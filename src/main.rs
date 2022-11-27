@@ -41,9 +41,9 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    commands
-        .spawn(Camera2dBundle::default())
-        .insert(PanCam::default());
+    let mut camera = Camera2dBundle::default();
+    camera.projection.scale = 0.1;
+    commands.spawn(camera).insert(PanCam::default());
 
     // commands.spawn_atlas_sprite(basic::body, Color::RED, default(), Anchor::Center);
     module::Basic::build(&mut commands)

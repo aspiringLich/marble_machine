@@ -36,11 +36,6 @@ where
         self.rect().width()
     }
 
-    /// vec pointing to the right of the rect
-    fn vec(self) -> Vec3 {
-        (self.rect().width() * 0.5) * Vec3::X
-    }
-
     /// get height of self.rect()
     fn height(self) -> f32 {
         self.rect().height()
