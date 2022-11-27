@@ -4,7 +4,7 @@ use strum_macros::EnumIter;
 
 pub trait AtlasDictionary
 where
-    Self: Sized + Copy + Clone + IntoEnumIterator,
+    Self: Sized + Copy + Clone,
 {
     /// the rect each individual item represents
     fn rect(self) -> Rect;
