@@ -7,7 +7,7 @@ use crate::{
 };
 use atlas::AtlasDictionary;
 use bevy::{ecs::system::EntityCommands, prelude::*};
-
+use bevy_rapier2d::prelude::*;
 /// ??? how the fuck did this compile
 pub trait CommandsSpawn<'a, 'b>
 where
@@ -63,21 +63,24 @@ where
     }
 
     fn spawn_input(&mut self, transform: Transform) -> EntityCommands<'a, 'b, '_> {
-        let cmd = self.get();
+        let commands = self.get();
         let (texture_atlas, index) = basic::marble_input.info();
 
-        cmd.spawn((
+        commands.spawn((
             SpriteSheetBundle {
                 texture_atlas,
                 transform: transform,
                 sprite: TextureAtlasSprite {
                     index,
                     color: Color::GRAY,
-                    anchor: Anchor::CenterLeft,
+                    anchor: Anchor::Center,
                     ..default()
                 },
                 ..default()
             },
+            Collider::ball(basic::marble_input.width() * 0.5),
+            Sensor,
+            marker::InputSensor,
             Name::new(format!("in.component")),
         ))
     }
@@ -93,11 +96,14 @@ where
                 sprite: TextureAtlasSprite {
                     index,
                     color: Color::GRAY,
-                    anchor: Anchor::CenterLeft,
+                    anchor: Anchor::Center,
                     ..default()
                 },
                 ..default()
             },
+            Collider::ball(basic::marble_output.width() * 0.5),
+            Sensor,
+            marker::OutputSensor,
             Name::new(format!("out.component")),
         ))
     }
@@ -152,7 +158,7 @@ pub fn transform_from_offset_rotate(offset: f32, rotation: f32, z: f32) -> Trans
 
 /// returns a transform that equates to a valid i/o position around a `body_small`.
 pub fn body_small_transform(rotation: f32) -> Transform {
-    transform_from_offset_rotate(basic::body_small.width() * 0.5 - 3.0, rotation, 0.25)
+    transform_from_offset_rotate(basic::body_small.width() * 0.5 + 1.0, rotation, 0.25)
 }
 
 pub static MODULE_COLOR: Color = color!(101, 237, 192);
@@ -168,12 +174,24 @@ pub fn spawn_modules(mut commands: Commands, mut events: EventReader<SpawnModule
     for event in events.iter() {
         let module = event.module.get();
 
-        let parent = commands.spawn(SpriteBundle { ..default() }).id();
+        let parent = commands
+            .spawn(SpriteBundle { ..default() })
+            .insert(Name::new({
+                use ModuleType::*;
+                match event.module {
+                    Basic => "basic.module",
+                    _ => unimplemented!(),
+                }
+            }))
+            .insert(module.clone())
+            .id();
 
-        macro spawn_body($atlasdict:expr, $name:expr) {
+        macro spawn_body_circular($atlasdict:expr, $name:expr) {
             commands
                 .spawn_atlas_sprite($atlasdict, MODULE_COLOR, Transform::from_xyz(0.0, 0.0, 0.5))
                 .insert(Name::new($name))
+                .insert(Collider::ball($atlasdict.width() * 0.5))
+                .insert(RigidBody::Fixed)
                 .id()
         }
 
@@ -190,7 +208,10 @@ pub fn spawn_modules(mut commands: Commands, mut events: EventReader<SpawnModule
                     children.extend(o.iter().map(|&rotation| {
                         commands.spawn_output(body_small_transform(rotation)).id()
                     }));
-                    vec![spawn_body!(basic::body_small, "body_small.component")]
+                    vec![spawn_body_circular!(
+                        basic::body_small,
+                        "body_small.component"
+                    )]
                 }
                 BodyLarge(i, o) => todo!(),
                 Decal((handle, index)) => todo!(),

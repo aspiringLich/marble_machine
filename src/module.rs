@@ -1,3 +1,4 @@
+use bevy::ecs::component::TableStorage;
 use bevy::prelude::*;
 use bevy::utils::Instant;
 
@@ -14,25 +15,27 @@ pub struct InputState {
 }
 
 #[derive(Copy, Clone)]
-
 pub enum ModuleType {
     Basic,
 }
 
 impl ModuleType {
-    pub fn get(self) -> &'static dyn Module {
+    pub fn get(self) -> impl Module<Storage = TableStorage> {
         match self {
-            Self::Basic => &Basic,
+            Self::Basic => Basic,
         }
     }
 }
 
-pub trait Module {
+pub trait Module
+where
+    Self: Component<Storage = TableStorage> + Clone,
+{
     /// return instructions on spawning this module
     fn spawn_instructions(&self) -> &Vec<SpawnInstruction>;
 }
 
-#[derive(Component)]
+#[derive(Component, Clone)]
 pub struct Basic;
 
 static BASIC_SPAWN_INSTRUCTIONS: Lazy<Vec<SpawnInstruction>> = Lazy::new(|| {
