@@ -24,14 +24,26 @@ where
     /// will return the handle, the id, and the size of the specific sprite
     ///
     /// ```
-    /// let (texture_atlas, index, scale) = atlas::get_sprite(atlas::item1);
+    /// let (texture_atlas, index) = atlas::get_sprite(atlas::item1);
     /// ```
-    fn info(self) -> (Handle<TextureAtlas>, usize, Vec3) {
-        (
-            Self::get(),
-            self.index(),
-            (self.rect().size() * GRID_SIZE).extend(1.0),
-        )
+    fn info(self) -> (Handle<TextureAtlas>, usize) {
+        let v = self.rect().size();
+        (Self::get(), self.index())
+    }
+
+    /// get width of self.rect()
+    fn width(self) -> f32 {
+        self.rect().width()
+    }
+
+    /// vec pointing to the right of the rect
+    fn vec(self) -> Vec3 {
+        (self.rect().width() * 0.5) * Vec3::X
+    }
+
+    /// get height of self.rect()
+    fn height(self) -> f32 {
+        self.rect().height()
     }
 }
 
@@ -50,10 +62,7 @@ pub fn init_texture_atlas(
             TextureAtlas::new_empty(asset_server.load(<$target>::path()), $dimensions.into());
         <$target>::iter().for_each(|variant| {
             let rect = variant.rect();
-            atlas.add_texture(Rect::from_corners(
-                rect.min * GRID_SIZE,
-                rect.max * GRID_SIZE,
-            ));
+            atlas.add_texture(rect);
         });
         let handle = texture_atlases.add(atlas);
         unsafe { ATLAS_HANDLES.push(handle) };
@@ -74,8 +83,23 @@ macro default_impl_atlas_dictionary($t:ty, $n:expr) {
     }
 }
 
-macro rect($a:expr,$b:expr,$c:expr,$d:expr) {
-    Rect::new($a as f32, $b as f32, $c as f32, $d as f32)
+macro rect {
+    ($a:expr,$b:expr,$c:expr,$d:expr) => {
+        Rect::new(
+            $a as f32 * GRID_SIZE,
+            $b as f32 * GRID_SIZE,
+            $c as f32 * GRID_SIZE,
+            $d as f32 * GRID_SIZE,
+        )
+    },
+    ($a:expr,$b:expr,$c:expr,$d:expr,$pad:expr) => {
+        Rect::new(
+            ($a as f32 * GRID_SIZE) + $pad as f32,
+            ($b as f32 * GRID_SIZE) + $pad as f32,
+            ($c as f32 * GRID_SIZE) - $pad as f32,
+            ($d as f32 * GRID_SIZE) - $pad as f32,
+        )
+    },
 }
 
 #[allow(non_camel_case_types)]
@@ -95,12 +119,12 @@ impl AtlasDictionary for basic {
 
         #[rustfmt::skip]
         match self {
-            marble_small  => rect!(0, 0, 1, 1),
+            marble_small  => rect!(0, 0, 1, 1, 1),
             marble        => rect!(1, 0, 2, 1),
             marble_output => rect!(0, 1, 1, 3),
             marble_input  => rect!(0, 3, 1, 5),
-            body_small    => rect!(3, 0, 5, 2),
-            body          => rect!(5, 0, 8, 3),
+            body_small    => rect!(3, 0, 5, 2, 1),
+            body          => rect!(5, 0, 8, 3, 1),
         }
     }
 

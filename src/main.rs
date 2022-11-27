@@ -5,21 +5,24 @@
 extern crate bevy_pancam;
 extern crate strum;
 
-pub use bevy::prelude::*;
-pub use bevy_inspector_egui::prelude::*;
+pub use bevy::{prelude::*, sprite::Anchor};
+use bevy_inspector_egui::prelude::*;
 
-pub use anyhow::{anyhow, bail, ensure, Result};
+use anyhow::{anyhow, bail, ensure, Error, Ok, Result};
 use bevy_pancam::PanCam;
-pub use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
-use yauc::*;
-pub use yauc::{error, info, warn};
-
-pub use once_cell::sync::Lazy;
+use once_cell::sync::Lazy;
+use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
 
 mod atlas;
-use atlas::{basic, AtlasDictionary};
+use atlas::basic;
 
 mod spawn;
+use spawn::CommandsSpawn;
+
+mod marble;
+
+mod module;
+use module::Module;
 
 fn main() {
     App::new()
@@ -28,8 +31,12 @@ fn main() {
         .add_plugin(bevy_pancam::PanCamPlugin)
         .add_plugin(WorldInspectorPlugin::new())
         // startup systems
-        .add_startup_system(atlas::init_texture_atlas)
-        .add_startup_system(setup.after(atlas::init_texture_atlas))
+        .add_startup_system_set(
+            SystemSet::new()
+                .with_system(atlas::init_texture_atlas)
+                .label("init"),
+        )
+        .add_startup_system(setup.after("init"))
         .run();
 }
 
@@ -38,15 +45,6 @@ fn setup(mut commands: Commands) {
         .spawn(Camera2dBundle::default())
         .insert(PanCam::default());
 
-    let (texture_atlas, index, scale) = basic::marble.info();
-    commands.spawn(SpriteSheetBundle {
-        texture_atlas,
-        transform: Transform::from_translation(Vec3::ZERO).with_scale(scale),
-        sprite: TextureAtlasSprite {
-            index,
-            color: Color::RED,
-            ..default()
-        },
-        ..default()
-    });
+    // commands.spawn_atlas_sprite(basic::body, Color::RED, default(), Anchor::Center);
+    module::Basic::build(&mut commands)
 }
