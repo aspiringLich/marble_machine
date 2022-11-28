@@ -8,7 +8,7 @@ use crate::{
 use atlas::AtlasDictionary;
 use bevy::{ecs::system::EntityCommands, prelude::*};
 use bevy_rapier2d::prelude::*;
-/// ??? how the fuck did this compile
+
 pub trait CommandsSpawn<'a, 'b>
 where
     Self: Sized,
@@ -80,7 +80,7 @@ where
             },
             Collider::ball(basic::marble_input.width() * 0.5),
             Sensor,
-            marker::InputSensor,
+            marker::Input,
             Name::new(format!("in.component")),
         ))
     }
@@ -103,7 +103,7 @@ where
             },
             Collider::ball(basic::marble_output.width() * 0.5),
             Sensor,
-            marker::OutputSensor,
+            marker::Output,
             Name::new(format!("out.component")),
         ))
     }
@@ -170,20 +170,24 @@ pub enum SpawnInstruction {
 }
 
 /// spawn a module based on [`SpawnModule`] events fired
-pub fn spawn_modules(mut commands: Commands, mut events: EventReader<SpawnModule>) {
+pub fn spawn_modules(
+    mut commands: Commands,
+    mut events: EventReader<SpawnModule>,
+    mut selected: ResMut<SelectedModule>,
+) {
     for event in events.iter() {
-        let module = event.module.get();
+        let mut mt = event.module;
 
         let parent = commands
             .spawn(SpriteBundle { ..default() })
             .insert(Name::new({
                 use ModuleType::*;
-                match event.module {
-                    Basic => "basic.module",
+                match mt {
+                    Basic { .. } => "basic.module",
                     _ => unimplemented!(),
                 }
             }))
-            .insert(module.clone())
+            .insert(mt)
             .id();
 
         macro spawn_body_circular($atlasdict:expr, $name:expr) {
@@ -195,7 +199,7 @@ pub fn spawn_modules(mut commands: Commands, mut events: EventReader<SpawnModule
                 .id()
         }
 
-        for instruction in module.spawn_instructions() {
+        for instruction in mt.get_inner().spawn_instructions() {
             use SpawnInstruction::*;
             let mut children = vec![];
 
@@ -218,6 +222,9 @@ pub fn spawn_modules(mut commands: Commands, mut events: EventReader<SpawnModule
             };
             children.append(append);
             commands.entity(parent).push_children(children.as_slice());
+            *selected = SelectedModule {
+                selected: Some(parent),
+            };
         }
     }
 }

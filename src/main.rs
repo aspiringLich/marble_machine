@@ -1,11 +1,15 @@
 #![feature(let_chains)]
 #![feature(decl_macro)]
 #![feature(stmt_expr_attributes)]
+#![feature(return_position_impl_trait_in_trait)]
 
 extern crate bevy_pancam;
 extern crate strum;
 
+use std::f32::consts::PI;
+
 use bevy::{prelude::*, sprite::Anchor};
+use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::prelude::*;
 use bevy_rapier2d::prelude::*;
 
@@ -18,21 +22,26 @@ use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
 mod atlas;
 use atlas::basic;
 
-mod spawn;
-use spawn::CommandsSpawn;
-
 mod marble;
-
-mod module;
 
 mod misc;
 use misc::marker;
 
+mod module;
+
+mod spawn;
+use spawn::CommandsSpawn;
+use ui::SelectedModule;
+
+mod ui;
+
 fn main() {
     App::new()
         // resources
+        .init_resource::<SelectedModule>()
         // plugins
         .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugin(EguiPlugin)
         .add_plugin(bevy_pancam::PanCamPlugin)
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
@@ -48,8 +57,9 @@ fn main() {
         )
         .add_startup_system(setup.after("init"))
         // systems
-        .add_system(spawn::spawn_modules)
-        .add_system(display_events)
+        .add_stage("spawn", SystemStage::single(spawn::spawn_modules))
+        .add_system(display_events.after("spawn"))
+        .add_system(ui::inspector_ui)
         .run();
 }
 
@@ -65,7 +75,10 @@ fn setup(mut commands: Commands, mut spawn_module: EventWriter<spawn::SpawnModul
         .insert(PanCam::default());
 
     // commands.spawn_atlas_sprite(basic::body, Color::RED, default(), Anchor::Center);
-    spawn_module.send(spawn::SpawnModule::new(ModuleType::Basic));
+    spawn_module.send(spawn::SpawnModule::new(ModuleType::Basic(module::Basic {
+        input_rot: 0.0,
+        output_rot: PI,
+    })));
 }
 
 fn display_events(
