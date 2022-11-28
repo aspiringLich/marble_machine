@@ -1,5 +1,3 @@
-use std::cell::UnsafeCell;
-
 use crate::{
     module::{Module, ModuleResources},
     *,
@@ -42,7 +40,7 @@ pub trait UiElements {
     fn get(&mut self) -> &mut egui::Ui;
 
     /// a slider to modify a float from 0-360 deg
-    fn angle_slider(&mut self, res: &mut ModuleResources, label: &str, angle: &mut f32) {
+    fn angle_slider(&mut self, label: &str, angle: &mut f32) {
         let ui = self.get();
         ui.label(label);
         let response = ui.add(

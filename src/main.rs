@@ -6,14 +6,11 @@
 extern crate bevy_pancam;
 extern crate strum;
 
-use std::f32::consts::PI;
-
 use bevy::{prelude::*, sprite::Anchor};
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use anyhow::{anyhow, bail, ensure, Error, Ok, Result};
 use bevy_pancam::PanCam;
 use module::ModuleType;
 use once_cell::sync::Lazy;
@@ -30,7 +27,6 @@ use misc::marker;
 mod module;
 
 mod spawn;
-use spawn::CommandsSpawn;
 use ui::SelectedModule;
 
 mod ui;
@@ -45,7 +41,7 @@ fn main() {
         .add_plugin(bevy_pancam::PanCamPlugin)
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-        // .add_plugin(RapierDebugRenderPlugin::default())
+        .add_plugin(RapierDebugRenderPlugin::default())
         // events
         .add_event::<spawn::SpawnMarble>()
         .add_event::<spawn::SpawnModule>()
@@ -57,9 +53,20 @@ fn main() {
         )
         .add_startup_system(setup.after("init"))
         // systems
-        .add_stage("spawn", SystemStage::single(spawn::spawn_modules))
-        .add_system(display_events.after("spawn"))
-        .add_system(ui::inspector_ui.after("spawn"))
+        .add_stage(
+            "spawn",
+            SystemStage::parallel()
+                .with_system(spawn::spawn_modules)
+                .with_system(spawn::spawn_marbles),
+        )
+        .add_stage_after(
+            "spawn",
+            "main",
+            SystemStage::parallel()
+                .with_system(display_events)
+                .with_system(ui::inspector_ui)
+                .with_system(spawn::despawn_marbles),
+        )
         .run();
 }
 
@@ -74,7 +81,6 @@ fn setup(mut commands: Commands, mut spawn_module: EventWriter<spawn::SpawnModul
         })
         .insert(PanCam::default());
 
-    // commands.spawn_atlas_sprite(basic::body, Color::RED, default(), Anchor::Center);
     spawn_module.send(spawn::SpawnModule::new(ModuleType::Basic(default())));
 }
 

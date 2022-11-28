@@ -1,8 +1,6 @@
-use bevy::ecs::query::{ReadOnlyWorldQuery, WorldQuery};
+use bevy::ecs::query::WorldQuery;
 use bevy::prelude::*;
 use std::f32::consts::TAU;
-use std::iter::{Filter, FilterMap, Map};
-use std::slice::Iter;
 
 pub mod marker {
     use bevy::prelude::Component;

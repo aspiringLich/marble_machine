@@ -1,8 +1,4 @@
-use bevy::ecs::component::TableStorage;
-use bevy::ecs::entity::MapEntities;
-use bevy::ecs::system::assert_is_system;
 use bevy::ecs::system::SystemParam;
-use bevy::utils::Instant;
 use bevy_egui::*;
 
 use crate::atlas::AtlasDictionary;
@@ -12,13 +8,6 @@ use crate::spawn::SpawnInstruction;
 use crate::spawn::SpawnMarble;
 use crate::ui::UiElements;
 use crate::*;
-
-use std::f32::consts::*;
-
-#[derive(Component)]
-pub struct InputState {
-    inputs: Vec<Option<(Marble, Instant)>>,
-}
 
 #[derive(Copy, Clone, Component)]
 pub enum ModuleType {
@@ -94,8 +83,8 @@ pub struct Basic {
 impl Default for Basic {
     fn default() -> Self {
         Basic {
-            input_rot: 0.0,
-            output_rot: 180.0,
+            input_rot: 180.0,
+            output_rot: 0.0,
         }
     }
 }
@@ -108,8 +97,8 @@ impl Module for Basic {
     }
 
     fn gui(&mut self, res: &mut ModuleResources, ui: &mut egui::Ui, entity: Entity) {
-        ui.angle_slider(res, "Input", &mut self.input_rot);
-        ui.angle_slider(res, "Output", &mut self.output_rot);
+        ui.angle_slider("Input", &mut self.input_rot);
+        ui.angle_slider("Output", &mut self.output_rot);
 
         let children = res.get_children.get(entity).unwrap();
 
@@ -121,7 +110,13 @@ impl Module for Basic {
         let mut output_transform = res.get_transform.get_mut(output).unwrap();
         *output_transform = body_small_transform(self.output_rot * misc::DEG_TO_RAD);
 
-        ui.button("Fire Marble!")
+        if ui.button("Fire Marble!").clicked() {
+            res.spawn_marble.send(SpawnMarble {
+                marble: Marble::Bit { value: true },
+                from: output,
+                power: 1.0,
+            })
+        }
     }
 
     const NAME: &'static str = "Basic Module";

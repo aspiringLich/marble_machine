@@ -27,7 +27,6 @@ where
     /// let (texture_atlas, index) = atlas::get_sprite(atlas::item1);
     /// ```
     fn info(self) -> (Handle<TextureAtlas>, usize) {
-        let v = self.rect().size();
         (Self::get(), self.index())
     }
 
@@ -114,10 +113,10 @@ impl AtlasDictionary for basic {
 
         #[rustfmt::skip]
         match self {
-            marble_small  => rect!(0, 0, 1, 1, 1),
-            marble        => rect!(1, 0, 2, 1),
-            marble_output => rect!(0, 1, 1, 3),
-            marble_input  => rect!(0, 3, 1, 5),
+            marble_small  => rect!(0, 0, 1, 1, 2),
+            marble        => rect!(1, 0, 2, 1, 1),
+            marble_output => rect!(0, 3, 1, 5),
+            marble_input  => rect!(0, 1, 1, 3),
             body_small    => rect!(3, 0, 5, 2, 1),
             body          => rect!(5, 0, 8, 3, 1),
         }

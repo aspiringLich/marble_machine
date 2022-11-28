@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::f32::consts::*;
 
 use crate::{
     marble::Marble,
@@ -6,8 +6,8 @@ use crate::{
     *,
 };
 use atlas::AtlasDictionary;
-use bevy::{ecs::system::EntityCommands, prelude::*};
-use bevy_rapier2d::prelude::*;
+use bevy::ecs::system::EntityCommands;
+use bevy_rapier2d::{prelude::*, rapier::prelude::ColliderMaterial};
 
 pub trait CommandsSpawn<'a, 'b>
 where
@@ -116,9 +116,51 @@ impl<'a, 'b> CommandsSpawn<'a, 'b> for Commands<'a, 'b> {
 #[derive(Copy, Clone)]
 
 pub struct SpawnMarble {
-    marble: Marble,
-    from: Entity,
-    velocity: Vec2,
+    pub marble: Marble,
+    pub from: Entity,
+    pub power: f32,
+}
+
+pub fn spawn_marbles(
+    mut commands: Commands,
+    mut spawn_events: EventReader<SpawnMarble>,
+    q_transform: Query<&mut Transform>,
+) {
+    for event in spawn_events.iter() {
+        let transform = *q_transform.get(event.from).unwrap();
+        let pos = transform.translation;
+        commands
+            .spawn_atlas_sprite(
+                basic::marble_small,
+                Color::GREEN,
+                Transform::from_translation(pos - pos.z),
+            )
+            .insert((
+                Collider::ball((basic::marble_small.width() * 0.5)),
+                RigidBody::Dynamic,
+                Velocity {
+                    linvel: transform.rotation.mul_vec3(Vec3::X).truncate() * 80.0,
+                    angvel: 0.0,
+                },
+                ColliderMassProperties::Mass(1.0),
+            ))
+            .insert(event.marble)
+            .insert(Name::new("bit.marble"));
+    }
+}
+
+/// despawn marbles if they go too low (and should be despawned cuz theyre out of bounds)
+pub fn despawn_marbles(
+    mut commands: Commands,
+    q_transform: Query<&Transform>,
+    q_marbles: Query<Entity, With<Marble>>,
+) {
+    for marble in q_marbles.iter() {
+        let transform = q_transform.get(marble).unwrap();
+        if transform.translation.y < -1000.0 {
+            commands.entity(marble).despawn_recursive();
+        }
+    }
 }
 
 #[derive(Copy, Clone)]
@@ -152,10 +194,10 @@ pub enum SpawnInstruction {
 /// spawn a module based on [`SpawnModule`] events fired
 pub fn spawn_modules(
     mut commands: Commands,
-    mut events: EventReader<SpawnModule>,
+    mut spawn_events: EventReader<SpawnModule>,
     mut selected: ResMut<SelectedModule>,
 ) {
-    for event in events.iter() {
+    for event in spawn_events.iter() {
         let mut mt = event.module;
 
         let parent = commands
