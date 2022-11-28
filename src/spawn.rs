@@ -62,14 +62,13 @@ where
         })
     }
 
-    fn spawn_input(&mut self, transform: Transform) -> EntityCommands<'a, 'b, '_> {
+    fn spawn_input(&mut self) -> EntityCommands<'a, 'b, '_> {
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_input.info();
 
         commands.spawn((
             SpriteSheetBundle {
                 texture_atlas,
-                transform: transform,
                 sprite: TextureAtlasSprite {
                     index,
                     color: Color::GRAY,
@@ -85,14 +84,13 @@ where
         ))
     }
 
-    fn spawn_output(&mut self, transform: Transform) -> EntityCommands<'a, 'b, '_> {
+    fn spawn_output(&mut self) -> EntityCommands<'a, 'b, '_> {
         let cmd = self.get();
         let (texture_atlas, index) = basic::marble_output.info();
 
         cmd.spawn((
             SpriteSheetBundle {
                 texture_atlas,
-                transform: transform,
                 sprite: TextureAtlasSprite {
                     index,
                     color: Color::GRAY,
@@ -143,24 +141,6 @@ macro color($r:expr, $g:expr, $b:expr) {
     }
 }
 
-/// basically, imagine offsetting some object by `offset` in the x-axis, then rotating it around the origin `rotation` radians.
-///
-/// this is what this function does.
-pub fn transform_from_offset_rotate(offset: f32, rotation: f32, z: f32) -> Transform {
-    let rotation = Quat::from_rotation_z(rotation);
-    let translation = rotation.mul_vec3(Vec3::X * offset) + Vec3::Z * z;
-    Transform {
-        rotation,
-        translation,
-        scale: Vec3::ONE,
-    }
-}
-
-/// returns a transform that equates to a valid i/o position around a `body_small`.
-pub fn body_small_transform(rotation: f32) -> Transform {
-    transform_from_offset_rotate(basic::body_small.width() * 0.5 + 1.0, rotation, 0.25)
-}
-
 pub static MODULE_COLOR: Color = color!(101, 237, 192);
 
 pub enum SpawnInstruction {
@@ -206,12 +186,8 @@ pub fn spawn_modules(
             let append = &mut match instruction {
                 // spawn a small body with said inputs and outputs
                 BodySmall(i, o) => {
-                    children.extend(i.iter().map(|&rotation| {
-                        commands.spawn_input(body_small_transform(rotation)).id()
-                    }));
-                    children.extend(o.iter().map(|&rotation| {
-                        commands.spawn_output(body_small_transform(rotation)).id()
-                    }));
+                    children.extend(i.iter().map(|_| commands.spawn_input().id()));
+                    children.extend(o.iter().map(|_| commands.spawn_output().id()));
                     vec![spawn_body_circular!(
                         basic::body_small,
                         "body_small.component"

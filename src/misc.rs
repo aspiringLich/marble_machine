@@ -1,5 +1,6 @@
 use bevy::ecs::query::{ReadOnlyWorldQuery, WorldQuery};
 use bevy::prelude::*;
+use std::f32::consts::TAU;
 use std::iter::{Filter, FilterMap, Map};
 use std::slice::Iter;
 
@@ -36,3 +37,5 @@ impl ChildrenMatches for Children {
         self
     }
 }
+
+pub const DEG_TO_RAD: f32 = TAU / 360.0;

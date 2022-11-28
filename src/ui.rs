@@ -33,7 +33,7 @@ pub fn inspector_ui(
     let mut binding = binding.get_module_type.get_mut(selected).unwrap();
     let module = binding.get_inner();
 
-    egui::Window::new("w").show(egui_context.ctx_mut(), |ui| {
+    egui::Window::new(module.get_name()).show(egui_context.ctx_mut(), |ui| {
         module.gui(unsafe { &mut *res }, ui, selected);
     });
 }
@@ -41,17 +41,15 @@ pub fn inspector_ui(
 pub trait UiElements {
     fn get(&mut self) -> &mut egui::Ui;
 
+    /// a slider to modify a float from 0-360 deg
     fn angle_slider(&mut self, res: &mut ModuleResources, label: &str, angle: &mut f32) {
         let ui = self.get();
-        ui.horizontal(|ui| {
-            ui.label(label);
-            let response = ui.add(
-                egui::Slider::new(angle, 0.0..=360.0)
-                    .text("angle")
-                    .step_by(1.0)
-                    .suffix("°"),
-            );
-        });
+        ui.label(label);
+        let response = ui.add(
+            egui::Slider::new(angle, 0.0..=360.0)
+                .step_by(15.0)
+                .suffix("°"),
+        );
     }
 }
 

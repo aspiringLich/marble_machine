@@ -45,7 +45,7 @@ fn main() {
         .add_plugin(bevy_pancam::PanCamPlugin)
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-        .add_plugin(RapierDebugRenderPlugin::default())
+        // .add_plugin(RapierDebugRenderPlugin::default())
         // events
         .add_event::<spawn::SpawnMarble>()
         .add_event::<spawn::SpawnModule>()
@@ -59,7 +59,7 @@ fn main() {
         // systems
         .add_stage("spawn", SystemStage::single(spawn::spawn_modules))
         .add_system(display_events.after("spawn"))
-        .add_system(ui::inspector_ui)
+        .add_system(ui::inspector_ui.after("spawn"))
         .run();
 }
 
@@ -75,10 +75,7 @@ fn setup(mut commands: Commands, mut spawn_module: EventWriter<spawn::SpawnModul
         .insert(PanCam::default());
 
     // commands.spawn_atlas_sprite(basic::body, Color::RED, default(), Anchor::Center);
-    spawn_module.send(spawn::SpawnModule::new(ModuleType::Basic(module::Basic {
-        input_rot: 0.0,
-        output_rot: PI,
-    })));
+    spawn_module.send(spawn::SpawnModule::new(ModuleType::Basic(default())));
 }
 
 fn display_events(
