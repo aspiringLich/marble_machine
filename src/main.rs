@@ -6,7 +6,7 @@
 extern crate bevy_pancam;
 extern crate strum;
 
-use bevy::{prelude::*, sprite::Anchor};
+use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, sprite::Anchor};
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -18,6 +18,8 @@ use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
 
 mod atlas;
 use atlas::basic;
+
+mod fps;
 
 mod marble;
 
@@ -36,7 +38,19 @@ fn main() {
         // resources
         .init_resource::<SelectedModule>()
         // plugins
-        .add_plugins(DefaultPlugins.set(ImagePlugin::default_nearest()))
+        .add_plugins(
+            DefaultPlugins
+                .set(ImagePlugin::default_nearest())
+                .set(WindowPlugin {
+                    window: WindowDescriptor {
+                        title: "Marble Machine".to_string(),
+                        ..default()
+                    },
+                    ..default()
+                }),
+        )
+        .add_plugin(FrameTimeDiagnosticsPlugin::default())
+        .add_plugin(fps::FpsText)
         .add_plugin(EguiPlugin)
         .add_plugin(bevy_pancam::PanCamPlugin)
         .add_plugin(WorldInspectorPlugin::new())

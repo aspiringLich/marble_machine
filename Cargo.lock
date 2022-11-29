@@ -935,18 +935,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "bevycheck"
-version = "0.4.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2d94b17c587ee2b7938fe80f2e43aa2087d7606bbceaf7fd6b6d80eb2e2fdd87"
-dependencies = [
- "bevy",
- "proc-macro-error",
- "quote",
- "syn",
-]
-
-[[package]]
 name = "bindgen"
 version = "0.61.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2223,7 +2211,6 @@ dependencies = [
  "bevy_egui",
  "bevy_pancam",
  "bevy_rapier2d",
- "bevycheck",
  "once_cell",
  "pretty_assertions",
  "strum",
@@ -2935,30 +2922,6 @@ dependencies = [
  "once_cell",
  "thiserror",
  "toml",
-]
-
-[[package]]
-name = "proc-macro-error"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da25490ff9892aab3fcf7c36f08cfb902dd3e71ca0f9f9517bea02a73a5ce38c"
-dependencies = [
- "proc-macro-error-attr",
- "proc-macro2",
- "quote",
- "syn",
- "version_check",
-]
-
-[[package]]
-name = "proc-macro-error-attr"
-version = "1.0.4"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a1be40180e52ecc98ad80b184934baf3d0d29f979574e439af5a55274b35f869"
-dependencies = [
- "proc-macro2",
- "quote",
- "version_check",
 ]
 
 [[package]]
