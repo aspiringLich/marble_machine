@@ -3,9 +3,9 @@ use bevy_egui::*;
 
 use crate::atlas::AtlasDictionary;
 use crate::marble::Marble;
+use crate::marble::SpawnMarble;
 use crate::misc::ChildrenMatches;
 use crate::spawn::SpawnInstruction;
-use crate::spawn::SpawnMarble;
 use crate::ui::UiElements;
 use crate::*;
 
@@ -84,7 +84,7 @@ impl Default for Basic {
     fn default() -> Self {
         Basic {
             input_rot: 180.0,
-            output_rot: 0.0,
+            output_rot: 90.0,
         }
     }
 }

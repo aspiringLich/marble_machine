@@ -31,9 +31,15 @@ pub fn inspector_ui(
     let mut binding = binding.get_module_type.get_mut(selected).unwrap();
     let module = binding.get_inner();
 
-    egui::Window::new(module.get_name()).show(egui_context.ctx_mut(), |ui| {
-        module.gui(unsafe { &mut *res }, ui, selected);
-    });
+    // let window =
+    egui::Window::new(module.get_name())
+        .resizable(true)
+        .collapsible(false)
+        .show(egui_context.ctx_mut(), |ui| {
+            module.gui(unsafe { &mut *res }, ui, selected);
+        });
+
+    // println!("{}", window.unwrap().response.rect.width());
 }
 
 pub trait UiElements {

@@ -13,8 +13,8 @@ use bevy_rapier2d::prelude::*;
 
 use bevy_pancam::PanCam;
 use module::ModuleType;
-use once_cell::sync::Lazy;
-use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
+// use once_cell::sync::Lazy;
+// use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
 
 mod atlas;
 use atlas::basic;
@@ -57,7 +57,7 @@ fn main() {
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
         .add_plugin(RapierDebugRenderPlugin::default())
         // events
-        .add_event::<spawn::SpawnMarble>()
+        .add_event::<marble::SpawnMarble>()
         .add_event::<spawn::SpawnModule>()
         // startup systems
         .add_startup_system_set(
@@ -71,7 +71,7 @@ fn main() {
             "spawn",
             SystemStage::parallel()
                 .with_system(spawn::spawn_modules)
-                .with_system(spawn::spawn_marbles),
+                .with_system(marble::spawn_marbles),
         )
         .add_stage_after(
             "spawn",
@@ -79,7 +79,7 @@ fn main() {
             SystemStage::parallel()
                 .with_system(display_events)
                 .with_system(ui::inspector_ui)
-                .with_system(spawn::despawn_marbles),
+                .with_system(marble::despawn_marbles),
         )
         .run();
 }
@@ -88,7 +88,7 @@ fn setup(mut commands: Commands, mut spawn_module: EventWriter<spawn::SpawnModul
     commands
         .spawn(Camera2dBundle {
             projection: OrthographicProjection {
-                scale: 0.1,
+                scale: 0.15,
                 ..default()
             },
             ..default()
