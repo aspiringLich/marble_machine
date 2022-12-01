@@ -97,9 +97,19 @@ macro rect {
     },
 }
 
+macro raw_rect($x:expr, $y:expr, $w:expr, $h:expr) {
+    Rect::new(
+        $x as f32,
+        $y as f32,
+        $x as f32 + $w as f32,
+        $y as f32 + $h as f32,
+    )
+}
+
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, EnumIter)]
 pub enum basic {
+    indicator,
     marble_small,
     marble,
     marble_output,
@@ -114,8 +124,9 @@ impl AtlasDictionary for basic {
 
         #[rustfmt::skip]
         match self {
-            marble_small  => rect!(0, 0, 1, 1, 2),
-            marble        => rect!(1, 0, 2, 1, 1),
+            indicator     => raw_rect!(2, 2, 4, 4),
+            marble_small  => rect!(1, 0, 2, 1, 2),
+            marble        => rect!(2, 0, 3, 1, 1),
             marble_output => rect!(0, 3, 1, 5),
             marble_input  => rect!(0, 1, 1, 3),
             body_small    => rect!(3, 0, 5, 2, 1),
