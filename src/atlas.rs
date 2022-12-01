@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
+/// implement on an enum to have it be a valid key to an atlas
 pub trait AtlasDictionary
 where
     Self: Sized + Copy + Clone,

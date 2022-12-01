@@ -3,7 +3,7 @@ use bevy_egui::*;
 
 use crate::atlas::AtlasDictionary;
 use crate::marble::Marble;
-use crate::marble::SpawnMarble;
+use crate::marble_io::FireMarble;
 use crate::misc::ChildrenMatches;
 use crate::spawn::SpawnInstruction;
 use crate::ui::UiElements;
@@ -40,7 +40,7 @@ pub struct ModuleResources<'w, 's> {
     pub get_input: Query<'w, 's, &'static marker::Input>,
     pub get_output: Query<'w, 's, &'static marker::Output>,
     // events
-    pub spawn_marble: EventWriter<'w, 's, SpawnMarble>,
+    pub spawn_marble: EventWriter<'w, 's, FireMarble>,
     // resources
 }
 
@@ -111,7 +111,7 @@ impl Module for Basic {
         *output_transform = body_small_transform(self.output_rot * misc::DEG_TO_RAD);
 
         if ui.button("Fire Marble!").clicked() {
-            res.spawn_marble.send(SpawnMarble {
+            res.spawn_marble.send(FireMarble {
                 marble: Marble::Bit { value: true },
                 from: output,
                 power: 1.0,

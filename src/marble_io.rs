@@ -1,17 +1,21 @@
-use crate::*;
+use crate::{atlas::AtlasDictionary, spawn::CommandsSpawn, *};
+use bevy::ecs::system::EntityCommands;
+use marble::Marble;
 
-/// an event that says to spawn a marble here
+/// an event that tells the program to fire a marble from this marble output.
 #[derive(Copy, Clone)]
 
-pub struct SpawnMarble {
+pub struct FireMarble {
     pub marble: Marble,
     pub from: Entity,
     pub power: f32,
 }
 
-pub fn spawn_marbles(
+/// if any `SpawnMarbles` events have fired, fire a marble at the specified entity with the
+/// right power and such and such.
+pub fn fire_marbles(
     mut commands: Commands,
-    mut spawn_events: EventReader<SpawnMarble>,
+    mut spawn_events: EventReader<FireMarble>,
     q_transform: Query<&mut Transform>,
 ) {
     for event in spawn_events.iter() {

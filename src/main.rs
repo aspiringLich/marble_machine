@@ -18,19 +18,15 @@ use module::ModuleType;
 
 mod atlas;
 use atlas::basic;
-
+mod components;
 mod fps;
-
 mod marble;
-
+mod marble_io;
 mod misc;
 use misc::marker;
-
 mod module;
-
 mod spawn;
 use ui::SelectedModule;
-
 mod ui;
 
 fn main() {
@@ -57,7 +53,7 @@ fn main() {
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
         .add_plugin(RapierDebugRenderPlugin::default())
         // events
-        .add_event::<marble::SpawnMarble>()
+        .add_event::<marble_io::FireMarble>()
         .add_event::<spawn::SpawnModule>()
         // startup systems
         .add_startup_system_set(
@@ -71,7 +67,7 @@ fn main() {
             "spawn",
             SystemStage::parallel()
                 .with_system(spawn::spawn_modules)
-                .with_system(marble::spawn_marbles),
+                .with_system(marble_io::fire_marbles),
         )
         .add_stage_after(
             "spawn",

@@ -6,8 +6,10 @@ use crate::{
 };
 use atlas::AtlasDictionary;
 use bevy::ecs::system::EntityCommands;
+use components::SpawnComponents;
 // use bevy_rapier2d::{prelude::*, rapier::prelude::ColliderMaterial};
 
+/// methods for spawning random things to make my code more reasonable
 pub trait CommandsSpawn<'a, 'b>
 where
     Self: Sized,
@@ -37,7 +39,7 @@ where
         })
     }
 
-    /// spawn a sprite that inherits stuff from its atlas also with a specified anchor
+    /// spawn a sprite that inher   its stuff from its atlas also with a specified anchor
     fn spawn_atlas_sprite_a<T: AtlasDictionary>(
         &mut self,
         item: T,
@@ -59,52 +61,6 @@ where
             },
             ..default()
         })
-    }
-
-    fn spawn_input(&mut self) -> EntityCommands<'a, 'b, '_> {
-        let commands = self.get();
-        let (texture_atlas, index) = basic::marble_input.info();
-
-        commands.spawn((
-            SpriteSheetBundle {
-                texture_atlas,
-                sprite: TextureAtlasSprite {
-                    index,
-                    color: Color::GRAY,
-                    anchor: Anchor::Center,
-                    ..default()
-                },
-                ..default()
-            },
-            Collider::ball(basic::marble_input.width() * 0.5),
-            Sensor,
-            ActiveEvents::COLLISION_EVENTS,
-            marker::Input,
-            Name::new("in.component"),
-        ))
-    }
-
-    fn spawn_output(&mut self) -> EntityCommands<'a, 'b, '_> {
-        let cmd = self.get();
-        let (texture_atlas, index) = basic::marble_output.info();
-
-        cmd.spawn((
-            SpriteSheetBundle {
-                texture_atlas,
-                sprite: TextureAtlasSprite {
-                    index,
-                    color: Color::GRAY,
-                    anchor: Anchor::Center,
-                    ..default()
-                },
-                ..default()
-            },
-            Collider::ball(basic::marble_output.width() * 0.5),
-            Sensor,
-            ActiveEvents::COLLISION_EVENTS,
-            marker::Output,
-            Name::new("out.component"),
-        ))
     }
 }
 
