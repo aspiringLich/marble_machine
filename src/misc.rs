@@ -12,6 +12,10 @@ pub mod marker {
     /// marks marble outputs
     #[derive(Component)]
     pub struct Output;
+
+    /// marks the main camera
+    #[derive(Component)]
+    pub struct Camera;
 }
 
 pub trait ChildrenMatches {
@@ -37,3 +41,7 @@ impl ChildrenMatches for Children {
 }
 
 pub const DEG_TO_RAD: f32 = TAU / 360.0;
+
+pub macro vec2($x:expr, $y:expr) {
+    Vec2::new($x as f32, $y as f32)
+}

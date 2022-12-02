@@ -1,5 +1,3 @@
-// use std::f32::consts::*;
-
 use crate::{
     module::{Module, ModuleType},
     *,

@@ -4,14 +4,14 @@
 #![feature(return_position_impl_trait_in_trait)]
 
 extern crate bevy_pancam;
+extern crate rand;
 extern crate strum;
 
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, sprite::Anchor};
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::prelude::*;
-use bevy_rapier2d::prelude::*;
-
 use bevy_pancam::PanCam;
+use bevy_rapier2d::prelude::*;
 use module::ModuleType;
 // use once_cell::sync::Lazy;
 // use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
@@ -25,6 +25,7 @@ mod marble_io;
 mod misc;
 use misc::marker;
 mod module;
+mod select;
 mod spawn;
 use ui::SelectedModule;
 mod ui;
@@ -75,7 +76,8 @@ fn main() {
             SystemStage::parallel()
                 .with_system(display_events)
                 .with_system(ui::inspector_ui)
-                .with_system(marble::despawn_marbles),
+                .with_system(marble::despawn_marbles)
+                .with_system(pan_camera),
         )
         .run();
 }
@@ -89,9 +91,37 @@ fn setup(mut commands: Commands, mut spawn_module: EventWriter<spawn::SpawnModul
             },
             ..default()
         })
-        .insert(PanCam::default());
+        .insert((
+            PanCam {
+                grab_buttons: vec![MouseButton::Middle],
+                ..default()
+            },
+            marker::Camera,
+        ));
 
     spawn_module.send(spawn::SpawnModule::new(ModuleType::Basic(default())));
+}
+
+fn pan_camera(
+    keys: Res<Input<KeyCode>>,
+    mut query_camera: Query<(&mut OrthographicProjection, &mut Transform), With<marker::Camera>>,
+) {
+    let (projection, mut transform) = query_camera.single_mut();
+    let scrollamt = 1.8;
+    let pos = &mut transform.translation;
+
+    if keys.pressed(KeyCode::A) {
+        pos.x -= scrollamt
+    }
+    if keys.pressed(KeyCode::D) {
+        pos.x += scrollamt
+    }
+    if keys.pressed(KeyCode::W) {
+        pos.y += scrollamt
+    }
+    if keys.pressed(KeyCode::S) {
+        pos.y -= scrollamt
+    }
 }
 
 fn display_events(

@@ -1,5 +1,8 @@
-use crate::{atlas::AtlasDictionary, spawn::CommandsSpawn, *};
+use crate::*;
+use atlas::AtlasDictionary;
 use marble::Marble;
+use rand::Rng;
+use spawn::CommandsSpawn;
 
 /// an event that tells the program to fire a marble from this marble output.
 #[derive(Copy, Clone)]
@@ -19,6 +22,7 @@ pub fn fire_marbles(
 ) {
     for event in spawn_events.iter() {
         let transform = *q_transform.get(event.from).unwrap();
+        let rotation = transform.rotation;
         let pos = transform.translation;
         commands
             .spawn_atlas_sprite(
@@ -30,8 +34,8 @@ pub fn fire_marbles(
                 Collider::ball(basic::marble_small.width() * 0.5),
                 RigidBody::Dynamic,
                 Velocity {
-                    linvel: transform.rotation.mul_vec3(Vec3::X).truncate() * 80.0,
-                    angvel: 0.0,
+                    linvel: rotation.mul_vec3(Vec3::X).truncate() * 120.0,
+                    angvel: rand::thread_rng().gen_range(-10.0..10.0),
                 },
                 ColliderMassProperties::Mass(1.0),
                 Restitution::coefficient(0.9),
