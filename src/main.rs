@@ -34,6 +34,7 @@ fn main() {
     App::new()
         // resources
         .init_resource::<SelectedModule>()
+        .init_resource::<select::CursorCoords>()
         // plugins
         .add_plugins(
             DefaultPlugins
@@ -65,6 +66,11 @@ fn main() {
         .add_startup_system(setup.after("init"))
         // systems
         .add_stage(
+            "start",
+            SystemStage::parallel().with_system(select::get_cursor_pos),
+        )
+        .add_stage_after(
+            "start",
             "spawn",
             SystemStage::parallel()
                 .with_system(spawn::spawn_modules)
@@ -76,6 +82,7 @@ fn main() {
             SystemStage::parallel()
                 .with_system(display_events)
                 .with_system(ui::inspector_ui)
+                .with_system(select::get_selected.after(ui::inspector_ui))
                 .with_system(marble::despawn_marbles)
                 .with_system(pan_camera),
         )

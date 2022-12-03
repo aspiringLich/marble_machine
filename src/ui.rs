@@ -4,14 +4,20 @@ use crate::{
 };
 use bevy_egui::*;
 
-#[derive(Resource)]
-pub struct SelectedModule {
-    pub selected: Option<Entity>,
-}
+#[derive(Resource, Debug)]
+pub struct SelectedModule(pub Option<Entity>);
 
 impl Default for SelectedModule {
     fn default() -> Self {
-        Self { selected: None }
+        Self(None)
+    }
+}
+
+impl std::ops::Deref for SelectedModule {
+    type Target = Option<Entity>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
 }
 
@@ -20,7 +26,7 @@ pub fn inspector_ui(
     mut res: ModuleResources,
     selected: Res<SelectedModule>,
 ) {
-    let Some(selected) = selected.selected else { return };
+    let Some(selected) = **selected else { return };
 
     // im not sure how else to make the borrow checker shut up so
     // im pretty sure this isnt actually unsafe buuuuut

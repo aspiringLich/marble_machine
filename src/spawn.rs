@@ -116,15 +116,19 @@ pub fn spawn_modules(
                     _ => unimplemented!(),
                 }
             }))
-            .insert(mt)
+            .insert((mt, marker::Module))
             .id();
 
         macro spawn_body_circular($atlasdict:expr, $name:expr) {
             commands
                 .spawn_atlas_sprite($atlasdict, MODULE_COLOR, Transform::from_xyz(0.0, 0.0, 0.5))
-                .insert(Name::new($name))
-                .insert(Collider::ball($atlasdict.width() * 0.5))
-                .insert((RigidBody::Fixed, Restitution::coefficient(0.8)))
+                .insert((
+                    Name::new($name),
+                    Collider::ball($atlasdict.width() * 0.5),
+                    RigidBody::Fixed,
+                    Restitution::coefficient(0.8),
+                    marker::ModuleBody,
+                ))
                 .id()
         }
 
@@ -147,9 +151,7 @@ pub fn spawn_modules(
             };
             children.append(append);
             commands.entity(parent).push_children(children.as_slice());
-            *selected = SelectedModule {
-                selected: Some(parent),
-            };
+            *selected = SelectedModule(Some(parent));
         }
     }
 }

@@ -5,6 +5,14 @@ use std::f32::consts::TAU;
 pub mod marker {
     use bevy::prelude::Component;
 
+    /// marks modules
+    #[derive(Component)]
+    pub struct Module;
+
+    /// marks module bodies
+    #[derive(Component)]
+    pub struct ModuleBody;
+
     /// marks marble inputs
     #[derive(Component)]
     pub struct Input;
