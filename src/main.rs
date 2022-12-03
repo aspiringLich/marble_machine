@@ -17,23 +17,25 @@ use module::ModuleType;
 // use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
 
 mod atlas;
-use atlas::basic;
 mod components;
 mod fps;
 mod marble;
 mod marble_io;
 mod misc;
-use misc::marker;
 mod module;
+mod place;
 mod select;
 mod spawn;
-use ui::SelectedModule;
+use ui::SelectedModules;
 mod ui;
+
+use atlas::basic;
+use misc::marker;
 
 fn main() {
     App::new()
         // resources
-        .init_resource::<SelectedModule>()
+        .init_resource::<SelectedModules>()
         .init_resource::<select::CursorCoords>()
         // plugins
         .add_plugins(
@@ -61,6 +63,7 @@ fn main() {
         .add_startup_system_set(
             SystemSet::new()
                 .with_system(atlas::init_texture_atlas)
+                .with_system(ui::init_egui_context)
                 .label("init"),
         )
         .add_startup_system(setup.after("init"))
@@ -81,8 +84,9 @@ fn main() {
             "main",
             SystemStage::parallel()
                 .with_system(display_events)
-                .with_system(ui::inspector_ui)
+                .with_system(ui::inspector_ui.label("ui"))
                 .with_system(select::get_selected.after(ui::inspector_ui))
+                .with_system(select::drag_selected.after(select::get_selected))
                 .with_system(marble::despawn_marbles)
                 .with_system(pan_camera),
         )

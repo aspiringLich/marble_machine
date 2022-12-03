@@ -71,11 +71,22 @@ impl<'a, 'b> CommandsSpawn<'a, 'b> for Commands<'a, 'b> {
 #[derive(Copy, Clone)]
 pub struct SpawnModule {
     module: ModuleType,
+    // whether this module is going to be dragged around
+    place: bool,
 }
 
 impl SpawnModule {
     pub fn new(module: ModuleType) -> Self {
-        SpawnModule { module }
+        SpawnModule {
+            module,
+            place: false,
+        }
+    }
+
+    /// this module is going to be dragged around
+    pub fn place(mut self) -> Self {
+        self.place = true;
+        self
     }
 }
 
@@ -100,7 +111,7 @@ pub enum SpawnInstruction {
 pub fn spawn_modules(
     mut commands: Commands,
     mut spawn_events: EventReader<SpawnModule>,
-    mut selected: ResMut<SelectedModule>,
+    mut selected: ResMut<SelectedModules>,
 ) {
     for event in spawn_events.iter() {
         let mut mt = event.module;
@@ -151,7 +162,7 @@ pub fn spawn_modules(
             };
             children.append(append);
             commands.entity(parent).push_children(children.as_slice());
-            *selected = SelectedModule(Some(parent));
+            *selected = SelectedModules(Some(parent));
         }
     }
 }

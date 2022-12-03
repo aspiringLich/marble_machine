@@ -2,8 +2,18 @@ use crate::*;
 use bevy::render::camera::RenderTarget;
 use bevy_rapier2d::prelude::*;
 
+pub struct SelectPlugin;
+
+impl Plugin for SelectPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_system(get_selected.after("ui"))
+            .add_system(drag_selected.after(get_selected).label("select"));
+    }
+}
+
+/// update SelectedModule whenever the left cursor is clicked
 pub fn get_selected(
-    mut selected: ResMut<SelectedModule>,
+    mut selected: ResMut<SelectedModules>,
     mut egui_ctx: ResMut<bevy_egui::EguiContext>,
     rapier_context: Res<RapierContext>,
     buttons: Res<Input<MouseButton>>,
@@ -11,10 +21,12 @@ pub fn get_selected(
     q_body: Query<&marker::ModuleBody>,
     q_parent: Query<&Parent>,
 ) {
+    // disable if were hovering over egui stuff
     if egui_ctx.ctx_mut().wants_pointer_input() {
         return;
     }
 
+    // if clicky click
     if buttons.just_pressed(MouseButton::Left) {
         let mut found = false;
         rapier_context.intersections_with_point(
@@ -23,16 +35,40 @@ pub fn get_selected(
             |entity| {
                 // get the parent of the main body and set that as the selected module
                 // main body is assumed to be the child of the overall module parent entity
-                *selected = SelectedModule(Some(q_parent.get(entity).unwrap().get()));
+                *selected = SelectedModules(Some(q_parent.get(entity).unwrap().get()));
                 // eprintln!("selected {}", q_name.get(entity).unwrap());
                 found = true;
                 false
             },
         );
         if !found {
-            *selected = SelectedModule(None);
+            *selected = default();
         }
     }
+}
+
+/// drag the selected module(s) around
+pub fn drag_selected(
+    mouse_pos: Res<CursorCoords>,
+    mouse_buttons: Res<Input<MouseButton>>,
+    selected: Res<SelectedModules>,
+    mut active: Local<bool>,
+    mut starting_pos: Local<Vec2>,
+) {
+    // basically: if active is not true it needs these specific conditions to become true, or else the system will not run
+    if !*active {
+        if selected.is_changed() && mouse_buttons.pressed(MouseButton::Left) {
+            *active = true;
+        } else {
+            return;
+        }
+    }
+    // if we let go of the left mouse button, return
+    if !mouse_buttons.pressed(MouseButton::Left) {
+        return;
+    }
+
+    let Some(selected) = **selected else {*active = false; return};
 }
 
 #[derive(Resource, Debug)]

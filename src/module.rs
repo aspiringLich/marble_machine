@@ -1,3 +1,5 @@
+use std::f32::consts;
+
 use bevy::ecs::system::SystemParam;
 use bevy_egui::*;
 
@@ -8,6 +10,8 @@ use crate::misc::ChildrenMatches;
 use crate::spawn::SpawnInstruction;
 use crate::ui::UiElements;
 use crate::*;
+
+use egui::*;
 
 #[derive(Copy, Clone, Component)]
 pub enum ModuleType {
@@ -83,8 +87,8 @@ pub struct Basic {
 impl Default for Basic {
     fn default() -> Self {
         Basic {
-            input_rot: 180.0,
-            output_rot: 90.0,
+            input_rot: consts::TAU * 0.25,
+            output_rot: consts::TAU * 0.75,
         }
     }
 }
@@ -97,18 +101,22 @@ impl Module for Basic {
     }
 
     fn gui(&mut self, res: &mut ModuleResources, ui: &mut egui::Ui, entity: Entity) {
-        ui.angle_slider("Input", &mut self.input_rot);
-        ui.angle_slider("Output", &mut self.output_rot);
+        egui::Grid::new("main_grid")
+            .min_col_width(0.0)
+            .show(ui, |ui| {
+                ui.angle_slider("Input", &mut self.input_rot);
+                ui.angle_slider("Output", &mut self.output_rot);
+            });
 
         let children = res.get_children.get(entity).unwrap();
 
         let input = children.get_matching(&res.get_input).next().unwrap();
         let mut input_transform = res.get_transform.get_mut(input).unwrap();
-        *input_transform = body_small_transform(self.input_rot * misc::DEG_TO_RAD);
+        *input_transform = body_small_transform(self.input_rot);
 
         let output = children.get_matching(&res.get_output).next().unwrap();
         let mut output_transform = res.get_transform.get_mut(output).unwrap();
-        *output_transform = body_small_transform(self.output_rot * misc::DEG_TO_RAD);
+        *output_transform = body_small_transform(self.output_rot);
 
         if ui.button("Fire Marble!").clicked() {
             res.spawn_marble.send(FireMarble {
