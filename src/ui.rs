@@ -44,7 +44,7 @@ pub fn inspector_ui(
     let res = &mut res as *mut ModuleResources;
 
     let binding = unsafe { &mut *res };
-    let mut binding = binding.get_module_type.get_mut(selected).unwrap();
+    let mut binding = binding.q_module_type.get_mut(selected).unwrap();
     let module = binding.get_inner();
 
     // let window =
@@ -53,16 +53,63 @@ pub fn inspector_ui(
         .collapsible(false)
         .show(egui_context.ctx_mut(), |ui| {
             ui.spacing_mut().slider_width = 300.0;
-            module.gui(unsafe { &mut *res }, ui, selected);
+            module.gui(unsafe { &mut *res }, ui, selected)
         });
 
     // println!("{}", window.unwrap().response.rect.width());
 }
 
+#[non_exhaustive]
+pub struct Layout<'a> {
+    grid: Option<Box<dyn FnOnce(&mut Ui) + 'a>>,
+    side_panel: Option<Box<dyn FnOnce(&mut Ui) + 'a>>,
+}
+
+impl<'a> Layout<'a> {
+    /// create a new layout with everything blank
+    pub fn new() -> Self {
+        Self {
+            grid: None,
+            side_panel: None,
+        }
+    }
+
+    /// with a left grid
+    pub fn with_grid(mut self, lyt_fn: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.grid = Some(Box::new(lyt_fn));
+        self
+    }
+
+    /// with a right panel
+    pub fn with_side_panel(mut self, lyt_fn: impl FnOnce(&mut Ui) + 'a) -> Self {
+        self.side_panel = Some(Box::new(lyt_fn));
+        self
+    }
+
+    /// build the ui
+    pub fn build(self, ui: &mut Ui) {
+        if let Some(grid) = self.grid {
+            egui::Grid::new("grid")
+                .min_col_width(0.0)
+                .striped(true)
+                .show(ui, grid);
+        }
+
+        if let Some(side_panel) = self.side_panel {
+            unimplemented!()
+        }
+    }
+}
+
 pub trait UiElements {
     fn get(&mut self) -> &mut Ui;
 
-    /// a slider to modify a float from 0-360 deg
+    /// A slider to modify an angle in radians, displays it in a more readable format (degrees)
+    /// and has some buttons to modify it further
+    ///
+    /// ```text
+    /// [<] [<~] [100.0°] [~>] [>]
+    /// ```
     fn angle_slider(&mut self, label: &str, angle: &mut f32) {
         let ui = self.get();
 
@@ -75,25 +122,29 @@ pub trait UiElements {
         let mut deg_angle = angle.to_degrees();
 
         ui.label(label);
-        // ui.add(
-        //     Slider::new(angle, 0.0..=consts::TAU)
-        //         .step_by(step_amt as f64)
-        //         .show_value(false),
-        // );
 
-        create_button!("<", "Rotate left 2.5°", *angle -= step_amt / 2.0);
+        create_button!(
+            "<",
+            "Rotate counter-clockwise 2.5°",
+            *angle += step_amt / 2.0
+        );
         let drag = DragValue::new(&mut deg_angle)
             .speed(1.0)
             .custom_formatter(|n, _| format!("{:>5.1}°", n));
+        create_button!(
+            "<~",
+            "Rotate counter-clockwise with a 45° step",
+            *angle = ((*angle + 0.01) * 8.0 / consts::TAU).ceil() * consts::TAU / 8.0
+        );
         if ui.add(drag).changed() {
             *angle = deg_angle.to_radians()
         }
         create_button!(
-            "~",
-            "Round to the nearest 45°",
-            *angle = (*angle * 8.0 / consts::TAU).round() * consts::TAU / 8.0
+            "~>",
+            "Rotate clockwise with a 45° step",
+            *angle = ((*angle - 0.01) * 8.0 / consts::TAU).floor() * consts::TAU / 8.0
         );
-        create_button!(">", "Rotate right 2.5°", *angle += step_amt / 2.0);
+        create_button!(">", "Rotate clockwise 2.5°", *angle -= step_amt / 2.0);
         ui.end_row();
 
         *angle = f32::rem_euclid(*angle, consts::TAU);

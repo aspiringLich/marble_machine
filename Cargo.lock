@@ -208,6 +208,15 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "73b5e5f48b927f04e952dedc932f31995a65a0bf65ec971c74436e51bf6e970d"
 
 [[package]]
+name = "auto_unwrap"
+version = "1.1.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9226b9dbebfa9bad3a5d70def5aedb255160e028be4a8f93e23eee22339e4df0"
+dependencies = [
+ "syn",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2238,6 +2247,7 @@ name = "marble_machine"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "auto_unwrap",
  "bevy",
  "bevy-inspector-egui",
  "bevy_egui",

@@ -1,12 +1,16 @@
 #![feature(let_chains)]
 #![feature(decl_macro)]
 #![feature(stmt_expr_attributes)]
+#![feature(float_next_up_down)]
+#![feature(type_alias_impl_trait)]
+#![feature(const_trait_impl)]
+#![feature(associated_type_defaults)]
 #![feature(return_position_impl_trait_in_trait)]
 
-extern crate bevy_pancam;
 extern crate rand;
 extern crate strum;
 
+use auto_unwrap::auto_unwrap;
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, sprite::Anchor};
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::prelude::*;
@@ -26,11 +30,11 @@ mod module;
 mod place;
 mod select;
 mod spawn;
-use ui::SelectedModules;
 mod ui;
 
 use atlas::basic;
 use misc::marker;
+use ui::SelectedModules;
 
 fn main() {
     App::new()
