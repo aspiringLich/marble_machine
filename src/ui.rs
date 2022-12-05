@@ -1,7 +1,7 @@
 use std::{f32::consts, f64};
 
 use crate::{
-    module::{Module, ModuleResources},
+    module::{param::ModuleResources, Module},
     *,
 };
 use bevy_egui::*;

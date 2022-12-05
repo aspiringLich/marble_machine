@@ -36,9 +36,12 @@ impl ModuleType {
     }
 }
 
-mod param {
+pub mod param {
     use crate::*;
-    use bevy::ecs::system::SystemParam;
+    use bevy::ecs::{
+        query::{QueryIter, ReadOnlyWorldQuery, WorldQuery},
+        system::SystemParam,
+    };
 
     type QuerySimple<'w, 's, T> = Query<'w, 's, &'static mut T>;
     type QueryWith<'w, 's, T, W> = Query<'w, 's, &'static mut T, bevy::prelude::With<W>>;
@@ -61,133 +64,79 @@ mod param {
         // resources
         pub keyboard: Res<'w, Input<KeyCode>>,
     }
-}
 
-// #[derive(Debug, Clone)]
-// pub struct QueryQueryIter<
-//     'a,
-//     Q: WorldQuery,
-//     R: ReadOnlyWorldQuery,
-//     I: Iterator<Item = Entity>,
-//     F = &'static dyn Fn(Entity) -> Option<<Q as WorldQuery>::Item<'a>>,
-// > {
-//     iter: I,
-//     func: F,
-//     phantom1: PhantomData<&'a Q>,
-//     phantom2: PhantomData<&'a R>,
-// }
-
-#[derive(Debug, Clone)]
-pub struct QueryQueryIter<I, Q> {
-    q: Q,
-    iter: I,
-}
-
-impl<I: Iterator, Q: WorldQuery, R: ReadOnlyWorldQuery> QueryQueryIter<I, Q> {
-    pub fn new<'a>(iter: I, q: Query<Q, R>) -> Self {
-        Self { q, iter }
-    }
-}
-
-impl<B, I: Iterator<Item = Entity>, F> Iterator for QueryQueryIter<I, F>
-where
-    F: FnMut(I::Item) -> Option<B>,
-{
-    type Item = B;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        while let Some(item) = self.iter.next() {}
-        todo!()
-    }
-}
-
-pub trait QueryQuery<'w> {
-    type I: Iterator<Item = Entity>;
-
-    fn get(self) -> Self::I;
-
-    /// queries all entities
-    fn query<Q: ReadOnlyWorldQuery, R: ReadOnlyWorldQuery, F>(
-        self,
-        other: &'w Query<'w, '_, Q, R>,
-    ) -> FilterMap<Self::I, F> {
-        let cls = |entity| other.get(entity).ok();
-        self.get().filter_map(cls)
-    }
-
-    /// queries all entities mutably
-    fn query_mut<Q: WorldQuery, R: ReadOnlyWorldQuery, I: Iterator, F>(
-        self,
-        other: &'w Query<'w, '_, Q, R>,
-    ) -> FilterMap<I, F>
+    pub trait QueryQuerySimple<'w, Q: Component>
     where
-        F: FnMut(I::Item) -> Option<Q>,
         Self: Sized,
     {
-        QueryQueryIter {
-            iter: self.get(),
-            func: Box::new(|entity| unsafe { other.get_unchecked(entity) }.ok()),
-            phantom: PhantomData,
+        fn get_self(&'w self) -> &'w QuerySimple<'w, 'w, Q>;
+        fn get_self_mut(&'w mut self) -> &'w mut QuerySimple<'w, 'w, Q>;
+
+        fn entity(&'w self, entity: Entity) -> &'w Q {
+            self.get_self().get(entity).unwrap()
+        }
+
+        fn entity_mut(&'w mut self, entity: Entity) -> Mut<'w, Q> {
+            self.get_self_mut().get_mut(entity).unwrap()
+        }
+    }
+
+    impl<'w, 's, Q: Component> QueryQuerySimple<'w, Q> for QuerySimple<'w, 'w, Q> {
+        fn get_self(&'w self) -> &'w QuerySimple<'w, 'w, Q> {
+            self
+        }
+
+        fn get_self_mut(&'w mut self) -> &'w mut QuerySimple<'w, 'w, Q> {
+            self
+        }
+    }
+
+    pub trait QueryQueryIter<'w>
+    where
+        Self: Sized,
+    {
+        fn get_self(self) -> impl Iterator<Item = Entity>;
+
+        fn query<T: Component>(self, q: &'w QuerySimple<'w, '_, T>) -> impl Iterator<Item = &'w T> {
+            self.get_self().into_iter().filter_map(|x| q.get(x).ok())
+        }
+
+        fn query_mut<T: Component>(
+            self,
+            q: &'w QuerySimple<'w, 'w, T>,
+        ) -> impl Iterator<Item = Mut<'w, T>> {
+            self.get_self()
+                .into_iter()
+                .filter_map(|x| unsafe { q.get_unchecked(x) }.ok())
+        }
+
+        fn with<T: Component>(
+            self,
+            w: &'w QueryEntity<'w, 'w, T>,
+        ) -> impl Iterator<Item = Entity> + 'w
+        where
+            Self: 'w,
+        {
+            self.get_self()
+                .into_iter()
+                .filter_map(move |x| w.get(x).ok())
+        }
+    }
+
+    impl<'w, 's, F: ReadOnlyWorldQuery> QueryQueryIter<'w> for QueryIter<'w, 's, Entity, F> {
+        fn get_self(self) -> QueryIter<'w, 's, Entity, F> {
+            self
+        }
+    }
+
+    impl<'w, 's> QueryQueryIter<'w> for std::slice::Iter<'w, Entity> {
+        fn get_self(self) -> impl Iterator<Item = Entity> + 'w {
+            self.map(|x| *x)
         }
     }
 }
 
-// impl<'w, 's, F: ReadOnlyWorldQuery> QueryQuery<'w> for Query<'w, 'w, Entity, F> {
-//     fn get(self) -> &'s mut QueryIter<'w, 's, Entity, F> {
-//         &mut self.iter()
-//     }
-// }
-
-// impl<'w, 's, Q: WoReadOnlyWorldQueryrldQuery, T = QueryQueryIter<'w, Q, dyn Iterator<Item = Entity>>>
-//     QueryQuery<'w, Q, T> for T
-// {
-//     fn get(self) -> T {
-//         self
-//     }
-// }
-
-impl<'w> QueryQuery<'w> for std::slice::Iter<'w, Entity> {
-    type I = impl Iterator<Item = Entity> + 'w;
-
-    fn get(self) -> Self::I {
-        self.map(|entity| *entity)
-    }
-}
-
-pub use param::ModuleResources;
-
-// impl<'w, 's> ModuleResources<'w, 's> {
-//     /// get the children of an entity
-//     pub fn get_children_of(&self, entity: Entity) -> &Children {
-//         self.q_children.get(entity).unwrap()
-//     }
-
-//     /// query every single child of an entity
-//     pub fn query_children<Q: WorldQuery, F: ReadOnlyWorldQuery>(
-//         &'w self,
-//         entity: Entity,
-//         query: &'w Query<'w, 's, Q, F>,
-//     ) -> impl Iterator<Item = ROQueryItem<'_, Q>> {
-//         self.get_children_of(entity)
-//             .iter()
-//             .filter_map(|child| query.get(*child).ok())
-//     }
-
-//     /// query every single child of an entity mutable
-//     ///
-//     /// NOTICE: this is very unsafe as i use `get_unchecked` to get around the fact the closure becomes a `FnMut`
-//     ///
-//     /// the function is not marked as unsafe because i am doing this for ergonomics anyway
-//     pub fn query_children_mut<Q: WorldQuery, F: ReadOnlyWorldQuery>(
-//         &'w self,
-//         entity: Entity,
-//         query: &'w Query<'w, 's, Q, F>,
-//     ) -> impl Iterator<Item = QueryItem<'_, Q>> {
-//         self.get_children_of(entity)
-//             .iter()
-//             .filter_map(|child| unsafe { query.get_unchecked(*child) }.ok())
-//     }
-// }
+use param::{ModuleResources, QueryQueryIter, QueryQuerySimple};
 
 pub trait Module {
     /// return instructions on spawning this module
@@ -258,11 +207,11 @@ impl Module for Basic {
         ui::Layout::new().with_grid(grid_lyt).build(ui);
 
         let children = q_children.get(module).unwrap();
-        let inputs: Vec<_> = children.iter().query(w_input).collect();
-        let outputs: Vec<_> = children.iter().query(w_output).collect();
+        let inputs: Vec<_> = children.iter().with(&w_input).collect();
+        let outputs: Vec<_> = children.iter().with(&w_output).collect();
 
-        let mut input_tfs: Vec<_> = inputs.iter().query_mut(q_transform).collect();
-        let mut output_tfs: Vec<_> = inputs.iter().query_mut(q_transform).collect();
+        let mut input_tfs: Vec<_> = inputs.iter().query_mut(&q_transform).collect();
+        let mut output_tfs: Vec<_> = outputs.iter().query_mut(&q_transform).collect();
 
         *input_tfs[0] = body_small_transform(self.input_rot);
         *output_tfs[0] = body_small_transform(self.output_rot);
@@ -271,7 +220,7 @@ impl Module for Basic {
             let mut from = q_children.get(module).unwrap();
             spawn_marble.send(FireMarble {
                 marble: Marble::Bit { value: true },
-                from: from.iter().query(w_output).next().unwrap(),
+                from: from.iter().with(&w_output).next().unwrap(),
                 power: 1.0,
             })
         }
