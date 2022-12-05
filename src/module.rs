@@ -91,35 +91,83 @@ pub mod param {
         }
     }
 
+    #[derive(Clone)]
+    pub struct QueryOutput<T: Sized>(T);
+
+    impl<I: Iterator, T> Iterator for QueryOutput<I>
+    where
+        I: Iterator<Item = T>,
+    {
+        type Item = T;
+
+        fn next(&mut self) -> Option<Self::Item> {
+            self.0.next()
+        }
+    }
+
+    impl<T> std::ops::Deref for QueryOutput<T> {
+        type Target = T;
+
+        fn deref(&self) -> &Self::Target {
+            &self.0
+        }
+    }
+
+    impl<T> std::ops::DerefMut for QueryOutput<T> {
+        fn deref_mut(&mut self) -> &mut Self::Target {
+            &mut self.0
+        }
+    }
+
+    impl<T> QueryOutput<T> {
+        pub fn new(t: T) -> Self {
+            QueryOutput(t)
+        }
+    }
+
     pub trait QueryQueryIter<'w>
     where
         Self: Sized,
     {
         fn get_self(self) -> impl Iterator<Item = Entity>;
 
-        fn query<T: Component>(self, q: &'w QuerySimple<'w, '_, T>) -> impl Iterator<Item = &'w T> {
-            self.get_self().into_iter().filter_map(|x| q.get(x).ok())
+        fn query<T: Component>(
+            self,
+            q: &'w QuerySimple<'w, '_, T>,
+        ) -> QueryOutput<impl Iterator<Item = &'w T>> {
+            QueryOutput::new(self.get_self().into_iter().filter_map(|x| q.get(x).ok()))
         }
 
         fn query_mut<T: Component>(
             self,
             q: &'w QuerySimple<'w, 'w, T>,
-        ) -> impl Iterator<Item = Mut<'w, T>> {
-            self.get_self()
-                .into_iter()
-                .filter_map(|x| unsafe { q.get_unchecked(x) }.ok())
+        ) -> QueryOutput<impl Iterator<Item = Mut<'w, T>>> {
+            QueryOutput::new(
+                self.get_self()
+                    .into_iter()
+                    .filter_map(|x| unsafe { q.get_unchecked(x) }.ok()),
+            )
         }
 
         fn with<T: Component>(
             self,
             w: &'w QueryEntity<'w, 'w, T>,
-        ) -> impl Iterator<Item = Entity> + 'w
+        ) -> QueryOutput<impl Iterator<Item = Entity> + 'w>
         where
             Self: 'w,
         {
+            QueryOutput::new(
+                self.get_self()
+                    .into_iter()
+                    .filter_map(move |x| w.get(x).ok()),
+            )
+        }
+
+        fn with_vec<T: Component>(self, w: &'w QueryEntity<'w, 'w, T>) -> Vec<Entity> {
             self.get_self()
                 .into_iter()
                 .filter_map(move |x| w.get(x).ok())
+                .collect()
         }
     }
 
@@ -132,6 +180,12 @@ pub mod param {
     impl<'w, 's> QueryQueryIter<'w> for std::slice::Iter<'w, Entity> {
         fn get_self(self) -> impl Iterator<Item = Entity> + 'w {
             self.map(|x| *x)
+        }
+    }
+
+    impl<'w, 's, I: Iterator<Item = Entity> + 'w> QueryQueryIter<'w> for QueryOutput<I> {
+        fn get_self(self) -> impl Iterator<Item = Entity> + 'w {
+            self
         }
     }
 }
@@ -206,21 +260,22 @@ impl Module for Basic {
         };
         ui::Layout::new().with_grid(grid_lyt).build(ui);
 
+        // get inputs and outputs
         let children = q_children.get(module).unwrap();
-        let inputs: Vec<_> = children.iter().with(&w_input).collect();
-        let outputs: Vec<_> = children.iter().with(&w_output).collect();
-
+        let inputs = children.iter().with_vec(&w_input);
+        let outputs = children.iter().with_vec(&w_output);
         let mut input_tfs: Vec<_> = inputs.iter().query_mut(&q_transform).collect();
         let mut output_tfs: Vec<_> = outputs.iter().query_mut(&q_transform).collect();
 
+        // set input and output transforms
         *input_tfs[0] = body_small_transform(self.input_rot);
         *output_tfs[0] = body_small_transform(self.output_rot);
 
+        // cool epic le hacker debug button
         if ui.button("Fire Marble!").clicked() {
-            let mut from = q_children.get(module).unwrap();
             spawn_marble.send(FireMarble {
                 marble: Marble::Bit { value: true },
-                from: from.iter().with(&w_output).next().unwrap(),
+                from: outputs[0],
                 power: 1.0,
             })
         }
