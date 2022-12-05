@@ -1,11 +1,3 @@
-use std::default;
-use std::f32::consts;
-use std::iter::FilterMap;
-use std::marker::PhantomData;
-
-use bevy::ecs::query::{QueryItem, QueryIter, ROQueryItem, ReadOnlyWorldQuery, WorldQuery};
-use bevy::ecs::system::SystemParam;
-use bevy::input::keyboard::KeyboardInput;
 use bevy_egui::*;
 
 use crate::atlas::AtlasDictionary;
@@ -39,7 +31,7 @@ impl ModuleType {
 pub mod param {
     use crate::*;
     use bevy::ecs::{
-        query::{QueryIter, ReadOnlyWorldQuery, WorldQuery},
+        query::{QueryIter, ReadOnlyWorldQuery},
         system::SystemParam,
     };
 
@@ -59,6 +51,7 @@ pub mod param {
         // entity queries
         pub w_input: QueryEntity<'w, 's, marker::Input>,
         pub w_output: QueryEntity<'w, 's, marker::Output>,
+        pub w_indicator: QueryEntity<'w, 's, marker::Indicator>,
         // events
         pub spawn_marble: EventWriter<'w, 's, module::FireMarble>,
         // resources
@@ -72,12 +65,22 @@ pub mod param {
         fn get_self(&'w self) -> &'w QuerySimple<'w, 'w, Q>;
         fn get_self_mut(&'w mut self) -> &'w mut QuerySimple<'w, 'w, Q>;
 
+        /// get the thing that satisfies this query under this entity
         fn entity(&'w self, entity: Entity) -> &'w Q {
-            self.get_self().get(entity).unwrap()
+            self.get_self().get(entity).expect(&format!(
+                "[{}{}] component was expected but was not found",
+                file!(),
+                line!(),
+            ))
         }
 
+        ///gets the thing that satisfies this query under this entity *mutably*
         fn entity_mut(&'w mut self, entity: Entity) -> Mut<'w, Q> {
-            self.get_self_mut().get_mut(entity).unwrap()
+            self.get_self_mut().get_mut(entity).expect(&format!(
+                "[{}{}] component was expected but was not found",
+                file!(),
+                line!(),
+            ))
         }
     }
 
@@ -91,10 +94,11 @@ pub mod param {
         }
     }
 
+    /// the output from the query
     #[derive(Clone)]
     pub struct QueryOutput<T: Sized>(T);
 
-    impl<I: Iterator, T> Iterator for QueryOutput<I>
+    impl<'a, I: Iterator + 'a, T> Iterator for QueryOutput<I>
     where
         I: Iterator<Item = T>,
     {
@@ -131,6 +135,7 @@ pub mod param {
     {
         fn get_self(self) -> impl Iterator<Item = Entity>;
 
+        /// queries this objects query for queries that match the other query.
         fn query<T: Component>(
             self,
             q: &'w QuerySimple<'w, '_, T>,
@@ -138,6 +143,7 @@ pub mod param {
             QueryOutput::new(self.get_self().into_iter().filter_map(|x| q.get(x).ok()))
         }
 
+        /// queries this objects query for queries that match the other query. But *mutably*
         fn query_mut<T: Component>(
             self,
             q: &'w QuerySimple<'w, 'w, T>,
@@ -149,6 +155,7 @@ pub mod param {
             )
         }
 
+        /// Filters this objects queries for queries that match the query but returns the entity not the query.
         fn with<T: Component>(
             self,
             w: &'w QueryEntity<'w, 'w, T>,
@@ -161,13 +168,6 @@ pub mod param {
                     .into_iter()
                     .filter_map(move |x| w.get(x).ok()),
             )
-        }
-
-        fn with_vec<T: Component>(self, w: &'w QueryEntity<'w, 'w, T>) -> Vec<Entity> {
-            self.get_self()
-                .into_iter()
-                .filter_map(move |x| w.get(x).ok())
-                .collect()
         }
     }
 
@@ -261,9 +261,9 @@ impl Module for Basic {
         ui::Layout::new().with_grid(grid_lyt).build(ui);
 
         // get inputs and outputs
-        let children = q_children.get(module).unwrap();
-        let inputs = children.iter().with_vec(&w_input);
-        let outputs = children.iter().with_vec(&w_output);
+        let children = q_children.entity(module);
+        let inputs: Vec<_> = children.iter().with(&w_input).collect();
+        let outputs: Vec<_> = children.iter().with(&w_output).collect();
         let mut input_tfs: Vec<_> = inputs.iter().query_mut(&q_transform).collect();
         let mut output_tfs: Vec<_> = outputs.iter().query_mut(&q_transform).collect();
 

@@ -124,7 +124,7 @@ impl AtlasDictionary for basic {
 
         #[rustfmt::skip]
         match self {
-            indicator     => raw_rect!(2, 2, 4, 4),
+            indicator     => raw_rect!(2, 2, 3, 3),
             marble_small  => rect!(1, 0, 2, 1, 2),
             marble        => rect!(2, 0, 3, 1, 1),
             marble_output => rect!(0, 3, 1, 5),

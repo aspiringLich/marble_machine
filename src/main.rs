@@ -67,7 +67,6 @@ fn main() {
         .add_startup_system_set(
             SystemSet::new()
                 .with_system(atlas::init_texture_atlas)
-                .with_system(ui::init_egui_context)
                 .label("init"),
         )
         .add_startup_system(setup.after("init"))

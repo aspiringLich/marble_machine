@@ -21,6 +21,10 @@ pub mod marker {
     #[derive(Component)]
     pub struct Output;
 
+    /// marks those funny indicator lights
+    #[derive(Component)]
+    pub struct Indicator;
+
     /// marks the main camera
     #[derive(Component)]
     pub struct Camera;

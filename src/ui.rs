@@ -24,12 +24,6 @@ impl std::ops::Deref for SelectedModules {
     }
 }
 
-pub fn init_egui_context(mut egui_context: ResMut<EguiContext>) {
-    // let ctx = egui_context.ctx_mut();
-    // ctx.set_visuals(egui::Visuals::light());
-    // ctx.set_pixels_per_point(20.0);
-}
-
 pub fn inspector_ui(
     mut egui_context: ResMut<EguiContext>,
     mut res: ModuleResources,
