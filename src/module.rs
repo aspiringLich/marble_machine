@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use bevy_egui::*;
 
 use crate::atlas::AtlasDictionary;
@@ -38,25 +40,6 @@ pub mod param {
     type QuerySimple<'w, 's, T> = Query<'w, 's, &'static mut T>;
     type QueryWith<'w, 's, T, W> = Query<'w, 's, &'static mut T, bevy::prelude::With<W>>;
     type QueryEntity<'w, 's, W> = Query<'w, 's, bevy::prelude::Entity, bevy::prelude::With<W>>;
-
-    /// information the modules get to mess around with
-    #[derive(SystemParam)]
-    pub struct ModuleResources<'w, 's> {
-        pub commands: Commands<'w, 's>,
-        // simple queries
-        pub q_name: QuerySimple<'w, 's, Name>,
-        pub q_module_type: QuerySimple<'w, 's, crate::ModuleType>,
-        pub q_transform: QuerySimple<'w, 's, Transform>,
-        pub q_children: QuerySimple<'w, 's, Children>,
-        // entity queries
-        pub w_input: QueryEntity<'w, 's, marker::Input>,
-        pub w_output: QueryEntity<'w, 's, marker::Output>,
-        pub w_indicator: QueryEntity<'w, 's, marker::Indicator>,
-        // events
-        pub spawn_marble: EventWriter<'w, 's, module::FireMarble>,
-        // resources
-        pub keyboard: Res<'w, Input<KeyCode>>,
-    }
 
     pub trait QueryQuerySimple<'a, Q: WorldQuery + 'a>
     where
@@ -107,20 +90,6 @@ pub mod param {
         }
     }
 
-    impl<T> std::ops::Deref for QueryOutput<T> {
-        type Target = T;
-
-        fn deref(&self) -> &Self::Target {
-            &self.0
-        }
-    }
-
-    impl<T> std::ops::DerefMut for QueryOutput<T> {
-        fn deref_mut(&mut self) -> &mut Self::Target {
-            &mut self.0
-        }
-    }
-
     impl<T> QueryOutput<T> {
         pub fn new(t: T) -> Self {
             QueryOutput(t)
@@ -136,7 +105,7 @@ pub mod param {
         /// queries this objects query for queries that match the other query.
         fn query<T: Component>(
             self,
-            q: &'w QuerySimple<'w, '_, T>,
+            q: &'w QuerySimple<'_, '_, T>,
         ) -> QueryOutput<impl Iterator<Item = &'w T>> {
             QueryOutput::new(self.get_self().into_iter().filter_map(|x| q.get(x).ok()))
         }
@@ -144,13 +113,29 @@ pub mod param {
         /// queries this objects query for queries that match the other query. But *mutably*
         fn query_mut<T: Component>(
             self,
-            q: &'w QuerySimple<'w, 'w, T>,
+            q: &'w QuerySimple<'_, '_, T>,
         ) -> QueryOutput<impl Iterator<Item = Mut<'w, T>>> {
             QueryOutput::new(
                 self.get_self()
                     .into_iter()
                     .filter_map(|x| unsafe { q.get_unchecked(x) }.ok()),
             )
+        }
+
+        /// queries the items and then collects them into a vector
+        fn query_collect<T: Component>(self, q: &'w QuerySimple<'_, '_, T>) -> Vec<&'w T> {
+            self.get_self()
+                .into_iter()
+                .filter_map(|x| q.get(x).ok())
+                .collect()
+        }
+
+        /// queries the items and then collects them into a vector but mut
+        fn query_collect_mut<T: Component>(self, q: &'w QuerySimple<'_, '_, T>) -> Vec<Mut<'w, T>> {
+            self.get_self()
+                .into_iter()
+                .filter_map(|x| unsafe { q.get_unchecked(x) }.ok())
+                .collect()
         }
 
         /// Filters this objects queries for queries that match the query but returns the entity not the query.
@@ -184,6 +169,49 @@ pub mod param {
     impl<'w, 's, I: Iterator<Item = Entity> + 'w> QueryQueryIter<'w> for QueryOutput<I> {
         fn get_self(self) -> impl Iterator<Item = Entity> + 'w {
             self
+        }
+    }
+
+    impl<'w, 's> QueryQueryIter<'w> for &'w Vec<Entity> {
+        fn get_self(self) -> impl Iterator<Item = Entity> + 'w {
+            self.iter().map(|x| *x)
+        }
+    }
+
+    /// information the modules get to mess around with
+    #[derive(SystemParam)]
+    pub struct ModuleResources<'w, 's> {
+        pub commands: Commands<'w, 's>,
+        // simple queries
+        pub q_name: QuerySimple<'w, 's, Name>,
+        pub q_module_type: QuerySimple<'w, 's, crate::ModuleType>,
+        pub q_transform: QuerySimple<'w, 's, Transform>,
+        pub q_children: QuerySimple<'w, 's, Children>,
+        // entity queries
+        pub w_input: QueryEntity<'w, 's, marker::Input>,
+        pub w_output: QueryEntity<'w, 's, marker::Output>,
+        pub w_indicator: QueryEntity<'w, 's, marker::Indicator>,
+        // events
+        pub spawn_marble: EventWriter<'w, 's, module::FireMarble>,
+        // resources
+        pub keyboard: Res<'w, Input<KeyCode>>,
+    }
+
+    impl<'w, 's> ModuleResources<'w, 's> {
+        pub fn inputs(&self, module: Entity) -> Vec<Entity> {
+            self.q_children
+                .entity(module)
+                .iter()
+                .with(&self.w_input)
+                .collect()
+        }
+
+        pub fn outputs(&self, module: Entity) -> Vec<Entity> {
+            self.q_children
+                .entity(module)
+                .iter()
+                .with(&self.w_output)
+                .collect()
         }
     }
 }
@@ -221,17 +249,11 @@ pub fn body_small_transform(rotation: f32) -> Transform {
 }
 
 #[derive(Copy, Clone)]
-pub struct Basic {
-    pub input_rot: f32,
-    pub output_rot: f32,
-}
+pub struct Basic;
 
 impl Default for Basic {
     fn default() -> Self {
-        Basic {
-            input_rot: f32::to_radians(270.0),
-            output_rot: f32::to_radians(90.0),
-        }
+        Basic
     }
 }
 
@@ -239,35 +261,25 @@ impl Module for Basic {
     fn spawn_instructions(&self) -> Vec<SpawnInstruction> {
         use SpawnInstruction::*;
 
-        vec![BodySmall(vec![self.input_rot], vec![self.output_rot])]
+        vec![BodySmall(vec![PI / 2.0], vec![PI / 2.0 * 3.0])]
     }
 
     fn gui(&mut self, res: &mut ModuleResources, ui: &mut Ui, module: Entity) {
+        let inputs = res.inputs(module);
+        let outputs = res.outputs(module);
+
         let ModuleResources {
-            commands,
             spawn_marble,
-            q_children,
             q_transform,
-            w_input,
-            w_output,
+            keyboard,
             ..
         } = &mut *res;
-        let grid_lyt = |ui: &mut Ui| {
-            ui.angle_slider("Input", &mut self.input_rot);
-            ui.angle_slider("Output", &mut self.output_rot);
-        };
-        ui::Layout::new().with_grid(grid_lyt).build(ui);
+        let input_tfs = inputs.query_collect_mut(q_transform);
+        let output_tfs = outputs.query_collect_mut(q_transform);
 
-        // get inputs and outputs
-        let children = q_children.entity(module);
-        let inputs: Vec<_> = children.iter().with(&w_input).collect();
-        let outputs: Vec<_> = children.iter().with(&w_output).collect();
-        let mut input_tfs: Vec<_> = inputs.iter().query_mut(&q_transform).collect();
-        let mut output_tfs: Vec<_> = outputs.iter().query_mut(&q_transform).collect();
-
-        // set input and output transforms
-        *input_tfs[0] = body_small_transform(self.input_rot);
-        *output_tfs[0] = body_small_transform(self.output_rot);
+        ui::Layout::new()
+            .default_rotation_sliders(input_tfs, output_tfs, &body_small_transform)
+            .build(ui);
 
         // cool epic le hacker debug button
         if ui.button("Fire Marble!").clicked() {

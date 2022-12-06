@@ -4,6 +4,7 @@ use crate::{
     module::{param::ModuleResources, Module},
     *,
 };
+use bevy::prelude::Vec2;
 use bevy_egui::*;
 use egui::*;
 
@@ -55,48 +56,76 @@ pub fn inspector_ui(
 
 #[non_exhaustive]
 pub struct Layout<'a> {
-    grid: Option<Box<dyn FnOnce(&mut Ui) + 'a>>,
-    side_panel: Option<Box<dyn FnOnce(&mut Ui) + 'a>>,
+    main: Vec<Box<dyn FnOnce(&mut Ui) + 'a>>,
 }
 
 impl<'a> Layout<'a> {
     /// create a new layout with everything blank
     pub fn new() -> Self {
-        Self {
-            grid: None,
-            side_panel: None,
-        }
+        Self { main: vec![] }
     }
 
-    /// with a left grid
-    pub fn with_grid(mut self, lyt_fn: impl FnOnce(&mut Ui) + 'a) -> Self {
-        self.grid = Some(Box::new(lyt_fn));
-        self
-    }
-
-    /// with a right panel
-    pub fn with_side_panel(mut self, lyt_fn: impl FnOnce(&mut Ui) + 'a) -> Self {
-        self.side_panel = Some(Box::new(lyt_fn));
+    /// make default rotation sliders
+    /// so one slider for every input and output
+    /// TODO: rotate everything on q and r
+    pub fn default_rotation_sliders<I, J, T>(mut self, i: I, o: I, transform_fn: &'a T) -> Self
+    where
+        I: IntoIterator<Item = J> + 'a,
+        J: AsMut<Transform> + 'a,
+        T: Fn(f32) -> Transform + 'static,
+    {
+        self.main.push(Box::new(|ui: &mut Ui| {
+            // add sliders, if theres only one of the type dont add a # to the label
+            // so like "Input" or "Input #1" and "Input #2"
+            let mut make_sliders = |transforms: I, name: &str| {
+                let mut make_slider = |label: String, transform: &mut Transform| {
+                    ui.angle_slider_transform(&label, transform, transform_fn)
+                };
+                let mut transforms: Vec<J> = transforms.into_iter().collect();
+                let len = transforms.len();
+                let name_fn = |name: &str, i| {
+                    if len == 1 {
+                        name.to_string()
+                    } else {
+                        format!("{} #{}", name, i)
+                    }
+                };
+                for (i, transform) in transforms.iter_mut().enumerate() {
+                    make_slider(name_fn(name, i), transform.as_mut())
+                }
+            };
+            make_sliders(i, "Input");
+            make_sliders(o, "Output");
+        }));
         self
     }
 
     /// build the ui
     pub fn build(self, ui: &mut Ui) {
-        if let Some(grid) = self.grid {
-            egui::Grid::new("grid")
+        for build_fn in self.main {
+            egui::Grid::new("main")
                 .min_col_width(0.0)
                 .striped(true)
-                .show(ui, grid);
-        }
-
-        if let Some(side_panel) = self.side_panel {
-            unimplemented!()
+                .show(ui, build_fn);
         }
     }
 }
 
 pub trait UiElements {
     fn get(&mut self) -> &mut Ui;
+
+    fn angle_slider_transform<T>(
+        &mut self,
+        label: &str,
+        transform: &mut Transform,
+        transform_fn: &T,
+    ) where
+        T: Fn(f32) -> Transform + 'static,
+    {
+        let mut rot: Vec3 = transform.rotation.to_euler(EulerRot::XYZ).into();
+        self.angle_slider(label, &mut rot.z);
+        *transform = transform_fn(rot.z);
+    }
 
     /// A slider to modify an angle in radians, displays it in a more readable format (degrees)
     /// and has some buttons to modify it further
@@ -124,7 +153,7 @@ pub trait UiElements {
         );
         let drag = DragValue::new(&mut deg_angle)
             .speed(1.0)
-            .custom_formatter(|n, _| format!("{:>5.1}°", n));
+            .custom_formatter(|n, _| format!("{:>5.1}°", n + 180.0));
         create_button!(
             "<~",
             "Rotate counter-clockwise with a 45° step",

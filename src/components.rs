@@ -10,7 +10,7 @@ where
     fn get(&mut self) -> &mut Commands<'a, 'b>;
 
     /// Spawn the normal input component
-    fn spawn_input(&mut self) -> EntityCommands<'a, 'b, '_> {
+    fn spawn_input(&mut self, transform: Transform) -> EntityCommands<'a, 'b, '_> {
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_input.info();
 
@@ -38,6 +38,7 @@ where
                     anchor: Anchor::Center,
                     ..default()
                 },
+                transform,
                 ..default()
             },
             Collider::ball(2.0),
@@ -51,7 +52,7 @@ where
     }
 
     /// spawn the normal output component
-    fn spawn_output(&mut self) -> EntityCommands<'a, 'b, '_> {
+    fn spawn_output(&mut self, transform: Transform) -> EntityCommands<'a, 'b, '_> {
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_output.info();
 
@@ -79,6 +80,7 @@ where
                     anchor: Anchor::Center,
                     ..default()
                 },
+                transform,
                 ..default()
             },
             // Collider::ball(basic::marble_output.width() * 0.5),

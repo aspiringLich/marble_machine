@@ -1,5 +1,5 @@
 use crate::{
-    module::{Module, ModuleType},
+    module::{body_small_transform, Module, ModuleType},
     *,
 };
 use atlas::AtlasDictionary;
@@ -150,8 +150,14 @@ pub fn spawn_modules(
             let append = &mut match instruction {
                 // spawn a small body with said inputs and outputs
                 BodySmall(i, o) => {
-                    children.extend(i.iter().map(|_| commands.spawn_input().id()));
-                    children.extend(o.iter().map(|_| commands.spawn_output().id()));
+                    children.extend(
+                        i.iter()
+                            .map(|x| commands.spawn_input(body_small_transform(*x)).id()),
+                    );
+                    children.extend(
+                        o.iter()
+                            .map(|x| commands.spawn_output(body_small_transform(*x)).id()),
+                    );
                     vec![spawn_body_circular!(
                         basic::body_small,
                         "body_small.component"
