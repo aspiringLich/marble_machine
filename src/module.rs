@@ -31,7 +31,7 @@ impl ModuleType {
 pub mod param {
     use crate::*;
     use bevy::ecs::{
-        query::{QueryIter, ReadOnlyWorldQuery},
+        query::{QueryIter, ROQueryItem, ReadOnlyWorldQuery, WorldQuery},
         system::SystemParam,
     };
 
@@ -58,38 +58,36 @@ pub mod param {
         pub keyboard: Res<'w, Input<KeyCode>>,
     }
 
-    pub trait QueryQuerySimple<'w, Q: Component>
+    pub trait QueryQuerySimple<'a, Q: WorldQuery + 'a>
     where
         Self: Sized,
     {
-        fn get_self(&'w self) -> &'w QuerySimple<'w, 'w, Q>;
-        fn get_self_mut(&'w mut self) -> &'w mut QuerySimple<'w, 'w, Q>;
+        fn get_self(&self) -> &Query<'_, '_, Q, ()>;
 
         /// get the thing that satisfies this query under this entity
-        fn entity(&'w self, entity: Entity) -> &'w Q {
-            self.get_self().get(entity).expect(&format!(
-                "[{}{}] component was expected but was not found",
-                file!(),
-                line!(),
-            ))
+        fn entity(&'a self, entity: Entity) -> ROQueryItem<'_, Q> {
+            self.get_self().get(entity).unwrap()
         }
 
-        ///gets the thing that satisfies this query under this entity *mutably*
-        fn entity_mut(&'w mut self, entity: Entity) -> Mut<'w, Q> {
-            self.get_self_mut().get_mut(entity).expect(&format!(
-                "[{}{}] component was expected but was not found",
-                file!(),
-                line!(),
-            ))
+        /// gets the thing that satisfies this query under this entity *mutably*
+        /// shhhhhhhhhh ignore that unsafe block shhhhhhhh
+        /// im pretty sure it isnt unsafe as it lives on within that mutable query
+        fn entity_mut(&'a mut self, entity: Entity) -> Q::Item<'a> {
+            unsafe {
+                self.get_self().get_unchecked(entity).expect(&format!(
+                    "[{}{}] component was expected but was not found",
+                    file!(),
+                    line!(),
+                ))
+            }
         }
     }
 
-    impl<'w, 's, Q: Component> QueryQuerySimple<'w, Q> for QuerySimple<'w, 'w, Q> {
-        fn get_self(&'w self) -> &'w QuerySimple<'w, 'w, Q> {
-            self
-        }
-
-        fn get_self_mut(&'w mut self) -> &'w mut QuerySimple<'w, 'w, Q> {
+    impl<'a, Q: WorldQuery> QueryQuerySimple<'a, Q> for Query<'_, '_, Q, ()>
+    where
+        Q: 'a,
+    {
+        fn get_self(&self) -> &Query<'_, '_, Q, ()> {
             self
         }
     }

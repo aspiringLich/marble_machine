@@ -14,16 +14,21 @@ where
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_input.info();
 
-        let child = commands
-            .spawn((
-                Collider::polyline(
-                    vec![vec2!(3, 5), vec2!(-3, 3), vec2!(-3, -3), vec2!(3, -5)],
-                    Some(vec![[0, 1], [2, 3]]),
-                ),
-                TransformBundle::default(),
-            ))
-            .insert(Name::new("in.collider"))
-            .id();
+        let mut children = vec![];
+        children.push(
+            commands
+                .spawn((
+                    Collider::polyline(
+                        vec![vec2!(3, 5), vec2!(-3, 3), vec2!(-3, -3), vec2!(3, -5)],
+                        Some(vec![[0, 1], [2, 3]]),
+                    ),
+                    TransformBundle::default(),
+                ))
+                .insert(Name::new("out.collider"))
+                .id(),
+        );
+        children.push(commands.spawn_indicator([-1.5, 0.0, 0.625].into()).id());
+
         let mut out = commands.spawn((
             SpriteSheetBundle {
                 texture_atlas,
@@ -41,7 +46,7 @@ where
             marker::Input,
             Name::new("in.component"),
         ));
-        out.add_child(child);
+        out.push_children(&children);
         out
     }
 
@@ -97,6 +102,7 @@ where
                 Color::GRAY,
                 Transform::from_translation([0.0, 0.0, -0.0625].into()),
             )
+            .insert(Name::new("indicator.sprite"))
             .id();
 
         let mut out = commands.spawn((
@@ -118,6 +124,7 @@ where
                 ..default()
             },
             marker::Indicator,
+            Name::new("indicator.component"),
         ));
         out.add_child(child);
         out

@@ -1,4 +1,7 @@
-use crate::*;
+use crate::{
+    module::param::{QueryQueryIter, QueryQuerySimple},
+    *,
+};
 use bevy::render::camera::RenderTarget;
 use bevy_rapier2d::prelude::*;
 
@@ -52,6 +55,7 @@ pub fn drag_selected(
     mouse_pos: Res<CursorCoords>,
     mouse_buttons: Res<Input<MouseButton>>,
     selected: Res<SelectedModules>,
+    mut q_transform: Query<&mut Transform>,
     mut active: Local<bool>,
     mut starting_pos: Local<Vec2>,
 ) {
@@ -59,6 +63,7 @@ pub fn drag_selected(
     if !*active {
         if selected.is_changed() && mouse_buttons.pressed(MouseButton::Left) {
             *active = true;
+            *starting_pos = **mouse_pos;
         } else {
             return;
         }
@@ -68,7 +73,20 @@ pub fn drag_selected(
         return;
     }
 
+    // eprintln!("drag!");=
+    let snapping = 8.0;
+
     let Some(selected) = **selected else {*active = false; return};
+    let pos = &mut q_transform.entity_mut(selected).translation;
+    let Vec2 { x: dx, y: dy } = **mouse_pos - *starting_pos;
+
+    // rounding dx and dy to the nearest snapping #
+    let (rx, ry) = (
+        (dx / snapping).round() * snapping,
+        (dy / snapping).round() * snapping,
+    );
+    pos.x = rx;
+    pos.y = ry;
 }
 
 #[derive(Resource, Debug)]
