@@ -123,8 +123,12 @@ pub trait UiElements {
         T: Fn(f32) -> Transform + 'static,
     {
         let mut rot: Vec3 = transform.rotation.to_euler(EulerRot::XYZ).into();
-        self.angle_slider(label, &mut rot.z);
-        *transform = transform_fn(rot.z);
+        let mut angle = rot.z;
+        self.angle_slider(label, &mut angle);
+
+        if angle != rot.z {
+            *transform = transform_fn(angle);
+        }
     }
 
     /// A slider to modify an angle in radians, displays it in a more readable format (degrees)

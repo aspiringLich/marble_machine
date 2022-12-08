@@ -4,6 +4,7 @@ use std::f32::consts::TAU;
 
 pub mod marker {
     use bevy::prelude::Component;
+    use derive_more::{Deref, DerefMut};
 
     /// marks modules
     #[derive(Component)]
@@ -14,12 +15,12 @@ pub mod marker {
     pub struct ModuleBody;
 
     /// marks marble inputs
-    #[derive(Component)]
-    pub struct Input;
+    #[derive(Component, Deref, DerefMut)]
+    pub struct Input(pub usize);
 
     /// marks marble outputs
-    #[derive(Component)]
-    pub struct Output;
+    #[derive(Component, Deref, DerefMut)]
+    pub struct Output(pub usize);
 
     /// marks those funny indicator lights
     #[derive(Component)]

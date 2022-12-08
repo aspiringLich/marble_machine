@@ -1,4 +1,4 @@
-use crate::*;
+use crate::{module::param::QueryQuerySimple, *};
 use atlas::AtlasDictionary;
 use marble::Marble;
 use rand::Rng;
@@ -19,11 +19,17 @@ pub fn fire_marbles(
     mut commands: Commands,
     mut spawn_events: EventReader<FireMarble>,
     q_transform: Query<&mut Transform>,
+    q_parent: Query<&Parent>,
 ) {
     for event in spawn_events.iter() {
-        let transform = *q_transform.get(event.from).unwrap();
-        let rotation = transform.rotation;
-        let pos = transform.translation;
+        let parent = q_parent.entity(event.from).get();
+        let transform = q_transform.entity(event.from);
+        let p_transform = q_transform.entity(parent);
+
+        // get the rotation and position of the parent entity + the output
+        let rotation = transform.rotation.mul_quat(p_transform.rotation);
+        let pos = transform.translation + p_transform.translation;
+        dbg!(rotation.mul_vec3(Vec3::X).truncate() * 120.0);
         commands
             .spawn_atlas_sprite(
                 basic::marble_small,
@@ -42,5 +48,75 @@ pub fn fire_marbles(
             ))
             .insert(event.marble)
             .insert(Name::new("bit.marble"));
+    }
+}
+
+/// a structure that holds the state of a module's inputs
+#[derive(Component, Debug, Default)]
+pub struct InputState {
+    inner: Vec<Option<Marble>>,
+}
+
+impl InputState {
+    /// create a new InputState from a length
+    pub fn new(len: usize) -> Self {
+        Self {
+            inner: vec![None; len],
+        }
+    }
+}
+
+impl std::ops::Index<usize> for InputState {
+    type Output = Option<Marble>;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.inner[index]
+    }
+}
+
+impl std::ops::IndexMut<usize> for InputState {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.inner[index]
+    }
+}
+
+pub fn update_inputs(
+    mut commands: Commands,
+    mut collision_events: EventReader<CollisionEvent>,
+    mut q_input_state: Query<&mut InputState>,
+    q_parent: Query<&Parent>,
+    q_marble: Query<&Marble>,
+    q_input: Query<&marker::Input>,
+    has_marble: Query<With<Marble>>,
+    q_name: Query<&Name>,
+) {
+    for event in collision_events.iter() {
+        use CollisionEvent::*;
+
+        let (e1, e2) = match event {
+            Started(e1, e2, _) => (*e1, *e2),
+            _ => continue,
+        };
+
+        let mut handle_event = |e1, e2| {
+            // if e1 is an input and e2 is a marble
+            if let Ok(&marker::Input(index)) = q_input.get(e1) && has_marble.has(e2) {
+                let marble_e = e2;
+                let marble = *q_marble.entity(e2);
+                
+                let parent = q_parent.entity(e1).get();
+                let name = q_name.get(parent);
+                let mut input_state = q_input_state.entity_mut(parent);
+                
+                // if the input is not occupied, despawn the marble and update input_state
+                if input_state[index].is_none() {
+                    input_state[index] = Some(marble);
+                    commands.entity(marble_e).despawn();
+                }
+            }
+        };
+
+        handle_event(e1, e2);
+        handle_event(e2, e1);
     }
 }

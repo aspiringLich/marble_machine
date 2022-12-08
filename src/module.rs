@@ -57,12 +57,19 @@ pub mod param {
         /// im pretty sure it isnt unsafe as it lives on within that mutable query
         fn entity_mut(&'a mut self, entity: Entity) -> Q::Item<'a> {
             unsafe {
-                self.get_self().get_unchecked(entity).expect(&format!(
-                    "[{}{}] component was expected but was not found",
-                    file!(),
-                    line!(),
-                ))
+                self.get_self().get_unchecked(entity).expect(&{
+                    format!(
+                        "[{}{}] component was expected but was not found",
+                        file!(),
+                        line!(),
+                    )
+                })
             }
+        }
+
+        /// does i has this???
+        fn has(&'a self, entity: Entity) -> bool {
+            self.get_self().get(entity).is_ok()
         }
     }
 
@@ -221,6 +228,8 @@ use param::{ModuleResources, QueryQueryIter, QueryQuerySimple};
 pub trait Module {
     /// return instructions on spawning this module
     fn spawn_instructions(&self) -> Vec<SpawnInstruction>;
+    /// function that runs to update this module
+    fn update(&mut self, res: &mut ModuleResources, entity: Entity);
     /// function to build the gui
     fn gui(&mut self, res: &mut ModuleResources, ui: &mut Ui, entity: Entity);
     /// the name of the module
@@ -260,8 +269,12 @@ impl Default for Basic {
 impl Module for Basic {
     fn spawn_instructions(&self) -> Vec<SpawnInstruction> {
         use SpawnInstruction::*;
+        let qt = PI / 2.0;
+        vec![BodySmall(vec![qt * 3.0], vec![qt])]
+    }
 
-        vec![BodySmall(vec![PI / 2.0], vec![PI / 2.0 * 3.0])]
+    fn update(&mut self, res: &mut ModuleResources, entity: Entity) {
+        todo!()
     }
 
     fn gui(&mut self, res: &mut ModuleResources, ui: &mut Ui, module: Entity) {

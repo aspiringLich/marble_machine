@@ -1,4 +1,5 @@
 use crate::{
+    marble_io::InputState,
     module::{body_small_transform, Module, ModuleType},
     *,
 };
@@ -102,8 +103,13 @@ macro color($r:expr, $g:expr, $b:expr) {
 pub static MODULE_COLOR: Color = color!(101, 237, 192);
 
 pub enum SpawnInstruction {
+    /// spawn a body_small with input indicators
     BodySmall(Vec<f32>, Vec<f32>),
+    /// spawn a body_small with input and output indicators
+    BodySmallIndicators(Vec<f32>, Vec<f32>),
+    /// spawn a body_large with input indicators
     BodyLarge(Vec<f32>, Vec<f32>),
+    /// spawn a decal in the center of the block
     Decal((Handle<TextureAtlas>, usize)),
 }
 
@@ -130,7 +136,7 @@ pub fn spawn_modules(
             .insert((mt, marker::Module))
             .id();
 
-        macro spawn_body_circular($atlasdict:expr, $name:expr) {
+        macro spawn_body_circular($atlasdict:expr, $name:literal $($tail:tt)*) {
             commands
                 .spawn_atlas_sprite($atlasdict, MODULE_COLOR, Transform::from_xyz(0.0, 0.0, 0.5))
                 .insert((
@@ -138,7 +144,8 @@ pub fn spawn_modules(
                     Collider::ball($atlasdict.width() * 0.5),
                     RigidBody::Fixed,
                     Restitution::coefficient(0.8),
-                    marker::ModuleBody,
+                    marker::ModuleBody
+                    $($tail)*
                 ))
                 .id()
         }
@@ -152,22 +159,24 @@ pub fn spawn_modules(
                 BodySmall(i, o) => {
                     children.extend(
                         i.iter()
-                            .map(|x| commands.spawn_input(body_small_transform(*x)).id()),
+                            .enumerate()
+                            .map(|(i, x)| commands.spawn_input(body_small_transform(*x), i).id()),
                     );
                     children.extend(
                         o.iter()
-                            .map(|x| commands.spawn_output(body_small_transform(*x)).id()),
+                            .enumerate()
+                            .map(|(i, x)| commands.spawn_output(body_small_transform(*x), i).id()),
                     );
+                    commands.entity(parent).insert(InputState::new(i.len()));
                     vec![spawn_body_circular!(
                         basic::body_small,
                         "body_small.component"
                     )]
                 }
-                BodyLarge(i, o) => todo!(),
-                Decal((handle, index)) => todo!(),
+                _ => todo!(),
             };
             children.append(append);
-            commands.entity(parent).push_children(children.as_slice());
+            commands.entity(parent).push_children(&children);
             *selected = SelectedModules(Some(parent));
         }
     }

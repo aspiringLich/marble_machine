@@ -7,6 +7,7 @@
 #![feature(associated_type_defaults)]
 #![feature(return_position_impl_trait_in_trait)]
 
+extern crate derive_more;
 extern crate rand;
 extern crate strum;
 
@@ -91,7 +92,8 @@ fn main() {
                 .with_system(select::get_selected.after(ui::inspector_ui))
                 .with_system(select::drag_selected.after(select::get_selected))
                 .with_system(marble::despawn_marbles)
-                .with_system(pan_camera),
+                .with_system(pan_camera)
+                .with_system(marble_io::update_inputs),
         )
         .run();
 }

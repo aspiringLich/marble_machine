@@ -1,6 +1,5 @@
 use crate::{atlas::AtlasDictionary, misc::vec2, spawn::CommandsSpawn, *};
 use bevy::ecs::system::EntityCommands;
-use std::f32::consts;
 
 /// Spawn components that make up marble modules
 pub trait SpawnComponents<'a, 'b>
@@ -10,7 +9,7 @@ where
     fn get(&mut self) -> &mut Commands<'a, 'b>;
 
     /// Spawn the normal input component
-    fn spawn_input(&mut self, transform: Transform) -> EntityCommands<'a, 'b, '_> {
+    fn spawn_input(&mut self, transform: Transform, n: usize) -> EntityCommands<'a, 'b, '_> {
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_input.info();
 
@@ -44,7 +43,7 @@ where
             Collider::ball(2.0),
             Sensor,
             ActiveEvents::COLLISION_EVENTS,
-            marker::Input,
+            marker::Input(n),
             Name::new("in.component"),
         ));
         out.push_children(&children);
@@ -52,7 +51,7 @@ where
     }
 
     /// spawn the normal output component
-    fn spawn_output(&mut self, transform: Transform) -> EntityCommands<'a, 'b, '_> {
+    fn spawn_output(&mut self, transform: Transform, n: usize) -> EntityCommands<'a, 'b, '_> {
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_output.info();
 
@@ -69,7 +68,6 @@ where
                 .insert(Name::new("out.collider"))
                 .id(),
         );
-        children.push(commands.spawn_indicator([-1.5, 0.0, 0.625].into()).id());
 
         let mut out = commands.spawn((
             SpriteSheetBundle {
@@ -83,14 +81,19 @@ where
                 transform,
                 ..default()
             },
-            // Collider::ball(basic::marble_output.width() * 0.5),
-            // Sensor,
-            // ActiveEvents::COLLISION_EVENTS,
-            marker::Output,
+            marker::Output(n),
             Name::new("out.component"),
         ));
 
         out.push_children(&children);
+        out
+    }
+
+    fn spawn_output_ind(&mut self, transform: Transform, n: usize) -> EntityCommands<'a, 'b, '_> {
+        let child = self.get().spawn_indicator([-1.5, 0.0, 0.625].into()).id();
+        let mut out = self.spawn_output(transform, n);
+
+        out.add_child(child);
         out
     }
 
