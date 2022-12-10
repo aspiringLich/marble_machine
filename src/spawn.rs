@@ -110,9 +110,9 @@ pub enum BodyType {
 
 #[derive(Default)]
 pub struct SpawnInstructions {
-    body: BodyType,
-    input_transforms: Vec<Transform>,
-    output_transforms: Vec<Transform>,
+    pub body: BodyType,
+    pub input_transforms: Vec<Transform>,
+    pub output_transforms: Vec<Transform>,
 }
 
 unsafe impl Sync for SpawnInstructions {}

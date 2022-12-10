@@ -5,6 +5,8 @@
 #![feature(type_alias_impl_trait)]
 #![feature(const_trait_impl)]
 #![feature(associated_type_defaults)]
+#![feature(once_cell)]
+#![feature(trivial_bounds)]
 #![feature(return_position_impl_trait_in_trait)]
 
 extern crate derive_more;
@@ -22,6 +24,7 @@ use once_cell::sync::Lazy;
 mod atlas;
 mod components;
 mod fps;
+mod interact;
 mod marble;
 mod marble_io;
 mod misc;
@@ -50,6 +53,7 @@ fn main() {
                 }),
         )
         // resources
+        .init_resource::<interact::InteractiveSelected>()
         .init_resource::<SelectedModules>()
         .init_resource::<select::CursorCoords>()
         .init_resource::<ui::SpawningUiImages>()
@@ -89,13 +93,15 @@ fn main() {
             "main",
             SystemStage::parallel()
                 .with_system(ui::inspector_ui)
-                .with_system_set(select::system_set())
+                .with_system_set(select::system_set().label("select"))
                 .with_system(pan_camera)
                 .with_system(marble::despawn_marbles)
                 .with_system(marble_io::update_inputs)
                 .with_system(module::update_modules)
                 .with_system(module::update_module_callbacks)
-                .with_system(ui::spawning_ui),
+                .with_system(ui::spawning_ui)
+                .with_system(interact::spawn_despawn_interactive_components)
+                .with_system(interact::use_widgets.after("select")),
         )
         .run();
 }

@@ -29,24 +29,34 @@ pub fn get_selected(
     rapier_context: Res<RapierContext>,
     buttons: Res<Input<MouseButton>>,
     mouse_pos: Res<CursorCoords>,
-    q_body: Query<&marker::ModuleBody>,
     q_parent: Query<&Parent>,
+    has_body: Query<With<marker::ModuleBody>>,
+    has_interactive: Query<With<interact::Interactive>>,
+    mut interactive_selected: ResMut<interact::InteractiveSelected>,
 ) {
     // if clicky click
     if buttons.just_pressed(MouseButton::Left) {
         let mut found = false;
-        rapier_context.intersections_with_point(
-            **mouse_pos,
-            QueryFilter::new().predicate(&|entity| q_body.get(entity).is_ok()),
-            |entity| {
+        rapier_context.intersections_with_point(**mouse_pos, default(), |entity| {
+            if has_body.has(entity) {
                 // get the parent of the main body and set that as the selected module
                 // main body is assumed to be the child of the overall module parent entity
                 *selected = SelectedModules::from_entity(q_parent.entity(entity).get());
                 // eprintln!("selected {}", q_name.get(entity).unwrap());
                 found = true;
+                // stop we found it
                 false
-            },
-        );
+            }
+            // if we hit a interactive thingy thats the thing we select instead, ignore the body thing
+            else if has_interactive.has(entity) {
+                **interactive_selected = Some(entity);
+                found = true;
+                false
+            } else {
+                // havent found it yet
+                true
+            }
+        });
         if !found {
             selected.clear_selected()
         }

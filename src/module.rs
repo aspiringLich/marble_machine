@@ -352,6 +352,7 @@ pub fn transform_from_offset_rotate(offset: f32, rotation: f32, z: f32) -> Trans
 }
 
 /// returns a transform that equates to a valid i/o position around a `body_small`.
+/// !!! IF THE OFFSET CHANGES REMEMBER TO ALSO CHANGE IT IN INTERACTIVE
 pub fn body_small_transform(rotation: f32) -> Transform {
     transform_from_offset_rotate(basic::body_small.width() * 0.5 + 1.0, rotation, 0.25)
 }
