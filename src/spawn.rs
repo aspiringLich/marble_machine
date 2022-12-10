@@ -7,7 +7,6 @@ use atlas::AtlasDictionary;
 use bevy::ecs::system::EntityCommands;
 use components::SpawnComponents;
 // use bevy_rapier2d::{prelude::*, rapier::prelude::ColliderMaterial};
-
 /// methods for spawning random things to make my code more reasonable
 pub trait CommandsSpawn<'a, 'b>
 where
@@ -120,14 +119,15 @@ pub fn spawn_modules(
     mut selected: ResMut<SelectedModules>,
 ) {
     for event in spawn_events.iter() {
-        let mut mt = event.module;
+        let SpawnModule { mut module, place } = event;
 
         let parent = commands
             .spawn(SpriteBundle { ..default() })
-            .insert(mt.get_inner().get_identifier())
-            .insert((mt, marker::Module))
+            .insert(module.get_inner().get_identifier())
+            .insert((module, marker::Module))
             .id();
 
+        // spawn a small circular body and return the id
         macro spawn_body_circular($atlasdict:expr, $name:literal $($tail:tt)*) {
             commands
                 .spawn_atlas_sprite($atlasdict, MODULE_COLOR, Transform::from_xyz(0.0, 0.0, 0.5))
@@ -142,7 +142,8 @@ pub fn spawn_modules(
                 .id()
         }
 
-        for instruction in mt.get_inner().spawn_instructions() {
+        // run through all the instructions laid out in the module
+        for instruction in module.get_inner().spawn_instructions() {
             use SpawnInstruction::*;
             let mut children = vec![];
 
@@ -169,7 +170,12 @@ pub fn spawn_modules(
             };
             children.append(append);
             commands.entity(parent).push_children(&children);
-            *selected = SelectedModules(Some(parent));
+        }
+
+        if *place {
+            *selected = SelectedModules::place_entity(parent);
+        } else {
+            *selected = SelectedModules::from_entity(parent);
         }
     }
 }

@@ -3,32 +3,35 @@ use crate::{
     *,
 };
 use bevy::render::camera::RenderTarget;
-use bevy_rapier2d::prelude::*;
+use iyes_loopless::prelude::{ConditionHelpers, IntoConditionalSystem};
 
-pub struct SelectPlugin;
-
-impl Plugin for SelectPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_system(get_selected.after("ui"))
-            .add_system(drag_selected.after(get_selected).label("select"));
-    }
+/// if:
+///     SelectedModules is in place mode,
+///     SelectedModules has something selected
+fn place(res: Res<SelectedModules>) -> bool {
+    res.place && res.selected.is_some()
 }
 
+fn egui_wants_cursor(mut ctx: ResMut<bevy_egui::EguiContext>) -> bool {
+    ctx.ctx_mut().wants_pointer_input()
+}
+
+pub fn system_set() -> SystemSet {
+    SystemSet::new()
+        .with_system(get_selected.run_if_not(place).run_if_not(egui_wants_cursor))
+        .with_system(drag_selected.run_if_not(place))
+        .with_system(place_selected.run_if(place).run_if_not(egui_wants_cursor))
+        .after(ui::inspector_ui)
+}
 /// update SelectedModule whenever the left cursor is clicked
 pub fn get_selected(
     mut selected: ResMut<SelectedModules>,
-    mut egui_ctx: ResMut<bevy_egui::EguiContext>,
     rapier_context: Res<RapierContext>,
     buttons: Res<Input<MouseButton>>,
     mouse_pos: Res<CursorCoords>,
     q_body: Query<&marker::ModuleBody>,
     q_parent: Query<&Parent>,
 ) {
-    // disable if were hovering over egui stuff
-    if egui_ctx.ctx_mut().wants_pointer_input() {
-        return;
-    }
-
     // if clicky click
     if buttons.just_pressed(MouseButton::Left) {
         let mut found = false;
@@ -38,14 +41,14 @@ pub fn get_selected(
             |entity| {
                 // get the parent of the main body and set that as the selected module
                 // main body is assumed to be the child of the overall module parent entity
-                *selected = SelectedModules(Some(q_parent.get(entity).unwrap().get()));
+                *selected = SelectedModules::from_entity(q_parent.entity(entity).get());
                 // eprintln!("selected {}", q_name.get(entity).unwrap());
                 found = true;
                 false
             },
         );
         if !found {
-            *selected = default();
+            selected.clear_selected()
         }
     }
 }
@@ -59,6 +62,8 @@ pub fn drag_selected(
     mut active: Local<bool>,
     mut starting_pos: Local<Vec2>,
 ) {
+    let snapping = 8.0;
+
     // basically: if active is not true it needs these specific conditions to become true, or else the system will not run
     if !*active {
         if selected.is_changed() && mouse_buttons.pressed(MouseButton::Left) {
@@ -75,12 +80,7 @@ pub fn drag_selected(
         return;
     }
 
-    // dbg!(&starting_pos);
-
-    // eprintln!("drag!");=
-    let snapping = 8.0;
-
-    let Some(selected) = **selected else {*active = false; return};
+    let Some(selected) = selected.selected else {*active = false; return};
     let pos = &mut q_transform.entity_mut(selected).translation;
     let Vec2 { x, y } = **mouse_pos;
 
@@ -92,6 +92,39 @@ pub fn drag_selected(
     if rx != x || ry != y {
         pos.x = rx;
         pos.y = ry;
+    }
+}
+
+/// runs if SelectedModules's place flag is true
+/// place the selected module somewhere
+fn place_selected(
+    mouse_pos: Res<CursorCoords>,
+    mouse_buttons: Res<Input<MouseButton>>,
+    mut selected: ResMut<SelectedModules>,
+    mut q_transform: Query<&mut Transform>,
+) {
+    let snapping = 8.0;
+
+    // if we click then place the module
+    if mouse_buttons.pressed(MouseButton::Left) {
+        // dont be confused, set selected.place to false so that it now the place_selected fn no longer runs
+        selected.place = false
+    }
+    // else the module follows the mouse
+    else {
+        let Some(selected) = selected.selected else { unreachable!() };
+        let pos = &mut q_transform.entity_mut(selected).translation;
+        let Vec2 { x, y } = **mouse_pos;
+
+        // rounding x and y to the nearest snapping #
+        let (rx, ry) = (
+            (x / snapping).round() * snapping,
+            (y / snapping).round() * snapping,
+        );
+        if rx != x || ry != y {
+            pos.x = rx;
+            pos.y = ry;
+        }
     }
 }
 

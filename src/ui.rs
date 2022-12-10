@@ -2,26 +2,40 @@ use std::{f32::consts, f64};
 
 use crate::{
     module::{param::ModuleResources, Module},
+    spawn::SpawnModule,
     *,
 };
+use bevy::prelude::Image;
 use bevy::prelude::Vec2;
 use bevy_egui::*;
 use egui::*;
 
-#[derive(Resource, Debug)]
-pub struct SelectedModules(pub Option<Entity>);
-
-impl Default for SelectedModules {
-    fn default() -> Self {
-        Self(None)
-    }
+/// stores the selected entities
+#[derive(Resource, Debug, Default)]
+pub struct SelectedModules {
+    /// the entity (TODO: entities) we have selected
+    pub selected: Option<Entity>,
+    /// whether we are selecting it or placing it
+    pub place: bool,
 }
 
-impl std::ops::Deref for SelectedModules {
-    type Target = Option<Entity>;
+impl SelectedModules {
+    pub fn from_entity(entity: Entity) -> Self {
+        Self {
+            selected: Some(entity),
+            place: false,
+        }
+    }
 
-    fn deref(&self) -> &Self::Target {
-        &self.0
+    pub fn place_entity(entity: Entity) -> Self {
+        Self {
+            selected: Some(entity),
+            place: true,
+        }
+    }
+
+    pub fn clear_selected(&mut self) {
+        self.selected = None;
     }
 }
 
@@ -30,7 +44,10 @@ pub fn inspector_ui(
     mut res: ModuleResources,
     selected: Res<SelectedModules>,
 ) {
-    let Some(selected) = **selected else { return };
+    if selected.place {
+        return;
+    };
+    let Some(selected) = selected.selected else { return };
     // im not sure how else to make the borrow checker shut up so
     // im pretty sure this isnt actually unsafe buuuuut
     // youre welcome future me if i just shot myself in the foot
@@ -40,11 +57,10 @@ pub fn inspector_ui(
     let mut binding = binding.q_module_type.get_mut(selected).unwrap();
     let module = binding.get_inner();
 
-    let window = egui::Window::new(module.get_name())
+    egui::Window::new(module.get_name())
         .resizable(true)
         .collapsible(false)
         .show(egui_context.ctx_mut(), |ui| {
-            ui.spacing_mut().slider_width = 300.0;
             module.gui(unsafe { &mut *res }, ui, selected)
         });
 
@@ -179,4 +195,41 @@ impl UiElements for Ui {
     fn get(&mut self) -> &mut Ui {
         self
     }
+}
+
+#[derive(Resource)]
+pub struct SpawningUiImages {
+    basic: Handle<Image>,
+}
+
+impl FromWorld for SpawningUiImages {
+    fn from_world(world: &mut World) -> Self {
+        let asset_server = world.get_resource_mut::<AssetServer>().unwrap();
+        Self {
+            basic: asset_server.load("module_pictures/basic.png"),
+        }
+    }
+}
+
+/// creates the spawning ui where you can spawn stuff
+pub fn spawning_ui(
+    mut egui_context: ResMut<EguiContext>,
+    images: Res<SpawningUiImages>,
+    mut spawn_module: EventWriter<SpawnModule>,
+) {
+    let basic = egui_context.add_image(images.basic.clone());
+
+    egui::Window::new("Le epic temp Module Spawner thingyyy")
+        .resizable(true)
+        .collapsible(false)
+        .show(egui_context.ctx_mut(), |ui| {
+            if ui
+                .add(ImageButton::new(basic, [100.0, 100.0]))
+                .on_hover_text("The first one")
+                .clicked()
+            {
+                spawn_module
+                    .send(SpawnModule::new(ModuleType::Basic(module::Basic::default())).place());
+            }
+        });
 }

@@ -5,6 +5,7 @@
 #![feature(type_alias_impl_trait)]
 #![feature(const_trait_impl)]
 #![feature(associated_type_defaults)]
+#![feature(once_cell)]
 #![feature(return_position_impl_trait_in_trait)]
 
 extern crate derive_more;
@@ -17,8 +18,6 @@ use bevy_inspector_egui::prelude::*;
 use bevy_pancam::PanCam;
 use bevy_rapier2d::prelude::*;
 use module::ModuleType;
-// use once_cell::sync::Lazy;
-// use pretty_assertions::{assert_eq, assert_ne, assert_str_eq};
 
 mod atlas;
 mod components;
@@ -38,10 +37,7 @@ use ui::SelectedModules;
 
 fn main() {
     App::new()
-        // resources
-        .init_resource::<SelectedModules>()
-        .init_resource::<select::CursorCoords>()
-        // plugins
+        // default plugin
         .add_plugins(
             DefaultPlugins
                 .set(ImagePlugin::default_nearest())
@@ -53,13 +49,18 @@ fn main() {
                     ..default()
                 }),
         )
+        // resources
+        .init_resource::<SelectedModules>()
+        .init_resource::<select::CursorCoords>()
+        .init_resource::<ui::SpawningUiImages>()
+        // plugins
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(fps::FpsText)
         .add_plugin(EguiPlugin)
         .add_plugin(bevy_pancam::PanCamPlugin)
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-        .add_plugin(RapierDebugRenderPlugin::default())
+        // .add_plugin(RapierDebugRenderPlugin::default())
         // events
         .add_event::<marble_io::FireMarble>()
         .add_event::<module::UpdateModule>()
@@ -88,13 +89,13 @@ fn main() {
             "main",
             SystemStage::parallel()
                 .with_system(ui::inspector_ui.label("ui"))
-                .with_system(select::get_selected.after(ui::inspector_ui))
-                .with_system(select::drag_selected.after(select::get_selected))
+                .with_system_set(select::system_set())
                 .with_system(marble::despawn_marbles)
                 .with_system(pan_camera)
                 .with_system(marble_io::update_inputs)
                 .with_system(module::update_modules)
-                .with_system(module::update_module_callbacks),
+                .with_system(module::update_module_callbacks)
+                .with_system(ui::spawning_ui),
         )
         .run();
 }
