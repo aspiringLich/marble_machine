@@ -31,8 +31,6 @@ pub fn inspector_ui(
     selected: Res<SelectedModules>,
 ) {
     let Some(selected) = **selected else { return };
-    // dbg!(egui_context.ctx_mut().pixels_per_point());
-
     // im not sure how else to make the borrow checker shut up so
     // im pretty sure this isnt actually unsafe buuuuut
     // youre welcome future me if i just shot myself in the foot
@@ -42,8 +40,7 @@ pub fn inspector_ui(
     let mut binding = binding.q_module_type.get_mut(selected).unwrap();
     let module = binding.get_inner();
 
-    // let window =
-    egui::Window::new(module.get_name())
+    let window = egui::Window::new(module.get_name())
         .resizable(true)
         .collapsible(false)
         .show(egui_context.ctx_mut(), |ui| {
@@ -157,7 +154,7 @@ pub trait UiElements {
         );
         let drag = DragValue::new(&mut deg_angle)
             .speed(1.0)
-            .custom_formatter(|n, _| format!("{:>5.1}°", n + 180.0));
+            .custom_formatter(|n, _| format!("{:>5.1}°", n.rem_euclid(360.0)));
         create_button!(
             "<~",
             "Rotate counter-clockwise with a 45° step",

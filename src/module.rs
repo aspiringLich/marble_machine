@@ -191,9 +191,11 @@ pub mod param {
         pub commands: Commands<'w, 's>,
         // simple queries
         pub q_name: QuerySimple<'w, 's, Name>,
-        pub q_module_type: QuerySimple<'w, 's, crate::ModuleType>,
+        pub q_module_type: QuerySimple<'w, 's, module::ModuleType>,
+        pub q_input_state: QuerySimple<'w, 's, marble_io::InputState>,
         pub q_transform: QuerySimple<'w, 's, Transform>,
         pub q_children: QuerySimple<'w, 's, Children>,
+        pub q_sprite: QuerySimple<'w, 's, Sprite>,
         // entity queries
         pub w_input: QueryEntity<'w, 's, marker::Input>,
         pub w_output: QueryEntity<'w, 's, marker::Output>,
@@ -205,31 +207,74 @@ pub mod param {
     }
 
     impl<'w, 's> ModuleResources<'w, 's> {
-        pub fn inputs(&self, module: Entity) -> Vec<Entity> {
-            self.q_children
-                .entity(module)
-                .iter()
-                .with(&self.w_input)
-                .collect()
+        pub fn inputs(
+            &'w self,
+            module: Entity,
+        ) -> QueryOutput<impl Iterator<Item = bevy::prelude::Entity> + 'w> {
+            self.q_children.entity(module).iter().with(&self.w_input)
         }
 
-        pub fn outputs(&self, module: Entity) -> Vec<Entity> {
-            self.q_children
-                .entity(module)
-                .iter()
-                .with(&self.w_output)
-                .collect()
+        pub fn outputs(
+            &'w self,
+            module: Entity,
+        ) -> QueryOutput<impl Iterator<Item = bevy::prelude::Entity> + 'w> {
+            self.q_children.entity(module).iter().with(&self.w_output)
+        }
+
+        /// update the indicator lights for the inputs to show if theyre full or not
+        pub fn update_input_indicators(&mut self, module: Entity) {
+            let input_states = self.q_input_state.entity(module).iter();
+            let inputs = self.inputs(module);
+
+            for (input, input_state) in inputs.zip(input_states) {
+                let indicator_sprite = &mut self
+                    .q_children
+                    .entity(input)
+                    .iter()
+                    .with(&self.w_indicator)
+                    .query_collect_mut(&self.q_sprite)[0];
+
+                let color = &mut indicator_sprite.color;
+                let hsla = color.as_hsla_f32();
+                let hue = [117.0, 0.0][input_state.is_some() as usize];
+                let new_color = Color::hsla(hue, hsla[1], hsla[2], hsla[3]);
+                *color = new_color;
+            }
         }
     }
 }
 
 use param::{ModuleResources, QueryQueryIter, QueryQuerySimple};
 
+/// tells this entity that they need to be updated (!!! (!!!)) (probably a module)
+#[derive(Deref, DerefMut)]
+pub struct UpdateModule(pub Entity);
+
+/// run the update functions for the modules!!
+pub fn update_modules(
+    mut set: ParamSet<(
+        ModuleResources,
+        Query<(&mut ModuleType, Entity), Changed<marble_io::InputState>>,
+        // Query<(&mut ModuleType, Entity)>,
+    )>,
+) {
+    // no mutability conflict as they conflict because the query gets ModuleType mutably
+    // and im passing in ModuleResources into the ModuleType we get, so
+    // shhhhhhh
+    let res_module = &set.p0() as *const ModuleResources as *mut ModuleResources;
+    for (mut module, entity) in set.p1().iter_mut() {
+        module
+            .get_inner()
+            .update(unsafe { &mut *res_module }, entity)
+    }
+}
+
 pub trait Module {
     /// return instructions on spawning this module
     fn spawn_instructions(&self) -> Vec<SpawnInstruction>;
     /// function that runs to update this module
-    fn update(&mut self, res: &mut ModuleResources, entity: Entity);
+    fn update(&mut self, res: &mut ModuleResources, module: Entity);
+    fn callback_update(&mut self, res: &mut ModuleResources, module: Entity);
     /// function to build the gui
     fn gui(&mut self, res: &mut ModuleResources, ui: &mut Ui, entity: Entity);
     /// the name of the module
@@ -273,13 +318,18 @@ impl Module for Basic {
         vec![BodySmall(vec![qt * 3.0], vec![qt])]
     }
 
-    fn update(&mut self, res: &mut ModuleResources, entity: Entity) {
-        todo!()
+    fn update(&mut self, res: &mut ModuleResources, module: Entity) {
+        // update indicators
+        res.update_input_indicators(module);
+
+        res.q_input_state.entity(module);
     }
 
+    fn callback_update(&mut self, res: &mut ModuleResources, module: Entity) {}
+
     fn gui(&mut self, res: &mut ModuleResources, ui: &mut Ui, module: Entity) {
-        let inputs = res.inputs(module);
-        let outputs = res.outputs(module);
+        let inputs: Vec<_> = res.inputs(module).collect();
+        let outputs: Vec<_> = res.outputs(module).collect();
 
         let ModuleResources {
             spawn_marble,

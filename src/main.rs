@@ -63,6 +63,7 @@ fn main() {
         .add_plugin(RapierDebugRenderPlugin::default())
         // events
         .add_event::<marble_io::FireMarble>()
+        .add_event::<module::UpdateModule>()
         .add_event::<spawn::SpawnModule>()
         // startup systems
         .add_startup_system_set(
@@ -93,7 +94,8 @@ fn main() {
                 .with_system(select::drag_selected.after(select::get_selected))
                 .with_system(marble::despawn_marbles)
                 .with_system(pan_camera)
-                .with_system(marble_io::update_inputs),
+                .with_system(marble_io::update_inputs)
+                .with_system(module::update_modules),
         )
         .run();
 }

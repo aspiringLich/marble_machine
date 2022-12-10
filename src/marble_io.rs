@@ -29,7 +29,7 @@ pub fn fire_marbles(
         // get the rotation and position of the parent entity + the output
         let rotation = transform.rotation.mul_quat(p_transform.rotation);
         let pos = transform.translation + p_transform.translation;
-        dbg!(rotation.mul_vec3(Vec3::X).truncate() * 120.0);
+        // dbg!(rotation.mul_vec3(Vec3::X).truncate() * 120.0);
         commands
             .spawn_atlas_sprite(
                 basic::marble_small,
@@ -52,7 +52,7 @@ pub fn fire_marbles(
 }
 
 /// a structure that holds the state of a module's inputs
-#[derive(Component, Debug, Default)]
+#[derive(Component, Debug, Default, Deref, DerefMut)]
 pub struct InputState {
     inner: Vec<Option<Marble>>,
 }
@@ -88,7 +88,7 @@ pub fn update_inputs(
     q_marble: Query<&Marble>,
     q_input: Query<&marker::Input>,
     has_marble: Query<With<Marble>>,
-    q_name: Query<&Name>,
+    mut update_event: EventWriter<module::UpdateModule>,
 ) {
     for event in collision_events.iter() {
         use CollisionEvent::*;
@@ -105,13 +105,13 @@ pub fn update_inputs(
                 let marble = *q_marble.entity(e2);
                 
                 let parent = q_parent.entity(e1).get();
-                let name = q_name.get(parent);
                 let mut input_state = q_input_state.entity_mut(parent);
                 
                 // if the input is not occupied, despawn the marble and update input_state
                 if input_state[index].is_none() {
                     input_state[index] = Some(marble);
                     commands.entity(marble_e).despawn();
+                    update_event.send(module::UpdateModule(parent));
                 }
             }
         };
