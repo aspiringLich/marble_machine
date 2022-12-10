@@ -13,6 +13,14 @@ pub struct FireMarble {
     pub power: f32,
 }
 
+impl FireMarble {
+    pub fn new(marble: Marble, from: Entity, power: f32) -> Self {
+        FireMarble {
+            marble, from, power
+        }
+    }
+}
+
 /// if any `SpawnMarbles` events have fired, fire a marble at the specified entity with the
 /// right power and such and such.
 pub fn fire_marbles(

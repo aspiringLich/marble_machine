@@ -1,4 +1,4 @@
-use std::f32::consts::PI;
+use std::{f32::consts::PI, time::Duration};
 
 use bevy_egui::*;
 
@@ -6,7 +6,6 @@ use crate::atlas::AtlasDictionary;
 use crate::marble::Marble;
 use crate::marble_io::FireMarble;
 use crate::spawn::SpawnInstruction;
-use crate::ui::UiElements;
 use crate::*;
 
 use egui::*;
@@ -38,7 +37,7 @@ pub mod param {
     };
 
     type QuerySimple<'w, 's, T> = Query<'w, 's, &'static mut T>;
-    type QueryWith<'w, 's, T, W> = Query<'w, 's, &'static mut T, bevy::prelude::With<W>>;
+    // type QueryWith<'w, 's, T, W> = Query<'w, 's, &'static mut T, bevy::prelude::With<W>>;
     type QueryEntity<'w, 's, W> = Query<'w, 's, bevy::prelude::Entity, bevy::prelude::With<W>>;
 
     pub trait QueryQuerySimple<'a, Q: WorldQuery + 'a>
@@ -48,6 +47,7 @@ pub mod param {
         fn get_self(&self) -> &Query<'_, '_, Q, ()>;
 
         /// get the thing that satisfies this query under this entity
+        #[must_use]
         fn entity(&'a self, entity: Entity) -> ROQueryItem<'_, Q> {
             self.get_self().get(entity).unwrap()
         }
@@ -55,6 +55,7 @@ pub mod param {
         /// gets the thing that satisfies this query under this entity *mutably*
         /// shhhhhhhhhh ignore that unsafe block shhhhhhhh
         /// im pretty sure it isnt unsafe as it lives on within that mutable query
+        #[must_use]
         fn entity_mut(&'a mut self, entity: Entity) -> Q::Item<'a> {
             unsafe {
                 self.get_self().get_unchecked(entity).expect(&{
@@ -110,6 +111,7 @@ pub mod param {
         fn get_self(self) -> impl Iterator<Item = Entity>;
 
         /// queries this objects query for queries that match the other query.
+        #[must_use]
         fn query<T: Component>(
             self,
             q: &'w QuerySimple<'_, '_, T>,
@@ -118,6 +120,7 @@ pub mod param {
         }
 
         /// queries this objects query for queries that match the other query. But *mutably*
+        #[must_use]
         fn query_mut<T: Component>(
             self,
             q: &'w QuerySimple<'_, '_, T>,
@@ -130,6 +133,7 @@ pub mod param {
         }
 
         /// queries the items and then collects them into a vector
+        #[must_use]
         fn query_collect<T: Component>(self, q: &'w QuerySimple<'_, '_, T>) -> Vec<&'w T> {
             self.get_self()
                 .into_iter()
@@ -138,6 +142,7 @@ pub mod param {
         }
 
         /// queries the items and then collects them into a vector but mut
+        #[must_use]
         fn query_collect_mut<T: Component>(self, q: &'w QuerySimple<'_, '_, T>) -> Vec<Mut<'w, T>> {
             self.get_self()
                 .into_iter()
@@ -145,7 +150,8 @@ pub mod param {
                 .collect()
         }
 
-        /// Filters this objects queries for queries that match the query but returns the entity not the query.
+        /// Filters this objects queries for queries that match the query
+        #[must_use]
         fn with<T: Component>(
             self,
             w: &'w QueryEntity<'w, 'w, T>,
@@ -158,6 +164,18 @@ pub mod param {
                     .into_iter()
                     .filter_map(move |x| w.get(x).ok()),
             )
+        }
+
+        /// Filters this objects queries for queries that match the query and then collects it
+        #[must_use]
+        fn with_collect<T: Component>(self, w: &'w QueryEntity<'w, 'w, T>) -> Vec<Entity>
+        where
+            Self: 'w,
+        {
+            self.get_self()
+                .into_iter()
+                .filter_map(move |x| w.get(x).ok())
+                .collect()
         }
     }
 
@@ -201,12 +219,13 @@ pub mod param {
         pub w_output: QueryEntity<'w, 's, marker::Output>,
         pub w_indicator: QueryEntity<'w, 's, marker::Indicator>,
         // events
-        pub spawn_marble: EventWriter<'w, 's, module::FireMarble>,
+        pub fire_marble: EventWriter<'w, 's, module::FireMarble>,
         // resources
         pub keyboard: Res<'w, Input<KeyCode>>,
     }
 
     impl<'w, 's> ModuleResources<'w, 's> {
+        #[must_use]
         pub fn inputs(
             &'w self,
             module: Entity,
@@ -214,6 +233,7 @@ pub mod param {
             self.q_children.entity(module).iter().with(&self.w_input)
         }
 
+        #[must_use]
         pub fn outputs(
             &'w self,
             module: Entity,
@@ -245,6 +265,41 @@ pub mod param {
 }
 
 use param::{ModuleResources, QueryQueryIter, QueryQuerySimple};
+
+/// "i want to do something after x second(s) pls help"
+#[derive(Deref, DerefMut, Component)]
+pub struct ModuleCallbackTimer(Timer);
+
+impl ModuleCallbackTimer {
+    pub fn new(ticks: u32) -> Self {
+        ModuleCallbackTimer(Timer::from_seconds(ticks as f32, TimerMode::Once))
+    }
+}
+
+pub fn update_module_callbacks(
+    mut set: ParamSet<(
+        ModuleResources,
+        Query<(&mut ModuleType, Entity, &mut ModuleCallbackTimer)>,
+    )>,
+) {
+    // no mutability conflict as they conflict because the query gets ModuleType mutably
+    // and im passing in ModuleResources into the ModuleType we get, so
+    // shhhhhhh
+    let res_module = &set.p0() as *const ModuleResources as *mut ModuleResources;
+    let res_module = unsafe { &mut *res_module };
+    for (mut module, entity, mut timer) in set.p1().iter_mut() {
+        // tick once
+        timer.tick(Duration::from_secs(1));
+
+        if timer.finished() {
+            module.get_inner().callback_update(res_module, entity);
+            res_module
+                .commands
+                .entity(entity)
+                .remove::<ModuleCallbackTimer>();
+        }
+    }
+}
 
 /// tells this entity that they need to be updated (!!! (!!!)) (probably a module)
 #[derive(Deref, DerefMut)]
@@ -278,10 +333,9 @@ pub trait Module {
     /// function to build the gui
     fn gui(&mut self, res: &mut ModuleResources, ui: &mut Ui, entity: Entity);
     /// the name of the module
-    const NAME: &'static str;
-    fn get_name(&self) -> &'static str {
-        Self::NAME
-    }
+    fn get_name(&self) -> &'static str;
+    /// the identifier of the module
+    fn get_identifier(&self) -> Name;
 }
 
 /// basically, imagine offsetting some object by `offset` in the x-axis, then rotating it around the origin `rotation` radians.
@@ -322,19 +376,52 @@ impl Module for Basic {
         // update indicators
         res.update_input_indicators(module);
 
-        res.q_input_state.entity(module);
+        let ModuleResources {
+            commands,
+            q_input_state,
+            ..
+        } = res;
+
+        let input_state = q_input_state.entity(module);
+        // if we have a marble then activate the callback
+        if input_state[0].is_some() {
+            commands.entity(module).insert(ModuleCallbackTimer::new(10));
+        }
     }
 
-    fn callback_update(&mut self, res: &mut ModuleResources, module: Entity) {}
+    fn callback_update(&mut self, res: &mut ModuleResources, module: Entity) {
+        let mut input_state = res.q_input_state.entity_mut(module);
+
+        // if theres a marble in there (there should be)
+        if let Some(marble) = input_state[0] {
+            let ModuleResources {
+                fire_marble,
+                w_output,
+                q_children,
+                ..
+            } = res;
+            let outputs = q_children.entity(module).iter().with_collect(w_output);
+
+            // fire it outta the input and mark that the input is empty
+            fire_marble.send(FireMarble::new(marble, outputs[0], 1.0));
+            input_state[0] = None;
+        } else {
+            warn!(
+                "callback_update on {}: expected marble in input state",
+                self.get_name()
+            )
+        }
+        res.update_input_indicators(module);
+    }
 
     fn gui(&mut self, res: &mut ModuleResources, ui: &mut Ui, module: Entity) {
         let inputs: Vec<_> = res.inputs(module).collect();
         let outputs: Vec<_> = res.outputs(module).collect();
 
         let ModuleResources {
-            spawn_marble,
+            fire_marble: spawn_marble,
             q_transform,
-            keyboard,
+            // keyboard,
             ..
         } = &mut *res;
         let input_tfs = inputs.query_collect_mut(q_transform);
@@ -354,5 +441,11 @@ impl Module for Basic {
         }
     }
 
-    const NAME: &'static str = "Basic Module";
+    fn get_name(&self) -> &'static str {
+        "Basic Module"
+    }
+
+    fn get_identifier(&self) -> Name {
+        Name::new("basic.module")
+    }
 }

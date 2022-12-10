@@ -124,15 +124,7 @@ pub fn spawn_modules(
 
         let parent = commands
             .spawn(SpriteBundle { ..default() })
-            .insert(Name::new({
-                use ModuleType::*;
-
-                #[allow(unreachable_patterns)]
-                match mt {
-                    Basic { .. } => "basic.module",
-                    _ => unimplemented!(),
-                }
-            }))
+            .insert(mt.get_inner().get_identifier())
             .insert((mt, marker::Module))
             .id();
 

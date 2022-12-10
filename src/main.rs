@@ -11,7 +11,6 @@ extern crate derive_more;
 extern crate rand;
 extern crate strum;
 
-use auto_unwrap::auto_unwrap;
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, sprite::Anchor};
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::prelude::*;
@@ -88,14 +87,14 @@ fn main() {
             "spawn",
             "main",
             SystemStage::parallel()
-                .with_system(display_events)
                 .with_system(ui::inspector_ui.label("ui"))
                 .with_system(select::get_selected.after(ui::inspector_ui))
                 .with_system(select::drag_selected.after(select::get_selected))
                 .with_system(marble::despawn_marbles)
                 .with_system(pan_camera)
                 .with_system(marble_io::update_inputs)
-                .with_system(module::update_modules),
+                .with_system(module::update_modules)
+                .with_system(module::update_module_callbacks),
         )
         .run();
 }
@@ -124,7 +123,7 @@ fn pan_camera(
     keys: Res<Input<KeyCode>>,
     mut query_camera: Query<(&mut OrthographicProjection, &mut Transform), With<marker::Camera>>,
 ) {
-    let (projection, mut transform) = query_camera.single_mut();
+    let (_, mut transform) = query_camera.single_mut();
     let scrollamt = 1.8;
     let pos = &mut transform.translation;
 
@@ -139,18 +138,5 @@ fn pan_camera(
     }
     if keys.pressed(KeyCode::S) {
         pos.y -= scrollamt
-    }
-}
-
-fn display_events(
-    mut collision_events: EventReader<CollisionEvent>,
-    mut contact_force_events: EventReader<ContactForceEvent>,
-) {
-    for collision_event in collision_events.iter() {
-        println!("Received collision event: {:?}", collision_event);
-    }
-
-    for contact_force_event in contact_force_events.iter() {
-        println!("Received contact force event: {:?}", contact_force_event);
     }
 }
