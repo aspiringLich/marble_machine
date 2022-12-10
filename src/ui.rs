@@ -61,7 +61,7 @@ pub fn inspector_ui(
         .resizable(true)
         .collapsible(false)
         .show(egui_context.ctx_mut(), |ui| {
-            module.gui(unsafe { &mut *res }, ui, selected)
+            module.interactive(unsafe { &mut *res }, ui, selected)
         });
 
     // println!("{}", window.unwrap().response.rect.width());

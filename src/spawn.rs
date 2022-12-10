@@ -101,15 +101,37 @@ macro color($r:expr, $g:expr, $b:expr) {
 
 pub static MODULE_COLOR: Color = color!(101, 237, 192);
 
-pub enum SpawnInstruction {
-    /// spawn a body_small with input indicators
-    BodySmall(Vec<f32>, Vec<f32>),
-    /// spawn a body_small with input and output indicators
-    BodySmallIndicators(Vec<f32>, Vec<f32>),
-    /// spawn a body_large with input indicators
-    BodyLarge(Vec<f32>, Vec<f32>),
-    /// spawn a decal in the center of the block
-    Decal((Handle<TextureAtlas>, usize)),
+#[derive(Default)]
+pub enum BodyType {
+    #[default]
+    Small,
+    Large,
+}
+
+#[derive(Default)]
+pub struct SpawnInstructions {
+    body: BodyType,
+    input_transforms: Vec<Transform>,
+    output_transforms: Vec<Transform>,
+}
+
+unsafe impl Sync for SpawnInstructions {}
+unsafe impl Send for SpawnInstructions {}
+
+impl SpawnInstructions {
+    pub fn from_body(body: BodyType) -> Self {
+        Self { body, ..default() }
+    }
+
+    pub fn with_inputs<T: Iterator<Item = Transform>>(mut self, input_transforms: T) -> Self {
+        self.input_transforms = input_transforms.collect();
+        self
+    }
+
+    pub fn with_outputs<T: Iterator<Item = Transform>>(mut self, output_transforms: T) -> Self {
+        self.output_transforms = output_transforms.collect();
+        self
+    }
 }
 
 /// spawn a module based on [`SpawnModule`] events fired
@@ -126,51 +148,58 @@ pub fn spawn_modules(
             .insert(module.get_inner().get_identifier())
             .insert((module, marker::Module))
             .id();
+        let mut children: Vec<Entity> = vec![];
 
         // spawn a small circular body and return the id
         macro spawn_body_circular($atlasdict:expr, $name:literal $($tail:tt)*) {
-            commands
-                .spawn_atlas_sprite($atlasdict, MODULE_COLOR, Transform::from_xyz(0.0, 0.0, 0.5))
-                .insert((
-                    Name::new($name),
-                    Collider::ball($atlasdict.width() * 0.5),
-                    RigidBody::Fixed,
-                    Restitution::coefficient(0.8),
-                    marker::ModuleBody
-                    $($tail)*
-                ))
-                .id()
+            children.push(
+                commands
+                    .spawn_atlas_sprite($atlasdict, MODULE_COLOR, Transform::from_xyz(0.0, 0.0, 0.5))
+                    .insert((
+                        Name::new($name),
+                        Collider::ball($atlasdict.width() * 0.5),
+                        RigidBody::Fixed,
+                        Restitution::coefficient(0.8),
+                        marker::ModuleBody
+                        $($tail)*
+                    ))
+                    .id()
+            )
         }
 
         // run through all the instructions laid out in the module
-        for instruction in module.get_inner().spawn_instructions() {
-            use SpawnInstruction::*;
-            let mut children = vec![];
+        let SpawnInstructions {
+            body,
+            input_transforms,
+            output_transforms,
+        } = module.get_inner().spawn_instructions();
 
-            let append = &mut match instruction {
-                // spawn a small body with said inputs and outputs
-                BodySmall(i, o) => {
-                    children.extend(
-                        i.iter()
-                            .enumerate()
-                            .map(|(i, x)| commands.spawn_input(body_small_transform(*x), i).id()),
-                    );
-                    children.extend(
-                        o.iter()
-                            .enumerate()
-                            .map(|(i, x)| commands.spawn_output(body_small_transform(*x), i).id()),
-                    );
-                    commands.entity(parent).insert(InputState::new(i.len()));
-                    vec![spawn_body_circular!(
-                        basic::body_small,
-                        "body_small.component"
-                    )]
-                }
-                _ => todo!(),
-            };
-            children.append(append);
-            commands.entity(parent).push_children(&children);
+        // spawn the body
+        match body {
+            Small => {
+                spawn_body_circular!(basic::body_small, "body_small.component");
+            }
         }
+        // spawn the input state
+        commands
+            .entity(parent)
+            .insert(InputState::new(input_transforms.len()));
+
+        // inputs
+        children.extend(
+            input_transforms
+                .iter()
+                .enumerate()
+                .map(|(i, &x)| commands.spawn_input(x, i).id()),
+        );
+        // outputs
+        children.extend(
+            output_transforms
+                .iter()
+                .enumerate()
+                .map(|(i, &x)| commands.spawn_output(x, i).id()),
+        );
+        commands.entity(parent).push_children(&children);
 
         if *place {
             *selected = SelectedModules::place_entity(parent);

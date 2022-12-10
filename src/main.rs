@@ -5,7 +5,6 @@
 #![feature(type_alias_impl_trait)]
 #![feature(const_trait_impl)]
 #![feature(associated_type_defaults)]
-#![feature(once_cell)]
 #![feature(return_position_impl_trait_in_trait)]
 
 extern crate derive_more;
@@ -18,6 +17,7 @@ use bevy_inspector_egui::prelude::*;
 use bevy_pancam::PanCam;
 use bevy_rapier2d::prelude::*;
 use module::ModuleType;
+use once_cell::sync::Lazy;
 
 mod atlas;
 mod components;
@@ -88,10 +88,10 @@ fn main() {
             "spawn",
             "main",
             SystemStage::parallel()
-                .with_system(ui::inspector_ui.label("ui"))
+                .with_system(ui::inspector_ui)
                 .with_system_set(select::system_set())
-                .with_system(marble::despawn_marbles)
                 .with_system(pan_camera)
+                .with_system(marble::despawn_marbles)
                 .with_system(marble_io::update_inputs)
                 .with_system(module::update_modules)
                 .with_system(module::update_module_callbacks)

@@ -2282,6 +2282,7 @@ dependencies = [
  "bevy_rapier2d",
  "derive_more",
  "iyes_loopless",
+ "once_cell",
  "rand",
  "strum",
  "strum_macros",

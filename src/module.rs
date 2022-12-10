@@ -5,7 +5,7 @@ use bevy_egui::*;
 use crate::atlas::AtlasDictionary;
 use crate::marble::Marble;
 use crate::marble_io::FireMarble;
-use crate::spawn::SpawnInstruction;
+use crate::spawn::{BodyType, SpawnInstructions};
 use crate::*;
 
 use egui::*;
@@ -326,12 +326,12 @@ pub fn update_modules(
 
 pub trait Module {
     /// return instructions on spawning this module
-    fn spawn_instructions(&self) -> Vec<SpawnInstruction>;
+    fn spawn_instructions(&self) -> &'static SpawnInstructions;
     /// function that runs to update this module
     fn update(&mut self, res: &mut ModuleResources, module: Entity);
     fn callback_update(&mut self, res: &mut ModuleResources, module: Entity);
-    /// function to build the gui
-    fn gui(&mut self, res: &mut ModuleResources, ui: &mut Ui, entity: Entity);
+    /// function to build the ui / interactive elements
+    fn interactive(&mut self, res: &mut ModuleResources, ui: &mut Ui, entity: Entity);
     /// the name of the module
     fn get_name(&self) -> &'static str;
     /// the identifier of the module
@@ -356,6 +356,14 @@ pub fn body_small_transform(rotation: f32) -> Transform {
     transform_from_offset_rotate(basic::body_small.width() * 0.5 + 1.0, rotation, 0.25)
 }
 
+/// goes over a slice also it takes in degrees instead of radians
+///
+pub fn body_small_transforms(rotations: &'static [f32]) -> impl Iterator<Item = Transform> {
+    rotations
+        .into_iter()
+        .map(|x| body_small_transform(x.to_radians()))
+}
+
 #[derive(Copy, Clone)]
 pub struct Basic;
 
@@ -365,11 +373,15 @@ impl Default for Basic {
     }
 }
 
+static BASIC_INSTRUCTIONS: Lazy<SpawnInstructions> = Lazy::new(|| {
+    SpawnInstructions::from_body(BodyType::Small)
+        .with_inputs(body_small_transforms(&[270.0]))
+        .with_outputs(body_small_transforms(&[90.0]))
+});
+
 impl Module for Basic {
-    fn spawn_instructions(&self) -> Vec<SpawnInstruction> {
-        use SpawnInstruction::*;
-        let qt = PI / 2.0;
-        vec![BodySmall(vec![qt * 3.0], vec![qt])]
+    fn spawn_instructions(&self) -> &'static SpawnInstructions {
+        &*BASIC_INSTRUCTIONS
     }
 
     fn update(&mut self, res: &mut ModuleResources, module: Entity) {
@@ -414,7 +426,7 @@ impl Module for Basic {
         res.update_input_indicators(module);
     }
 
-    fn gui(&mut self, res: &mut ModuleResources, ui: &mut Ui, module: Entity) {
+    fn interactive(&mut self, res: &mut ModuleResources, ui: &mut Ui, module: Entity) {
         let inputs: Vec<_> = res.inputs(module).collect();
         let outputs: Vec<_> = res.outputs(module).collect();
 

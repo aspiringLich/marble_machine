@@ -102,11 +102,15 @@ where
         // dbg!(basic::indicator.width());
 
         let child = commands
-            .spawn_atlas_sprite(
-                basic::indicator,
-                Color::GRAY,
-                Transform::from_translation([0.0, 0.0, -0.0625].into()),
-            )
+            .spawn(SpriteBundle {
+                transform: Transform::from_scale([3.0, 3.0, 1.0].into())
+                    .with_translation(Vec3::new(0.0, 0.0, -0.0625)),
+                sprite: Sprite {
+                    color: Color::DARK_GRAY,
+                    ..default()
+                },
+                ..default()
+            })
             .insert(Name::new("indicator.sprite"))
             .id();
 
