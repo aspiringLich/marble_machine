@@ -84,6 +84,7 @@ pub fn drag_selected(
             return;
         }
     }
+
     // if we let go of the left mouse button, return
     if !mouse_buttons.pressed(MouseButton::Left) {
         *active = false;
@@ -92,16 +93,20 @@ pub fn drag_selected(
 
     let Some(selected) = selected.selected else {*active = false; return};
     let pos = &mut q_transform.entity_mut(selected).translation;
-    let Vec2 { x, y } = **mouse_pos;
+    let Vec2 { x, y } = **mouse_pos - *starting_pos;
 
     // rounding x and y to the nearest snapping #
-    let (rx, ry) = (
+    let round = Vec2::new(
         (x / snapping).round() * snapping,
         (y / snapping).round() * snapping,
     );
-    if rx != x || ry != y {
-        pos.x = rx;
-        pos.y = ry;
+    if round.x != 0.0 {
+        starting_pos.x += round.x;
+        pos.x += round.x;
+    }
+    if round.y != 0.0 {
+        starting_pos.y += round.y;
+        pos.y += round.y;
     }
 }
 
