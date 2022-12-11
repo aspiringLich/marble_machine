@@ -2,7 +2,7 @@ use std::{f32::consts::PI, sync::OnceLock};
 
 use crate::{
     atlas::AtlasDictionary,
-    module::{body_small_transform, param::*, transform_from_offset_rotate, Module},
+    module::{param::*, transform_from_offset_rotate, Module},
     select::CursorCoords,
     spawn::BodyType,
     *,
@@ -12,7 +12,7 @@ use crate::{
 pub struct Interactive;
 
 #[derive(Component)]
-pub struct RotationWidget(Entity, f32);
+pub struct RotationWidget(f32);
 
 const ROTATION_WIDGET_OFFSET: f32 = 8.0;
 
@@ -54,34 +54,33 @@ pub fn spawn_despawn_interactive_components(
 
         let inputs = q_children.entity(module).iter().with(&w_input);
         let outputs = q_children.entity(module).iter().with(&w_output);
+        for entity in inputs.chain(outputs) {
+            let len = q_transform
+                .entity(entity)
+                .clone()
+                .translation
+                .truncate()
+                .length();
 
-        commands.entity(module).add_children(|children| match body {
-            BodyType::Small => {
-                for entity in inputs.chain(outputs) {
-                    let mut transform = q_transform.entity(entity).clone();
-                    let pos = transform.translation.truncate();
-
-                    let len = pos.length();
-                    transform.translation =
-                        (pos.normalize() * (len + ROTATION_WIDGET_OFFSET)).extend(2.0);
-
-                    let (texture_atlas, index) = basic::marble_small.info();
-                    children.spawn((
-                        Interactive,
-                        RotationWidget(entity, len),
-                        SpriteSheetBundle {
-                            sprite: TextureAtlasSprite { index, ..default() },
-                            texture_atlas,
-                            transform,
-                            ..default()
-                        },
-                        Collider::ball(basic::marble_small.width() / 2.0),
-                        Sensor,
-                    ));
-                }
-            }
-            _ => todo!(),
-        });
+            let (texture_atlas, index) = basic::marble_small.info();
+            let child = commands
+                .spawn((
+                    Interactive,
+                    RotationWidget(len),
+                    SpriteSheetBundle {
+                        sprite: TextureAtlasSprite { index, ..default() },
+                        texture_atlas,
+                        transform: Transform::from_translation(
+                            Vec3::X * (ROTATION_WIDGET_OFFSET + body.offset()),
+                        ),
+                        ..default()
+                    },
+                    Collider::ball(basic::marble_small.width() / 2.0),
+                    Sensor,
+                ))
+                .id();
+            commands.entity(entity).add_child(child);
+        }
     } else {
         if let Some(b) = *before {
             // remove all the interactive components
@@ -119,21 +118,14 @@ pub fn use_widgets(
     let Some(entity) = **interactive_selected else { *active = false; return; };
     *active = true;
 
-    if let Ok(RotationWidget(affecting, offset)) = q_rotation.get(entity) {
-        let parent_tf = q_transform.entity(q_parent.entity(entity).get());
+    if let Ok(RotationWidget(offset)) = q_rotation.get(entity) {
+        // were the child of input which is the child of the module entity, so
+        let parent_tf = q_transform.entity(q_parent.entity(q_parent.entity(entity).get()).get());
         // the relative mouse pos of our cursor and the module
         let relative_pos = parent_tf.translation.truncate() - **mouse_pos;
         let rotation = -relative_pos.angle_between(Vec2::X) + PI;
 
-        // change the tf of both the widget and the affected entity
-        let mut widget_tf = q_transform.entity_mut(entity);
-        *widget_tf = transform_from_offset_rotate(
-            *offset + ROTATION_WIDGET_OFFSET,
-            rotation,
-            widget_tf.translation.z,
-        );
-
-        let mut affecting_tf = q_transform.entity_mut(*affecting);
+        let mut affecting_tf = q_transform.entity_mut(q_parent.entity(entity).get());
         *affecting_tf = transform_from_offset_rotate(*offset, rotation, affecting_tf.translation.z);
     }
 }

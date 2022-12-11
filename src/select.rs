@@ -1,8 +1,4 @@
-use crate::{
-    module::param::{QueryQueryIter, QueryQuerySimple},
-    *,
-};
-use bevy::render::camera::RenderTarget;
+use crate::{module::param::*, *};
 use iyes_loopless::prelude::{ConditionHelpers, IntoConditionalSystem};
 
 /// if:
@@ -90,6 +86,9 @@ pub fn drag_selected(
     mouse_pos: Res<CursorCoords>,
     mouse_buttons: Res<Input<MouseButton>>,
     selected: Res<SelectedModules>,
+    keyboard: Res<Input<KeyCode>>,
+    q_children: Query<&Children>,
+    has_io: Query<Or<(With<marker::Input>, With<marker::Output>)>>,
     mut q_transform: Query<&mut Transform>,
     mut active: Local<bool>,
     mut starting_pos: Local<Vec2>,
@@ -114,6 +113,17 @@ pub fn drag_selected(
     }
 
     let Some(selected) = selected.selected else {*active = false; return};
+
+    // let io = q_children
+    //     .entity(selected)
+    //     .iter()
+    //     .filter(|e| has_io.has(**e));
+    // if keyboard.just_pressed(KeyCode::Q) || keyboard.just_pressed(KeyCode::E) {
+    //     for &e in io {
+    //         let mut tf = q_transform.entity_mut(e);
+    //     }
+    // }
+
     let pos = &mut q_transform.entity_mut(selected).translation;
     let Vec2 { x, y } = **mouse_pos - *starting_pos;
 
@@ -135,6 +145,7 @@ pub fn drag_selected(
 /// runs if SelectedModules's place flag is true
 /// place the selected module somewhere
 fn place_selected(
+    keyboard: Res<Input<KeyCode>>,
     mouse_pos: Res<CursorCoords>,
     mouse_buttons: Res<Input<MouseButton>>,
     mut selected: ResMut<SelectedModules>,

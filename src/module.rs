@@ -351,19 +351,19 @@ pub fn transform_from_offset_rotate(offset: f32, rotation: f32, z: f32) -> Trans
     }
 }
 
-/// returns a transform that equates to a valid i/o position around a `body_small`.
-/// !!! IF THE OFFSET CHANGES REMEMBER TO ALSO CHANGE IT IN INTERACTIVE
-pub fn body_small_transform(rotation: f32) -> Transform {
-    transform_from_offset_rotate(basic::body_small.width() * 0.5 + 1.0, rotation, 0.25)
-}
+// /// returns a transform that equates to a valid i/o position around a `body_small`.
+// /// !!! IF THE OFFSET CHANGES REMEMBER TO ALSO CHANGE IT IN INTERACTIVE
+// pub fn body_small_transform(rotation: f32) -> Transform {
+//     transform_from_offset_rotate(basic::body_small.width() * 0.5 + 1.0, rotation, 0.25)
+// }
 
-/// goes over a slice also it takes in degrees instead of radians
-///
-pub fn body_small_transforms(rotations: &'static [f32]) -> impl Iterator<Item = Transform> {
-    rotations
-        .into_iter()
-        .map(|x| body_small_transform(x.to_radians()))
-}
+// /// goes over a slice also it takes in degrees instead of radians
+// ///
+// pub fn body_small_transforms(rotations: &'static [f32]) -> impl Iterator<Item = Transform> {
+//     rotations
+//         .into_iter()
+//         .map(|x| body_small_transform(x.to_radians()))
+// }
 
 #[derive(Copy, Clone)]
 pub struct Basic;
@@ -376,8 +376,8 @@ impl Default for Basic {
 
 static BASIC_INSTRUCTIONS: Lazy<SpawnInstructions> = Lazy::new(|| {
     SpawnInstructions::from_body(BodyType::Small)
-        .with_inputs(body_small_transforms(&[270.0]))
-        .with_outputs(body_small_transforms(&[90.0]))
+        .with_input_rotations([270.].into_iter())
+        .with_output_rotations([90.].into_iter())
 });
 
 impl Module for Basic {
@@ -428,21 +428,21 @@ impl Module for Basic {
     }
 
     fn interactive(&mut self, res: &mut ModuleResources, ui: &mut Ui, module: Entity) {
-        let inputs: Vec<_> = res.inputs(module).collect();
+        // let inputs: Vec<_> = res.inputs(module).collect();
         let outputs: Vec<_> = res.outputs(module).collect();
 
         let ModuleResources {
             fire_marble: spawn_marble,
-            q_transform,
+            // q_transform,
             // keyboard,
             ..
         } = &mut *res;
-        let input_tfs = inputs.query_collect_mut(q_transform);
-        let output_tfs = outputs.query_collect_mut(q_transform);
+        // let input_tfs = inputs.query_collect_mut(q_transform);
+        // let output_tfs = outputs.query_collect_mut(q_transform);
 
-        ui::Layout::new()
-            .default_rotation_sliders(input_tfs, output_tfs, &body_small_transform)
-            .build(ui);
+        // ui::Layout::new()
+        //     .default_rotation_sliders(input_tfs, output_tfs, &body_small_transform)
+        //     .build(ui);
 
         // cool epic le hacker debug button
         if ui.button("Fire Marble!").clicked() {

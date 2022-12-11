@@ -108,6 +108,19 @@ pub enum BodyType {
     Large,
 }
 
+pub fn offset_of<T: AtlasDictionary>(input: T) -> f32 {
+    input.width() * 0.5 + 1.0
+}
+
+impl BodyType {
+    pub fn offset(&self) -> f32 {
+        match self {
+            BodyType::Small => offset_of(basic::body_small),
+            BodyType::Large => todo!(),
+        }
+    }
+}
+
 #[derive(Default)]
 pub struct SpawnInstructions {
     pub body: BodyType,
@@ -123,13 +136,21 @@ impl SpawnInstructions {
         Self { body, ..default() }
     }
 
-    pub fn with_inputs<T: Iterator<Item = Transform>>(mut self, input_transforms: T) -> Self {
-        self.input_transforms = input_transforms.collect();
+    pub fn with_input_rotations<T: Iterator<Item = f32>>(mut self, input_transforms: T) -> Self {
+        self.input_transforms = input_transforms
+            .map(|r| {
+                Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, r.to_radians()))
+            })
+            .collect();
         self
     }
 
-    pub fn with_outputs<T: Iterator<Item = Transform>>(mut self, output_transforms: T) -> Self {
-        self.output_transforms = output_transforms.collect();
+    pub fn with_output_rotations<T: Iterator<Item = f32>>(mut self, output_transforms: T) -> Self {
+        self.output_transforms = output_transforms
+            .map(|r| {
+                Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, r.to_radians()))
+            })
+            .collect();
         self
     }
 }
@@ -191,14 +212,14 @@ pub fn spawn_modules(
             input_transforms
                 .iter()
                 .enumerate()
-                .map(|(i, &x)| commands.spawn_input(x, i).id()),
+                .map(|(i, &x)| commands.spawn_input(x, body.offset(), i).id()),
         );
         // outputs
         children.extend(
             output_transforms
                 .iter()
                 .enumerate()
-                .map(|(i, &x)| commands.spawn_output(x, i).id()),
+                .map(|(i, &x)| commands.spawn_output(x, body.offset(), i).id()),
         );
         commands.entity(parent).push_children(&children);
 

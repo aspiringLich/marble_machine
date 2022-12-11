@@ -9,9 +9,15 @@ where
     fn get(&mut self) -> &mut Commands<'a, 'b>;
 
     /// Spawn the normal input component
-    fn spawn_input(&mut self, transform: Transform, n: usize) -> EntityCommands<'a, 'b, '_> {
+    fn spawn_input(
+        &mut self,
+        transform: Transform,
+        offset: f32,
+        n: usize,
+    ) -> EntityCommands<'a, 'b, '_> {
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_input.info();
+        let offset_tf = Transform::from_translation(Vec3::X * offset);
 
         let mut children = vec![];
         children.push(
@@ -21,39 +27,61 @@ where
                         vec![vec2!(3, 5), vec2!(-3, 3), vec2!(-3, -3), vec2!(3, -5)],
                         Some(vec![[0, 1], [2, 3]]),
                     ),
-                    TransformBundle::default(),
+                    TransformBundle::from_transform(offset_tf),
                 ))
                 .insert(Name::new("out.collider"))
                 .id(),
         );
-        children.push(commands.spawn_indicator([-1.5, 0.0, 0.625].into()).id());
+
+        children.push(
+            commands
+                .spawn_indicator(Vec3::new(-1.5, 0.0, 0.625) + offset_tf.translation)
+                .id(),
+        );
+        children.push(
+            commands
+                .spawn((
+                    SpriteSheetBundle {
+                        texture_atlas,
+                        sprite: TextureAtlasSprite {
+                            index,
+                            color: Color::GRAY,
+                            anchor: Anchor::Center,
+                            ..default()
+                        },
+                        transform: offset_tf,
+                        ..default()
+                    },
+                    Collider::ball(2.0),
+                    Sensor,
+                    ActiveEvents::COLLISION_EVENTS,
+                    Name::new("in.sprite"),
+                ))
+                .id(),
+        );
 
         let mut out = commands.spawn((
-            SpriteSheetBundle {
-                texture_atlas,
-                sprite: TextureAtlasSprite {
-                    index,
-                    color: Color::GRAY,
-                    anchor: Anchor::Center,
-                    ..default()
-                },
+            SpriteBundle {
                 transform,
                 ..default()
             },
-            Collider::ball(2.0),
-            Sensor,
-            ActiveEvents::COLLISION_EVENTS,
-            marker::Input(n),
             Name::new("in.component"),
+            marker::Input(n),
         ));
         out.push_children(&children);
         out
     }
 
     /// spawn the normal output component
-    fn spawn_output(&mut self, transform: Transform, n: usize) -> EntityCommands<'a, 'b, '_> {
+    fn spawn_output(
+        &mut self,
+        transform: Transform,
+        offset: f32,
+        n: usize,
+    ) -> EntityCommands<'a, 'b, '_> {
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_output.info();
+        let offset_tf = Transform::from_translation(Vec3::X * offset);
 
         let mut children = vec![];
         children.push(
@@ -63,39 +91,50 @@ where
                         vec![vec2!(3, 5), vec2!(-3, 3), vec2!(-3, -3), vec2!(3, -5)],
                         Some(vec![[0, 1], [2, 3]]),
                     ),
-                    TransformBundle::default(),
+                    TransformBundle::from_transform(offset_tf),
                 ))
                 .insert(Name::new("out.collider"))
                 .id(),
         );
+        children.push(
+            commands
+                .spawn((
+                    SpriteSheetBundle {
+                        texture_atlas,
+                        sprite: TextureAtlasSprite {
+                            index,
+                            color: Color::GRAY,
+                            anchor: Anchor::Center,
+                            ..default()
+                        },
+                        transform: offset_tf,
+                        ..default()
+                    },
+                    Name::new("out.sprite"),
+                ))
+                .id(),
+        );
 
         let mut out = commands.spawn((
-            SpriteSheetBundle {
-                texture_atlas,
-                sprite: TextureAtlasSprite {
-                    index,
-                    color: Color::GRAY,
-                    anchor: Anchor::Center,
-                    ..default()
-                },
+            SpriteBundle {
                 transform,
                 ..default()
             },
-            marker::Output(n),
             Name::new("out.component"),
+            marker::Output(n),
         ));
 
         out.push_children(&children);
         out
     }
 
-    fn spawn_output_ind(&mut self, transform: Transform, n: usize) -> EntityCommands<'a, 'b, '_> {
-        let child = self.get().spawn_indicator([-1.5, 0.0, 0.625].into()).id();
-        let mut out = self.spawn_output(transform, n);
+    // fn spawn_output_ind(&mut self, transform: Transform, n: usize) -> EntityCommands<'a, 'b, '_> {
+    //     let child = self.get().spawn_indicator([-1.5, 0.0, 0.625].into()).id();
+    //     let mut out = self.spawn_output(transform, n);
 
-        out.add_child(child);
-        out
-    }
+    //     out.add_child(child);
+    //     out
+    // }
 
     fn spawn_indicator(&mut self, pos: Vec3) -> EntityCommands<'a, 'b, '_> {
         let commands = self.get();
