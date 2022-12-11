@@ -1,6 +1,6 @@
 use crate::{
     marble_io::InputState,
-    module::{body_small_transform, Module, ModuleType},
+    module::{Module, ModuleType},
     *,
 };
 use atlas::AtlasDictionary;
@@ -176,9 +176,10 @@ pub fn spawn_modules(
 
         // spawn the body
         match body {
-            Small => {
+            BodyType::Small => {
                 spawn_body_circular!(basic::body_small, "body_small.component");
             }
+            _ => todo!(),
         }
         // spawn the input state
         commands

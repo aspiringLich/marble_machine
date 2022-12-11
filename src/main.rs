@@ -29,7 +29,6 @@ mod marble;
 mod marble_io;
 mod misc;
 mod module;
-mod place;
 mod select;
 mod spawn;
 mod ui;

@@ -35,6 +35,15 @@ pub fn spawn_despawn_interactive_components(
 
     // spawn all the interactive components
     if let Some(module) = selected.selected {
+        if before.is_some() {
+            // remove all the interactive components
+            for entity in q_children.iter_descendants(before.unwrap()) {
+                if has_interactive.has(entity) {
+                    commands.entity(entity).despawn()
+                }
+            }
+        }
+
         *before = Some(module);
 
         let body = &q_module
@@ -74,11 +83,14 @@ pub fn spawn_despawn_interactive_components(
             _ => todo!(),
         });
     } else {
-        // remove all the interactive components
-        for entity in q_children.iter_descendants(before.unwrap()) {
-            if has_interactive.has(entity) {
-                commands.entity(entity).despawn()
+        if let Some(b) = *before {
+            // remove all the interactive components
+            for entity in q_children.iter_descendants(b) {
+                if has_interactive.has(entity) {
+                    commands.entity(entity).despawn()
+                }
             }
+            *before = None;
         }
     }
 }
