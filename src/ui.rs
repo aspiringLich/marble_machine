@@ -11,7 +11,7 @@ use bevy_egui::*;
 use egui::*;
 
 /// stores the selected entities
-#[derive(Resource, Debug, Default)]
+#[derive(Resource, Debug, Default, Hash)]
 pub struct SelectedModules {
     /// the entity (TODO: entities) we have selected
     pub selected: Option<Entity>,

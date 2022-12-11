@@ -11,10 +11,11 @@ where
     /// Spawn the normal input component
     fn spawn_input(
         &mut self,
-        transform: Transform,
+        mut transform: Transform,
         offset: f32,
         n: usize,
     ) -> EntityCommands<'a, 'b, '_> {
+        transform.translation.z = 0.375;
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_input.info();
         let offset_tf = Transform::from_translation(Vec3::X * offset);
@@ -45,7 +46,6 @@ where
                         texture_atlas,
                         sprite: TextureAtlasSprite {
                             index,
-                            color: Color::GRAY,
                             anchor: Anchor::Center,
                             ..default()
                         },
@@ -75,10 +75,11 @@ where
     /// spawn the normal output component
     fn spawn_output(
         &mut self,
-        transform: Transform,
+        mut transform: Transform,
         offset: f32,
         n: usize,
     ) -> EntityCommands<'a, 'b, '_> {
+        transform.translation.z = 0.25;
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_output.info();
         let offset_tf = Transform::from_translation(Vec3::X * offset);
@@ -103,7 +104,6 @@ where
                         texture_atlas,
                         sprite: TextureAtlasSprite {
                             index,
-                            color: Color::GRAY,
                             anchor: Anchor::Center,
                             ..default()
                         },

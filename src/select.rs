@@ -1,3 +1,5 @@
+use std::f32::consts::TAU;
+
 use crate::{module::param::*, *};
 use iyes_loopless::prelude::{ConditionHelpers, IntoConditionalSystem};
 
@@ -28,17 +30,22 @@ pub fn get_selected(
     hovered: Res<HoveredEntities>,
     q_parent: Query<&Parent>,
     has_body: Query<With<marker::ModuleBody>>,
-    has_interactive: Query<With<interact::Interactive>>,
+    has_interactive: Query<
+        Or<(
+            With<interact::Interactive>,
+            With<interact::InteractiveClickable>,
+        )>,
+    >,
     mut interactive_selected: ResMut<interact::InteractiveSelected>,
 ) {
     // get that window
     let Some(window) = windows.get_primary_mut() else { error!("no window you dingus"); return; };
 
     // the entity, if applicable, that we may want to apply glow to to show were hovering over it
-    // let mut glow: Entity;
+    let mut glow: Entity;
     // prioritize interactive elements
     if let Some(&e) = hovered.iter().find(|e| has_interactive.has(**e)) {
-        // glow = e;
+        glow = e;
         // if clicky click, set interactive_selected
         if buttons.just_pressed(MouseButton::Left) {
             **interactive_selected = Some(e);
@@ -46,7 +53,7 @@ pub fn get_selected(
     }
     // then check if weve selected a body
     else if let Some(&e) = hovered.iter().find(|e| has_body.has(**e)) {
-        // glow = e;
+        glow = e;
         // if clicky click, set selected modules
         if buttons.just_pressed(MouseButton::Left) {
             *selected = SelectedModules::from_entity(q_parent.entity(e).get());
@@ -62,10 +69,10 @@ pub fn get_selected(
         }
 
         // wait but stuff might be selected!
-        if let Some(_e) = **interactive_selected {
-            // glow = e;
-        } else if let Some(_e) = selected.selected && buttons.pressed(MouseButton::Left) {
-            // glow = e;
+        if let Some(e) = **interactive_selected {
+            glow = e;
+        } else if let Some(e) = selected.selected && buttons.pressed(MouseButton::Left) {
+            glow = e;
         } else {
             // dont need to bother with this stuff
             // leave
@@ -74,10 +81,14 @@ pub fn get_selected(
         }
     }
 
-    if buttons.pressed(MouseButton::Left) {
-        window.set_cursor_icon(CursorIcon::Grabbing);
+    if has_interactive.has(glow) {
+        window.set_cursor_icon(CursorIcon::Hand);
     } else {
-        window.set_cursor_icon(CursorIcon::Grab);
+        if buttons.pressed(MouseButton::Left) {
+            window.set_cursor_icon(CursorIcon::Grabbing);
+        } else {
+            window.set_cursor_icon(CursorIcon::Grab);
+        }
     }
 }
 
@@ -93,7 +104,7 @@ pub fn drag_selected(
     mut active: Local<bool>,
     mut starting_pos: Local<Vec2>,
 ) {
-    let snapping = 8.0;
+    let snapping = 1.0;
 
     // basically: if active is not true it needs these specific conditions to become true, or else the system will not run
     if !*active {
@@ -114,15 +125,21 @@ pub fn drag_selected(
 
     let Some(selected) = selected.selected else {*active = false; return};
 
-    // let io = q_children
-    //     .entity(selected)
-    //     .iter()
-    //     .filter(|e| has_io.has(**e));
-    // if keyboard.just_pressed(KeyCode::Q) || keyboard.just_pressed(KeyCode::E) {
-    //     for &e in io {
-    //         let mut tf = q_transform.entity_mut(e);
-    //     }
-    // }
+    let io = q_children
+        .entity(selected)
+        .iter()
+        .filter(|e| has_io.has(**e));
+    if keyboard.just_pressed(KeyCode::Q) {
+        for &e in io {
+            let mut tf = q_transform.entity_mut(e);
+            tf.rotate_z(TAU / 8.0)
+        }
+    } else if keyboard.just_pressed(KeyCode::E) {
+        for &e in io {
+            let mut tf = q_transform.entity_mut(e);
+            tf.rotate_z(-TAU / 8.0)
+        }
+    }
 
     let pos = &mut q_transform.entity_mut(selected).translation;
     let Vec2 { x, y } = **mouse_pos - *starting_pos;
@@ -151,7 +168,7 @@ fn place_selected(
     mut selected: ResMut<SelectedModules>,
     mut q_transform: Query<&mut Transform>,
 ) {
-    let snapping = 8.0;
+    let snapping = 1.0;
 
     // if we click then place the module
     if mouse_buttons.pressed(MouseButton::Left) {

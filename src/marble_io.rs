@@ -1,4 +1,4 @@
-use crate::{module::param::QueryQuerySimple, *};
+use crate::{module::param::{QueryQuerySimple, QueryQueryIter}, *};
 use atlas::AtlasDictionary;
 use marble::Marble;
 use rand::Rng;
@@ -27,11 +27,15 @@ pub fn fire_marbles(
     mut commands: Commands,
     mut spawn_events: EventReader<FireMarble>,
     q_transform: Query<&mut Transform>,
+    q_children: Query<&Children>,
+    w_sprite: Query<Entity, With<TextureAtlasSprite>>,
     q_parent: Query<&Parent>,
 ) {
     for event in spawn_events.iter() {
         let parent = q_parent.entity(event.from).get();
-        let transform = q_transform.entity(event.from);
+        let mut transform = q_transform.entity(q_children.entity(event.from).iter().with(&w_sprite).next().unwrap()).clone();
+        let z = transform.translation.z;
+        transform.rotate_around(Vec3::Z * z, q_transform.entity(event.from).rotation);
         let p_transform = q_transform.entity(parent);
 
         // get the rotation and position of the parent entity + the output
