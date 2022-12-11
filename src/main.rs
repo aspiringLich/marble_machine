@@ -13,7 +13,10 @@ extern crate derive_more;
 extern crate rand;
 extern crate strum;
 
-use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, sprite::Anchor};
+use bevy::{
+    core_pipeline::bloom::BloomSettings, diagnostic::FrameTimeDiagnosticsPlugin, prelude::*,
+    sprite::Anchor,
+};
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::prelude::*;
 use bevy_pancam::PanCam;
@@ -39,7 +42,7 @@ use ui::SelectedModules;
 
 fn main() {
     App::new()
-        // default plugin
+        // bevy plugins
         .add_plugins(
             DefaultPlugins
                 .set(ImagePlugin::default_nearest())
@@ -55,6 +58,7 @@ fn main() {
         .init_resource::<interact::InteractiveSelected>()
         .init_resource::<SelectedModules>()
         .init_resource::<select::CursorCoords>()
+        .init_resource::<select::HoveredEntities>()
         .init_resource::<ui::SpawningUiImages>()
         // plugins
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
@@ -85,6 +89,7 @@ fn main() {
             "spawn",
             SystemStage::parallel()
                 .with_system(spawn::spawn_modules)
+                .with_system(select::get_hovered_entities.after(spawn::spawn_modules))
                 .with_system(marble_io::fire_marbles),
         )
         .add_stage_after(
@@ -105,15 +110,22 @@ fn main() {
         .run();
 }
 
-fn setup(mut commands: Commands, mut spawn_module: EventWriter<spawn::SpawnModule>) {
+fn setup(mut commands: Commands) {
     commands
-        .spawn(Camera2dBundle {
-            projection: OrthographicProjection {
-                scale: 0.15,
+        .spawn((
+            Camera2dBundle {
+                camera: Camera {
+                    hdr: true,
+                    ..default()
+                },
+                projection: OrthographicProjection {
+                    scale: 0.15,
+                    ..default()
+                },
                 ..default()
             },
-            ..default()
-        })
+            BloomSettings::default(),
+        ))
         .insert((
             PanCam {
                 grab_buttons: vec![MouseButton::Middle],
@@ -121,8 +133,6 @@ fn setup(mut commands: Commands, mut spawn_module: EventWriter<spawn::SpawnModul
             },
             marker::Camera,
         ));
-
-    spawn_module.send(spawn::SpawnModule::new(ModuleType::Basic(default())));
 }
 
 fn pan_camera(

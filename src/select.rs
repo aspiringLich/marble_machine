@@ -23,43 +23,65 @@ pub fn system_set() -> SystemSet {
         .with_system(place_selected.run_if(place).run_if_not(egui_wants_cursor))
         .after(ui::inspector_ui)
 }
+
 /// update SelectedModule whenever the left cursor is clicked
 pub fn get_selected(
+    mut windows: ResMut<Windows>,
     mut selected: ResMut<SelectedModules>,
-    rapier_context: Res<RapierContext>,
     buttons: Res<Input<MouseButton>>,
-    mouse_pos: Res<CursorCoords>,
+    hovered: Res<HoveredEntities>,
     q_parent: Query<&Parent>,
     has_body: Query<With<marker::ModuleBody>>,
     has_interactive: Query<With<interact::Interactive>>,
     mut interactive_selected: ResMut<interact::InteractiveSelected>,
 ) {
-    // if clicky click
-    if buttons.just_pressed(MouseButton::Left) {
-        let mut found = false;
-        rapier_context.intersections_with_point(**mouse_pos, default(), |entity| {
-            if has_body.has(entity) {
-                // get the parent of the main body and set that as the selected module
-                // main body is assumed to be the child of the overall module parent entity
-                *selected = SelectedModules::from_entity(q_parent.entity(entity).get());
-                // eprintln!("selected {}", q_name.get(entity).unwrap());
-                found = true;
-                // stop we found it
-                false
-            }
-            // if we hit a interactive thingy thats the thing we select instead, ignore the body thing
-            else if has_interactive.has(entity) {
-                **interactive_selected = Some(entity);
-                found = true;
-                false
-            } else {
-                // havent found it yet
-                true
-            }
-        });
-        if !found {
-            selected.clear_selected()
+    // get that window
+    let Some(window) = windows.get_primary_mut() else { error!("no window you dingus"); return; };
+
+    // the entity, if applicable, that we may want to apply glow to to show were hovering over it
+    // let mut glow: Entity;
+    // prioritize interactive elements
+    if let Some(&e) = hovered.iter().find(|e| has_interactive.has(**e)) {
+        // glow = e;
+        // if clicky click, set interactive_selected
+        if buttons.just_pressed(MouseButton::Left) {
+            **interactive_selected = Some(e);
         }
+    }
+    // then check if weve selected a body
+    else if let Some(&e) = hovered.iter().find(|e| has_body.has(**e)) {
+        // glow = e;
+        // if clicky click, set selected modules
+        if buttons.just_pressed(MouseButton::Left) {
+            *selected = SelectedModules::from_entity(q_parent.entity(e).get());
+        }
+    } else {
+        // if clicky click, unselect stuff
+        if buttons.just_pressed(MouseButton::Left) {
+            selected.clear_selected();
+        } else if !buttons.pressed(MouseButton::Left) && let Some(_) = **interactive_selected {
+            **interactive_selected = None;
+            window.set_cursor_icon(CursorIcon::Default);
+            return;
+        }
+
+        // wait but stuff might be selected!
+        if let Some(_e) = **interactive_selected {
+            // glow = e;
+        } else if let Some(_e) = selected.selected && buttons.pressed(MouseButton::Left) {
+            // glow = e;
+        } else {
+            // dont need to bother with this stuff
+            // leave
+            window.set_cursor_icon(CursorIcon::Default);
+            return;
+        }
+    }
+
+    if buttons.pressed(MouseButton::Left) {
+        window.set_cursor_icon(CursorIcon::Grabbing);
+    } else {
+        window.set_cursor_icon(CursorIcon::Grab);
     }
 }
 
@@ -143,7 +165,7 @@ fn place_selected(
     }
 }
 
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Deref)]
 pub struct CursorCoords(Vec2);
 
 impl Default for CursorCoords {
@@ -151,28 +173,15 @@ impl Default for CursorCoords {
         CursorCoords(Vec2::ZERO)
     }
 }
-
-impl std::ops::Deref for CursorCoords {
-    type Target = Vec2;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
 /// get the position of a cursor in absolute world coordinates
 pub fn get_cursor_pos(
-    window: Res<Windows>,
+    windows: Res<Windows>,
     q_camera: Query<(&Camera, &GlobalTransform), With<marker::Camera>>,
     mut coords: ResMut<CursorCoords>,
 ) {
     let (camera, camera_transform) = q_camera.single();
 
-    let window = if let RenderTarget::Window(id) = camera.target {
-        window.get(id).unwrap()
-    } else {
-        window.get_primary().unwrap()
-    };
+    let Some(window) = windows.get_primary() else { error!("no window you dingus"); return; };
 
     if let Some(screen_pos) = window.cursor_position() {
         let window_size = Vec2::new(window.width() as f32, window.height() as f32);
@@ -183,4 +192,19 @@ pub fn get_cursor_pos(
 
         coords.0 = world_pos;
     }
+}
+
+#[derive(Default, Deref, DerefMut, Resource)]
+pub struct HoveredEntities(Vec<Entity>);
+
+pub fn get_hovered_entities(
+    mouse_pos: Res<CursorCoords>,
+    rapier_context: Res<RapierContext>,
+    mut hovered_entities: ResMut<HoveredEntities>,
+) {
+    hovered_entities.clear();
+    rapier_context.intersections_with_point(**mouse_pos, default(), |entity| {
+        hovered_entities.push(entity);
+        true
+    });
 }

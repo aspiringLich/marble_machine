@@ -42,7 +42,7 @@ pub fn fire_marbles(
             .spawn_atlas_sprite(
                 basic::marble_small,
                 Color::GREEN,
-                Transform::from_translation(pos - pos.z),
+                Transform::from_translation(pos - pos.z + 0.0625),
             )
             .insert((
                 Collider::ball(basic::marble_small.width() * 0.5),

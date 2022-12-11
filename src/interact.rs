@@ -96,7 +96,7 @@ pub fn spawn_despawn_interactive_components(
 }
 
 /// holds the interactive component currently selected
-#[derive(Deref, DerefMut, Resource, Default)]
+#[derive(Deref, DerefMut, Resource, Default, Debug)]
 pub struct InteractiveSelected(Option<Entity>);
 
 /// use the interactive widget thingies
