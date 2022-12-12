@@ -105,8 +105,6 @@ pub fn update_inputs(
     for event in collision_events.iter() {
         use CollisionEvent::*;
         
-        dbg!(&event);
-        
         let (e1, e2) = match event {
             Started(e1, e2, _) => (*e1, *e2),
             _ => continue,
