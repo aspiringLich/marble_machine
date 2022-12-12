@@ -30,7 +30,7 @@ where
                     ),
                     TransformBundle::from_transform(offset_tf),
                 ))
-                .insert(Name::new("out.collider"))
+                .insert(Name::new("in.collider"))
                 .id(),
         );
 
@@ -56,6 +56,7 @@ where
                     Sensor,
                     ActiveEvents::COLLISION_EVENTS,
                     Name::new("in.sprite"),
+                    marker::Input(n),
                 ))
                 .id(),
         );

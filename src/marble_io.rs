@@ -104,7 +104,9 @@ pub fn update_inputs(
 ) {
     for event in collision_events.iter() {
         use CollisionEvent::*;
-
+        
+        dbg!(&event);
+        
         let (e1, e2) = match event {
             Started(e1, e2, _) => (*e1, *e2),
             _ => continue,
@@ -116,7 +118,7 @@ pub fn update_inputs(
                 let marble_e = e2;
                 let marble = *q_marble.entity(e2);
                 
-                let parent = q_parent.entity(e1).get();
+                let parent = q_parent.entity(q_parent.entity(e1).get()).get();
                 let mut input_state = q_input_state.entity_mut(parent);
                 
                 // if the input is not occupied, despawn the marble and update input_state

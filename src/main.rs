@@ -17,6 +17,7 @@ use bevy::{
     core_pipeline::bloom::BloomSettings, diagnostic::FrameTimeDiagnosticsPlugin, prelude::*,
     sprite::Anchor,
 };
+use bevy_editor_pls::prelude::*;
 use bevy_egui::EguiPlugin;
 use bevy_inspector_egui::prelude::*;
 use bevy_pancam::PanCam;
@@ -65,6 +66,7 @@ fn main() {
         .add_plugin(fps::FpsText)
         .add_plugin(EguiPlugin)
         .add_plugin(bevy_pancam::PanCamPlugin)
+        // .add_plugin(EditorPlugin)
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
         // .add_plugin(RapierDebugRenderPlugin::default())
@@ -115,7 +117,7 @@ fn setup(mut commands: Commands) {
         .spawn((
             Camera2dBundle {
                 camera: Camera {
-                    hdr: true,
+                    // hdr: true,
                     ..default()
                 },
                 projection: OrthographicProjection {
@@ -124,7 +126,7 @@ fn setup(mut commands: Commands) {
                 },
                 ..default()
             },
-            BloomSettings::default(),
+            // BloomSettings::default(),
         ))
         .insert((
             PanCam {

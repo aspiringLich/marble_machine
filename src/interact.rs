@@ -34,7 +34,7 @@ pub fn spawn_despawn_interactive_components(
     mut commands: Commands,
     selected: Res<SelectedModules>,
     mut prev_selected: Local<u64>,
-    q_children: Query<&Children>,
+    mut q_children: Query<&mut Children>,
     mut q_module: Query<&mut ModuleType>,
     has_interactive: Query<Or<(With<Interactive>, With<InteractiveClickable>)>>,
     w_input: Query<Entity, With<marker::Input>>,
@@ -131,12 +131,9 @@ pub fn spawn_despawn_interactive_components(
         commands.entity(module).push_children(&children);
     } else {
         if let Some(b) = *before {
+            let to_be_removed: Vec<_> = q_children.iter_descendants(b).into_iter().filter(|e| has_interactive.has(*e)).collect();
             // remove all the interactive components
-            for entity in q_children.iter_descendants(b) {
-                if has_interactive.has(entity) {
-                    commands.entity(entity).despawn()
-                }
-            }
+            to_be_removed.iter().for_each(|e| commands.entity(*e).despawn_recursive());
             *before = None;
         }
     }
