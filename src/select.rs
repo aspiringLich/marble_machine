@@ -167,6 +167,8 @@ fn place_selected(
     mouse_buttons: Res<Input<MouseButton>>,
     mut selected: ResMut<SelectedModules>,
     mut q_transform: Query<&mut Transform>,
+    q_children: Query<&Children>,
+    has_io: Query<Or<(With<marker::Input>, With<marker::Output>)>>,
 ) {
     let snapping = 1.0;
 
@@ -178,6 +180,23 @@ fn place_selected(
     // else the module follows the mouse
     else {
         let Some(selected) = selected.selected else { unreachable!() };
+
+        let io = q_children
+            .entity(selected)
+            .iter()
+            .filter(|e| has_io.has(**e));
+        if keyboard.just_pressed(KeyCode::Q) {
+            for &e in io {
+                let mut tf = q_transform.entity_mut(e);
+                tf.rotate_z(TAU / 8.0)
+            }
+        } else if keyboard.just_pressed(KeyCode::E) {
+            for &e in io {
+                let mut tf = q_transform.entity_mut(e);
+                tf.rotate_z(-TAU / 8.0)
+            }
+        }
+
         let pos = &mut q_transform.entity_mut(selected).translation;
         let Vec2 { x, y } = **mouse_pos;
 

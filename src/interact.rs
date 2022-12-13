@@ -157,7 +157,6 @@ pub fn use_widgets(
     q_delete: Query<&DeleteWidget>,
     q_parent: Query<&Parent>,
     q_children: Query<&Children>,
-    w_body: Query<Entity, With<marker::ModuleBody>>,
     has_io: Query<Or<(With<marker::Input>, With<marker::Output>)>>,
     mut active: Local<bool>,
     buttons: Res<Input<MouseButton>>,
