@@ -71,7 +71,7 @@ fn main() {
         // .add_plugin(EditorPlugin)
         .add_plugin(WorldInspectorPlugin::new())
         .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-        // .add_plugin(RapierDebugRenderPlugin::default())
+        .add_plugin(RapierDebugRenderPlugin::default())
         // events
         .add_event::<marble_io::FireMarble>()
         .add_event::<module::UpdateModule>()

@@ -196,6 +196,7 @@ pub fn use_widgets(
     buttons: Res<Input<MouseButton>>,
     mouse_pos: Res<CursorCoords>,
     mut diff: Local<Option<f32>>,
+    keyboard: Res<Input<KeyCode>>,
 ) {
     // uh just trust me this works
     // i kinda forgot the logic behind it like right after i wrote it
@@ -221,6 +222,8 @@ pub fn use_widgets(
         Some(-relative_pos.angle_between(Vec2::X) + PI)
     };
     
+    let step = PI / 12.0;
+    
     use Interactive::*;
     match q_interactive.entity(entity) {
         Rotation => {
@@ -240,25 +243,33 @@ pub fn use_widgets(
             };
             
             let root = q_transform.entity(module);
-            if let Some(angle) = rel_angle(root) {
-                let Some(diff) = *diff else {
-                    *diff = Some(angle - *io_rot - rot);
-                    return;
-                };
+            let Some(angle) = rel_angle(root) else { return; };
+            let Some(diff) = *diff else {
+                *diff = Some(angle - *io_rot - rot);
+                return;
+            };
+            
+            if keyboard.pressed(KeyCode::LShift) {
+                let rounded = ((angle - diff) / step).round() * step;
+                *io_rot = rounded - rot;
+            } else {
                 *io_rot = angle - rot - diff;
             }
         }
         IORotation => {
             let module = q_parent.entity(entity).get();
             let mut i_rot = q_interactive_rot.entity_mut(module);
-            // dbg!(&i_rot);
             
             let root = q_transform.entity(module);
-            if let Some(angle) = rel_angle(root) {
-                let Some(diff) = *diff else {
-                    *diff = Some(angle - i_rot.rot);
-                    return;
-                };
+            let Some(angle) = rel_angle(root) else { return; };
+            let Some(diff) = *diff else {
+                *diff = Some(angle - i_rot.rot);
+                return;
+            };
+            
+            if keyboard.pressed(KeyCode::LShift) {
+                i_rot.rot = ((angle - diff) / step).round() * step;
+            } else {
                 i_rot.rot = angle - diff;
             }
         },
@@ -281,7 +292,6 @@ pub fn do_interactive_rotation(
     q_children: Query<&Children>,
 ) {
     let Ok(entity) = w_interactive_rot.get_single() else { return; }; 
-    
     let Ok(i_rot) = q_interactive_rot.get(entity) else { return; };
     let children = q_children.entity(entity);
     
