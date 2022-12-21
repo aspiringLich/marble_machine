@@ -30,6 +30,8 @@ impl ModuleType {
 }
 
 pub mod param {
+    use std::intrinsics::type_name;
+
     use crate::*;
     use bevy::ecs::{
         query::{QueryIter, ROQueryItem, ReadOnlyWorldQuery, WorldQuery},
@@ -49,7 +51,13 @@ pub mod param {
         /// get the thing that satisfies this query under this entity
         #[must_use]
         fn entity(&'a self, entity: Entity) -> ROQueryItem<'_, Q> {
-            self.get_self().get(entity).unwrap()
+            self.get_self().get(entity).unwrap_or_else(|_| {
+                error!(
+                    "Expected component {} to exist on the queried entity",
+                    type_name::<Q>()
+                );
+                panic!()
+            })
         }
 
         /// gets the thing that satisfies this query under this entity *mutably*
@@ -58,12 +66,12 @@ pub mod param {
         #[must_use]
         fn entity_mut(&'a mut self, entity: Entity) -> Q::Item<'a> {
             unsafe {
-                self.get_self().get_unchecked(entity).expect(&{
-                    format!(
-                        "[{}{}] component was expected but was not found",
-                        file!(),
-                        line!(),
-                    )
+                self.get_self().get_unchecked(entity).unwrap_or_else(|_| {
+                    error!(
+                        "Expected component {} to exist on the queried entity",
+                        type_name::<Q>()
+                    );
+                    panic!()
                 })
             }
         }

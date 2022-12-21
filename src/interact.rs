@@ -11,21 +11,33 @@ use crate::{
     *,
 };
 
-#[derive(Component)]
-pub struct Interactive;
+#[derive(Component, Debug)]
+pub enum Interactive {
+    Rotation,
+    IORotation,
+    Delete,
+}
 
-/// marks a components such that a different mouse cursor will appear when hovering over it
-#[derive(Component)]
-pub struct InteractiveClickable;
+#[derive(Component, Debug)]
+pub struct InteractiveRotation {
+    pub input_rot: Vec<f32>,
+    pub output_rot: Vec<f32>,
+    pub rot: f32,
+}
 
-#[derive(Component)]
-pub struct RotationWidget;
-
-#[derive(Component)]
-pub struct IORotationWidget;
-
-#[derive(Component)]
-pub struct DeleteWidget;
+impl InteractiveRotation {
+    pub fn from<'a, T: Iterator<Item = &'a Transform>>(inputs: T, outputs: T) -> Self {
+        Self {
+            input_rot: inputs
+                .map(|t| t.rotation.to_euler(EulerRot::XYZ).2)
+                .collect(),
+            output_rot: outputs
+                .map(|t| t.rotation.to_euler(EulerRot::XYZ).2)
+                .collect(),
+            rot: 0.0,
+        }
+    }
+}
 
 const ROTATION_WIDGET_OFFSET: f32 = 8.0;
 
@@ -36,8 +48,9 @@ pub fn spawn_despawn_interactive_components(
     mut prev_selected: Local<u64>,
     q_children: Query<&Children>,
     q_parent: Query<&Parent>,
+    q_transform: Query<&Transform>,
     mut q_module: Query<&mut ModuleType>,
-    has_interactive: Query<Or<(With<Interactive>, With<InteractiveClickable>)>>,
+    has_interactive: Query<With<Interactive>>,
     w_input: Query<Entity, With<marker::Input>>,
     w_output: Query<Entity, With<marker::Output>>,
     mut before: Local<Option<Entity>>,
@@ -59,10 +72,16 @@ pub fn spawn_despawn_interactive_components(
     // spawn all the interactive components
     if let Some(module) = selected.selected {
         if let Some(b) = *before {
-            let to_be_removed: Vec<_> = q_children.iter_descendants(b).into_iter().filter(|e| has_interactive.has(*e)).collect();
+            let to_be_removed: Vec<_> = q_children
+                .iter_descendants(b)
+                .into_iter()
+                .filter(|e| has_interactive.has(*e))
+                .collect();
             // remove all the interactive components
             to_be_removed.iter().for_each(|&e| {
-                commands.entity(q_parent.entity(e).get()).remove_children(&[e]);
+                commands
+                    .entity(q_parent.entity(e).get())
+                    .remove_children(&[e]);
                 commands.entity(e).despawn();
             });
             *before = None;
@@ -99,44 +118,59 @@ pub fn spawn_despawn_interactive_components(
 
         // rotation widgets
         let children = q_children.entity(module);
-        let inputs = children.iter().with(&w_input);
-        let outputs = children.iter().with(&w_output);
+        let inputs = children.iter().with_collect(&w_input);
+        let outputs = children.iter().with_collect(&w_output);
         let color = Color::ORANGE;
 
         let mut children = vec![];
-        for entity in inputs.chain(outputs) {
+
+        for entity in inputs.iter().chain(outputs.iter()) {
             let child = spawn_widget!(
                 Vec3::X * (ROTATION_WIDGET_OFFSET + body.offset()),
                 color,
                 "rotation.widget",
-                RotationWidget,
-                Interactive
+                Interactive::Rotation
             );
-            commands.entity(entity).add_child(child);
+            commands.entity(*entity).add_child(child);
         }
         children.push(spawn_widget!(
             Vec3::new(body.offset() - 3.0, 0.0, 0.0),
             color,
             "io_rotation.widget",
-            IORotationWidget,
-            Interactive
+            Interactive::IORotation
         ));
         children.push(spawn_widget!(
             Vec3::new(-body.offset(), body.offset(), 0.0),
             Color::RED,
             "delete.widget",
-            DeleteWidget,
-            InteractiveClickable
+            Interactive::Delete
         ));
+
         commands.entity(module).push_children(&children);
+
+        let get_transform = |e: &Entity| q_transform.get(*e).ok();
+        commands.entity(module).insert(InteractiveRotation::from(
+            inputs.iter().filter_map(get_transform),
+            outputs.iter().filter_map(get_transform),
+        ));
     } else {
         if let Some(b) = *before {
-            let to_be_removed: Vec<_> = q_children.iter_descendants(b).into_iter().filter(|e| has_interactive.has(*e)).collect();
+            if commands.get_entity(b).is_none() {
+                return;
+            }
+            let to_be_removed: Vec<_> = q_children
+                .iter_descendants(b)
+                .into_iter()
+                .filter(|e| has_interactive.has(*e))
+                .collect();
             // remove all the interactive components
             to_be_removed.iter().for_each(|&e| {
-                commands.entity(q_parent.entity(e).get()).remove_children(&[e]);
+                commands
+                    .entity(q_parent.entity(e).get())
+                    .remove_children(&[e]);
                 commands.entity(e).despawn();
             });
+            commands.entity(b).remove::<InteractiveRotation>();
             *before = None;
         }
     }
@@ -146,89 +180,133 @@ pub fn spawn_despawn_interactive_components(
 #[derive(Deref, DerefMut, Resource, Default, Debug)]
 pub struct InteractiveSelected(Option<Entity>);
 
+/// TODO: implement this better, somehow i dont think this has bugs but you cant be suuure
 /// use the interactive widget thingies
 pub fn use_widgets(
     mut commands: Commands,
     mut selected: ResMut<SelectedModules>,
     interactive_selected: Res<InteractiveSelected>,
-    mut q_transform: Query<&mut Transform>,
-    q_rotation: Query<&RotationWidget>,
-    q_io_rotation: Query<&IORotationWidget>,
-    q_delete: Query<&DeleteWidget>,
+    q_transform: Query<&Transform>,
     q_parent: Query<&Parent>,
-    q_children: Query<&Children>,
-    has_io: Query<Or<(With<marker::Input>, With<marker::Output>)>>,
+    q_interactive: Query<&Interactive>,
+    mut q_interactive_rot: Query<&mut InteractiveRotation>,
+    q_in: Query<&marker::Input>,
+    q_out: Query<&marker::Output>,
     mut active: Local<bool>,
     buttons: Res<Input<MouseButton>>,
     mouse_pos: Res<CursorCoords>,
-    // the previous global rotation
-    mut prev_rot: Local<Option<f32>>,
-    mut prev_io_rot: Local<Option<Entity>>,
+    mut diff: Local<Option<f32>>,
 ) {
     // uh just trust me this works
     // i kinda forgot the logic behind it like right after i wrote it
     let changed = interactive_selected.is_changed();
     if (!changed && !*active) || !buttons.pressed(MouseButton::Left) {
         *active = false;
-        *prev_rot = None;
+        *diff = None;
         return;
     }
     let Some(entity) = **interactive_selected else { 
         *active = false; 
-        *prev_rot = None;
+        *diff = None;
         return; 
     };
     *active = true;
+    
 
-    // horrible terrible mess i hope to never lay eyes upon again
-    if q_rotation.get(entity).is_ok() {
-        let parent = q_parent.entity(q_parent.entity(entity).get()).get();
-        // were the child of input which is the child of the module entity, so
-        let parent_tf = q_transform.entity(parent);
-        // the relative mouse pos of our cursor and the module
-        let relative_pos = parent_tf.translation.truncate() - **mouse_pos;
+    let rel_angle = |t: &Transform| {
+        let relative_pos = t.translation.truncate() - **mouse_pos;
         if relative_pos == Vec2::ZERO {
-            return;
+            return None;
         }
-
-        let rotation = -relative_pos.angle_between(Vec2::X) + PI;
-
-        let mut affecting_tf = q_transform.entity_mut(q_parent.entity(entity).get());
-        affecting_tf.rotation = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, rotation);
+        Some(-relative_pos.angle_between(Vec2::X) + PI)
+    };
+    
+    use Interactive::*;
+    match q_interactive.entity(entity) {
+        Rotation => {
+            let io_port = q_parent.entity(entity).get();
+            let module = q_parent.entity(io_port).get();
+            
+            let mut i_rot = q_interactive_rot.entity_mut(module);
+            let rot = i_rot.rot;
+            // dbg!(&i_rot);
+            let io_rot = if let Ok(marker::Input(n)) = q_in.get(io_port) {
+                &mut i_rot.input_rot[*n]
+            } else if let Ok(marker::Output(n)) = q_out.get(io_port) {
+                &mut i_rot.output_rot[*n]
+            } else {
+                error!("Expected Input or Output component on module entity; Did not find either.");
+                return;
+            };
+            
+            let root = q_transform.entity(module);
+            if let Some(angle) = rel_angle(root) {
+                let Some(diff) = *diff else {
+                    *diff = Some(angle - *io_rot - rot);
+                    return;
+                };
+                *io_rot = angle - rot - diff;
+            }
+        }
+        IORotation => {
+            let module = q_parent.entity(entity).get();
+            let mut i_rot = q_interactive_rot.entity_mut(module);
+            // dbg!(&i_rot);
+            
+            let root = q_transform.entity(module);
+            if let Some(angle) = rel_angle(root) {
+                let Some(diff) = *diff else {
+                    *diff = Some(angle - i_rot.rot);
+                    return;
+                };
+                i_rot.rot = angle - diff;
+            }
+        },
+        Delete => {
+            let parent = q_parent.entity(entity).get();
+            commands.entity(parent).despawn_recursive();
+            *active = false;
+            selected.clear_selected();
+        },
     }
-    // i should really implement this better this is just the easiest way
-    else if q_io_rotation.get(entity).is_ok() {
-        *prev_io_rot = Some(entity);
-        // rotate the parent, but also rotate the body in the opposite direction
-        let parent = q_parent.entity(entity).get();
+}
 
-        // the relative mouse pos of our cursor and the module
-        let parent_pos = q_transform.entity_mut(parent).translation.truncate();
-        let relative_pos = parent_pos - **mouse_pos;
-        if relative_pos == Vec2::ZERO {
-            return;
+pub fn do_interactive_rotation(
+    w_interactive_rot: Query<Entity, Changed<InteractiveRotation>>,
+    q_interactive_rot: Query<&InteractiveRotation>,
+    q_interactive: Query<&Interactive>,
+    mut q_transform: Query<&mut Transform>,
+    w_i: Query<Entity, With<marker::Input>>,
+    w_o: Query<Entity, With<marker::Output>>,
+    q_children: Query<&Children>,
+) {
+    let Ok(entity) = w_interactive_rot.get_single() else { return; }; 
+    
+    let Ok(i_rot) = q_interactive_rot.get(entity) else { return; };
+    let children = q_children.entity(entity);
+    
+    let interactive = children.iter().filter_map(|e| q_interactive.get(*e).ok().map(|i| (e, i)));
+    for (e, i) in interactive {
+        use Interactive::*;
+        match i {
+            IORotation => {
+                let mut transform = q_transform.entity_mut(*e);
+                let z = transform.translation.z;
+                let rot = transform.rotation.to_euler(EulerRot::XYZ).2;
+                
+                transform.rotate_around(Vec2::ZERO.extend(z), Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.rot - rot));
+                break;
+            },
+            _ => continue,
         }
+    }
 
-        let rotation = -relative_pos.angle_between(Vec2::X) + PI;
-        let diff = rotation - prev_rot.unwrap_or(rotation);
-        *prev_rot = Some(rotation);
-
-        // rotate all the io things
-        for &io_entity in q_children
-            .entity(parent)
-            .iter()
-            .filter(|&&entity| has_io.has(entity))
-        {
-            q_transform.entity_mut(io_entity).rotate_z(diff);
-        }
-        // rotate muhself
-        let mut tf = q_transform.entity_mut(entity);
-        let z = tf.translation.z;
-        tf.rotate_around(Vec3::Z * z, Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, diff));
-    } else if q_delete.get(entity).is_ok() {
-        let parent = q_parent.entity(entity).get();
-        commands.entity(parent).despawn_recursive();
-        *active = false;
-        selected.clear_selected();
+    for (i, input) in children.iter().with(&w_i).enumerate() {
+        let mut transform = q_transform.entity_mut(input);
+        transform.rotation = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.input_rot[i] + i_rot.rot);
+    }
+    for (i, output) in children.iter().with(&w_o).enumerate() {
+        let mut transform = q_transform.entity_mut(output);
+        transform.rotation = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.output_rot[i] + i_rot.rot);
     }
 }

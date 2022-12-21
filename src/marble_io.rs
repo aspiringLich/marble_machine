@@ -1,4 +1,7 @@
-use crate::{module::param::{QueryQuerySimple, QueryQueryIter}, *};
+use crate::{
+    module::param::{QueryQueryIter, QueryQuerySimple},
+    *,
+};
 use atlas::AtlasDictionary;
 use marble::Marble;
 use rand::Rng;
@@ -16,7 +19,9 @@ pub struct FireMarble {
 impl FireMarble {
     pub fn new(marble: Marble, from: Entity, power: f32) -> Self {
         FireMarble {
-            marble, from, power
+            marble,
+            from,
+            power,
         }
     }
 }
@@ -33,7 +38,16 @@ pub fn fire_marbles(
 ) {
     for event in spawn_events.iter() {
         let parent = q_parent.entity(event.from).get();
-        let mut transform = q_transform.entity(q_children.entity(event.from).iter().with(&w_sprite).next().unwrap()).clone();
+        let mut transform = q_transform
+            .entity(
+                q_children
+                    .entity(event.from)
+                    .iter()
+                    .with(&w_sprite)
+                    .next()
+                    .unwrap(),
+            )
+            .clone();
         let z = transform.translation.z;
         transform.rotate_around(Vec3::Z * z, q_transform.entity(event.from).rotation);
         let p_transform = q_transform.entity(parent);
@@ -104,7 +118,7 @@ pub fn update_inputs(
 ) {
     for event in collision_events.iter() {
         use CollisionEvent::*;
-        
+
         let (e1, e2) = match event {
             Started(e1, e2, _) => (*e1, *e2),
             _ => continue,

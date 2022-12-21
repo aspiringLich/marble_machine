@@ -8,6 +8,8 @@
 #![feature(once_cell)]
 #![feature(trivial_bounds)]
 #![feature(return_position_impl_trait_in_trait)]
+#![feature(panic_backtrace_config)]
+#![feature(core_intrinsics)]
 
 extern crate derive_more;
 extern crate rand;
@@ -107,7 +109,8 @@ fn main() {
                 .with_system(module::update_module_callbacks)
                 .with_system(ui::spawning_ui)
                 .with_system(interact::spawn_despawn_interactive_components)
-                .with_system(interact::use_widgets.after("select")),
+                .with_system(interact::use_widgets.after("select"))
+                .with_system(interact::do_interactive_rotation.after(interact::use_widgets)),
         )
         .run();
 }

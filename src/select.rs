@@ -30,12 +30,7 @@ pub fn get_selected(
     hovered: Res<HoveredEntities>,
     q_parent: Query<&Parent>,
     has_body: Query<With<marker::ModuleBody>>,
-    has_interactive: Query<
-        Or<(
-            With<interact::Interactive>,
-            With<interact::InteractiveClickable>,
-        )>,
-    >,
+    has_interactive: Query<With<interact::Interactive>>,
     mut interactive_selected: ResMut<interact::InteractiveSelected>,
 ) {
     // get that window
