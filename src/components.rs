@@ -20,8 +20,7 @@ where
         let (texture_atlas, index) = basic::marble_input.info();
         let offset_tf = Transform::from_translation(Vec3::X * offset);
 
-        let mut children = vec![];
-        children.push(
+        let children = vec![
             commands
                 .spawn((
                     Collider::polyline(
@@ -32,14 +31,9 @@ where
                 ))
                 .insert(Name::new("in.collider"))
                 .id(),
-        );
-
-        children.push(
             commands
                 .spawn_indicator(Vec3::new(-1.5, 0.0, 0.625) + offset_tf.translation)
                 .id(),
-        );
-        children.push(
             commands
                 .spawn((
                     SpriteSheetBundle {
@@ -59,7 +53,7 @@ where
                     marker::Input(n),
                 ))
                 .id(),
-        );
+        ];
 
         let mut out = commands.spawn((
             SpriteBundle {
@@ -85,8 +79,7 @@ where
         let (texture_atlas, index) = basic::marble_output.info();
         let offset_tf = Transform::from_translation(Vec3::X * offset);
 
-        let mut children = vec![];
-        children.push(
+        let children = vec![
             commands
                 .spawn((
                     Collider::polyline(
@@ -97,8 +90,6 @@ where
                 ))
                 .insert(Name::new("out.collider"))
                 .id(),
-        );
-        children.push(
             commands
                 .spawn((
                     SpriteSheetBundle {
@@ -114,7 +105,7 @@ where
                     Name::new("out.sprite"),
                 ))
                 .id(),
-        );
+        ];
 
         let mut out = commands.spawn((
             SpriteBundle {

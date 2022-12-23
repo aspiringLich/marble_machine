@@ -30,14 +30,15 @@ use once_cell::sync::Lazy;
 mod atlas;
 mod components;
 mod fps;
-mod interact;
 mod marble;
 mod marble_io;
 mod misc;
 mod module;
-mod select;
 mod spawn;
 mod ui;
+
+mod interactive;
+use interactive::*;
 
 use atlas::basic;
 use misc::marker;
@@ -63,6 +64,11 @@ fn main() {
         .init_resource::<select::CursorCoords>()
         .init_resource::<select::HoveredEntities>()
         .init_resource::<ui::SpawningUiImages>()
+        .insert_resource(RapierConfiguration {
+            physics_pipeline_active: true,
+            query_pipeline_active: true,
+            ..default()
+        })
         // plugins
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_plugin(fps::FpsText)
@@ -101,16 +107,14 @@ fn main() {
             "main",
             SystemStage::parallel()
                 .with_system(ui::inspector_ui)
-                .with_system_set(select::system_set().label("select"))
+                .with_system_set(interactive::system_set())
                 .with_system(pan_camera)
                 .with_system(marble::despawn_marbles)
                 .with_system(marble_io::update_inputs)
                 .with_system(module::update_modules)
                 .with_system(module::update_module_callbacks)
                 .with_system(ui::spawning_ui)
-                .with_system(interact::spawn_despawn_interactive_components)
-                .with_system(interact::use_widgets.after("select"))
-                .with_system(interact::do_interactive_rotation.after(interact::use_widgets)),
+                .with_system(ui::debug_ui),
         )
         .run();
 }

@@ -26,6 +26,8 @@ impl FireMarble {
     }
 }
 
+pub const VELOCITY_FACTOR: f32 = 120.0;
+
 /// if any `SpawnMarbles` events have fired, fire a marble at the specified entity with the
 /// right power and such and such.
 pub fn fire_marbles(
@@ -38,7 +40,7 @@ pub fn fire_marbles(
 ) {
     for event in spawn_events.iter() {
         let parent = q_parent.entity(event.from).get();
-        let mut transform = q_transform
+        let mut transform = *q_transform
             .entity(
                 q_children
                     .entity(event.from)
@@ -46,8 +48,7 @@ pub fn fire_marbles(
                     .with(&w_sprite)
                     .next()
                     .unwrap(),
-            )
-            .clone();
+            );
         let z = transform.translation.z;
         transform.rotate_around(Vec3::Z * z, q_transform.entity(event.from).rotation);
         let p_transform = q_transform.entity(parent);
@@ -66,7 +67,7 @@ pub fn fire_marbles(
                 Collider::ball(basic::marble_small.width() * 0.5),
                 RigidBody::Dynamic,
                 Velocity {
-                    linvel: rotation.mul_vec3(Vec3::X).truncate() * 120.0,
+                    linvel: rotation.mul_vec3(Vec3::X).truncate() * VELOCITY_FACTOR,
                     angvel: rand::thread_rng().gen_range(-10.0..10.0),
                 },
                 ColliderMassProperties::Mass(1.0),
@@ -106,6 +107,7 @@ impl std::ops::IndexMut<usize> for InputState {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn update_inputs(
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,

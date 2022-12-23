@@ -39,9 +39,10 @@ impl InteractiveRotation {
     }
 }
 
-const ROTATION_WIDGET_OFFSET: f32 = 8.0;
+const ROTATION_WIDGET_OFFSET: f32 = 4.0;
 
 /// look at SelectedModules and if its modified run this function
+#[allow(clippy::too_many_arguments)]
 pub fn spawn_despawn_interactive_components(
     mut commands: Commands,
     selected: Res<SelectedModules>,
@@ -95,7 +96,7 @@ pub fn spawn_despawn_interactive_components(
             .spawn_instructions()
             .body;
 
-        macro spawn_widget($translation:expr, $color:expr, $name:literal $($tail:tt)*) {
+        macro spawn_widget($translation:expr, $color:expr, $name:literal, $factor:literal $($tail:tt)*) {
             commands
                 .spawn((
                     SpriteSheetBundle {
@@ -108,7 +109,7 @@ pub fn spawn_despawn_interactive_components(
                         transform: Transform::from_translation($translation + Vec3::Z * 2.0).with_scale(Vec3::ONE * 1.01),
                         ..default()
                     },
-                    Collider::ball(basic::marble_small.width() / 2.0),
+                    Collider::ball(basic::marble_small.width() / 2.0 * $factor),
                     Sensor,
                     Name::new($name)
                     $($tail)*
@@ -129,6 +130,7 @@ pub fn spawn_despawn_interactive_components(
                 Vec3::X * (ROTATION_WIDGET_OFFSET + body.offset()),
                 color,
                 "rotation.widget",
+                2.0,
                 Interactive::Rotation
             );
             commands.entity(*entity).add_child(child);
@@ -137,12 +139,14 @@ pub fn spawn_despawn_interactive_components(
             Vec3::new(body.offset() - 3.0, 0.0, 0.0),
             color,
             "io_rotation.widget",
+            1.0,
             Interactive::IORotation
         ));
         children.push(spawn_widget!(
             Vec3::new(-body.offset(), body.offset(), 0.0),
             Color::RED,
             "delete.widget",
+            1.0,
             Interactive::Delete
         ));
 
@@ -182,6 +186,7 @@ pub struct InteractiveSelected(Option<Entity>);
 
 /// TODO: implement this better, somehow i dont think this has bugs but you cant be suuure
 /// use the interactive widget thingies
+#[allow(clippy::too_many_arguments)]
 pub fn use_widgets(
     mut commands: Commands,
     mut selected: ResMut<SelectedModules>,

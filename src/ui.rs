@@ -67,9 +67,11 @@ pub fn inspector_ui(
     // println!("{}", window.unwrap().response.rect.width());
 }
 
+type LayoutFn<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
+
 #[non_exhaustive]
 pub struct Layout<'a> {
-    main: Vec<Box<dyn FnOnce(&mut Ui) + 'a>>,
+    main: Vec<LayoutFn<'a>>,
 }
 
 impl<'a> Layout<'a> {
@@ -231,5 +233,38 @@ pub fn spawning_ui(
                 spawn_module
                     .send(SpawnModule::new(ModuleType::Basic(module::Basic::default())).place());
             }
+        });
+}
+
+/// creates the master debug ui thing
+pub fn debug_ui(
+    mut egui_context: ResMut<EguiContext>,
+    mut rapier_config: ResMut<RapierConfiguration>,
+    mut step: Local<bool>,
+) {
+    let active = &mut rapier_config.physics_pipeline_active;
+    if *step {
+        *active = false;
+        *step = false;
+    }
+
+    egui::Window::new("debug ui thing")
+        .resizable(true)
+        .collapsible(false)
+        .show(egui_context.ctx_mut(), |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Physics Pipeline");
+                if ui
+                    .button([" ⏵ ", " ⏸ "][*active as usize])
+                    .on_hover_text("Start / Stop physics")
+                    .clicked()
+                {
+                    *active = !*active;
+                }
+                if ui.button(" step ").on_hover_text("Step").clicked() {
+                    *active = true;
+                    *step = true;
+                }
+            });
         });
 }

@@ -3,26 +3,8 @@ use std::f32::consts::TAU;
 use crate::{module::param::*, *};
 use iyes_loopless::prelude::{ConditionHelpers, IntoConditionalSystem};
 
-/// if:
-///     SelectedModules is in place mode,
-///     SelectedModules has something selected
-fn place(res: Res<SelectedModules>) -> bool {
-    res.place && res.selected.is_some()
-}
-
-fn egui_wants_cursor(mut ctx: ResMut<bevy_egui::EguiContext>) -> bool {
-    ctx.ctx_mut().wants_pointer_input()
-}
-
-pub fn system_set() -> SystemSet {
-    SystemSet::new()
-        .with_system(get_selected.run_if_not(place).run_if_not(egui_wants_cursor))
-        .with_system(drag_selected.run_if_not(place))
-        .with_system(place_selected.run_if(place).run_if_not(egui_wants_cursor))
-        .after(ui::inspector_ui)
-}
-
 /// update SelectedModule whenever the left cursor is clicked
+#[allow(clippy::too_many_arguments)]
 pub fn get_selected(
     mut windows: ResMut<Windows>,
     mut selected: ResMut<SelectedModules>,
@@ -78,16 +60,15 @@ pub fn get_selected(
 
     if has_interactive.has(glow) {
         window.set_cursor_icon(CursorIcon::Hand);
+    } else if buttons.pressed(MouseButton::Left) {
+        window.set_cursor_icon(CursorIcon::Grabbing);
     } else {
-        if buttons.pressed(MouseButton::Left) {
-            window.set_cursor_icon(CursorIcon::Grabbing);
-        } else {
-            window.set_cursor_icon(CursorIcon::Grab);
-        }
+        window.set_cursor_icon(CursorIcon::Grab);
     }
 }
 
 /// drag the selected module(s) around
+#[allow(clippy::too_many_arguments)]
 pub fn drag_selected(
     mouse_pos: Res<CursorCoords>,
     mouse_buttons: Res<Input<MouseButton>>,
@@ -156,7 +137,7 @@ pub fn drag_selected(
 
 /// runs if SelectedModules's place flag is true
 /// place the selected module somewhere
-fn place_selected(
+pub fn place_selected(
     keyboard: Res<Input<KeyCode>>,
     mouse_pos: Res<CursorCoords>,
     mouse_buttons: Res<Input<MouseButton>>,
@@ -226,7 +207,7 @@ pub fn get_cursor_pos(
     let Some(window) = windows.get_primary() else { error!("no window you dingus"); return; };
 
     if let Some(screen_pos) = window.cursor_position() {
-        let window_size = Vec2::new(window.width() as f32, window.height() as f32);
+        let window_size = Vec2::new(window.width(), window.height());
         let ndc = (screen_pos / window_size) * 2.0 - Vec2::ONE;
         let ndc_to_world = camera_transform.compute_matrix() * camera.projection_matrix().inverse();
         let world_pos = ndc_to_world.project_point3(ndc.extend(-1.0));

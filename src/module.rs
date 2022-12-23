@@ -22,7 +22,7 @@ impl Default for ModuleType {
 }
 
 impl ModuleType {
-    pub fn get_inner<'a>(&'a mut self) -> &'a mut impl Module {
+    pub fn get_inner(&mut self) -> &mut impl Module {
         match self {
             Self::Basic(x) => x,
         }
@@ -193,21 +193,21 @@ pub mod param {
         }
     }
 
-    impl<'w, 's> QueryQueryIter<'w> for std::slice::Iter<'w, Entity> {
+    impl<'w> QueryQueryIter<'w> for std::slice::Iter<'w, Entity> {
         fn get_self(self) -> impl Iterator<Item = Entity> + 'w {
-            self.map(|x| *x)
+            self.copied()
         }
     }
 
-    impl<'w, 's, I: Iterator<Item = Entity> + 'w> QueryQueryIter<'w> for QueryOutput<I> {
+    impl<'w, I: Iterator<Item = Entity> + 'w> QueryQueryIter<'w> for QueryOutput<I> {
         fn get_self(self) -> impl Iterator<Item = Entity> + 'w {
             self
         }
     }
 
-    impl<'w, 's> QueryQueryIter<'w> for &'w Vec<Entity> {
+    impl<'w> QueryQueryIter<'w> for &'w Vec<Entity> {
         fn get_self(self) -> impl Iterator<Item = Entity> + 'w {
-            self.iter().map(|x| *x)
+            self.iter().copied()
         }
     }
 
@@ -314,6 +314,7 @@ pub fn update_module_callbacks(
 pub struct UpdateModule(pub Entity);
 
 /// run the update functions for the modules!!
+#[allow(clippy::type_complexity)]
 pub fn update_modules(
     mut set: ParamSet<(
         ModuleResources,
@@ -390,7 +391,7 @@ static BASIC_INSTRUCTIONS: Lazy<SpawnInstructions> = Lazy::new(|| {
 
 impl Module for Basic {
     fn spawn_instructions(&self) -> &'static SpawnInstructions {
-        &*BASIC_INSTRUCTIONS
+        &BASIC_INSTRUCTIONS
     }
 
     fn update(&mut self, res: &mut ModuleResources, module: Entity) {
