@@ -149,7 +149,6 @@ where
             SpriteBundle {
                 transform: Transform {
                     translation: pos + Vec3::Z * 0.125,
-                    scale: Vec3::ONE,
                     ..default()
                 },
                 sprite: Sprite {

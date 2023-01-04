@@ -1,3 +1,5 @@
+use std::collections::VecDeque;
+
 use crate::*;
 use iyes_loopless::prelude::*;
 
@@ -17,23 +19,45 @@ fn select(res: Res<SelectedModules>) -> bool {
     res.selected.is_some()
 }
 
-fn egui(mut ctx: ResMut<bevy_egui::EguiContext>) -> bool {
-    ctx.ctx_mut().wants_pointer_input()
+#[derive(Deref, DerefMut)]
+struct BoolBuf(VecDeque<bool>);
+
+impl Default for BoolBuf {
+    fn default() -> Self {
+        Self(vec![false; 4].into())
+    }
 }
 
-pub fn system_set() -> SystemSet {
-    SystemSet::new()
-        .with_system(
+// this is a hack idk why it doesnt work like i want
+fn egui(mut ctx: ResMut<bevy_egui::EguiContext>, mut before: Local<BoolBuf>) -> bool {
+    let out = ctx.ctx_mut().wants_pointer_input();
+    before.pop_front();
+    before.push_back(out);
+    before.iter().any(|b| *b)
+}
+
+fn init_res(mut commands: Commands) {
+    commands.init_resource::<tracer::TracerEntities>();
+}
+
+pub fn app(app: &mut App) {
+    app.add_startup_system(init_res.after("init"))
+        .add_system(
             select::get_selected
                 .run_if_not(place)
                 .run_if_not(egui)
                 .label("drag"),
         )
-        .with_system(select::drag_selected.run_if_not(place))
-        .with_system(select::place_selected.run_if(place).run_if_not(egui))
-        .with_system(interact::spawn_despawn_interactive_components)
-        .with_system(interact::use_widgets.after(select::get_selected))
-        .with_system(interact::do_interactive_rotation.after(interact::use_widgets))
-        .with_system(tracer::tracer.run_if(select).after("drag"))
-        .after(ui::inspector_ui)
+        .add_system(select::drag_selected.run_if_not(place).run_if_not(egui))
+        .add_system(select::place_selected.run_if(place).run_if_not(egui))
+        .add_system(interact::spawn_despawn_interactive_components)
+        .add_system(interact::use_widgets.after(select::get_selected))
+        .add_system(interact::do_interactive_rotation.after(interact::use_widgets))
+        .add_system(
+            tracer::tracer
+                .run_if(select)
+                .run_if(|r: Res<SelectedModules>| !r.place)
+                .after("drag"),
+        )
+        .init_resource::<interact::InteractiveSelected>();
 }

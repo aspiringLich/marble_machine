@@ -5,20 +5,32 @@ use crate::{
     *,
 };
 
-#[derive(Deref, DerefMut)]
-pub struct TracerEntities<const N: usize>([Entity; N]);
+const TRACER_N: usize = 20;
+#[derive(Deref, DerefMut, Resource)]
+pub struct TracerEntities([Entity; TRACER_N]);
 
-impl<const N: usize> FromWorld for TracerEntities<N> {
+const TRACER_COLOR: Color = Color::Rgba {
+    red: 0.25,
+    green: 0.25,
+    blue: 0.25,
+    alpha: 0.5,
+};
+
+impl FromWorld for TracerEntities {
     fn from_world(world: &mut World) -> Self {
-        let mut e: TracerEntities<N> = unsafe { std::mem::zeroed() };
+        let mut e: TracerEntities = unsafe { std::mem::zeroed() };
 
-        for i in 0..N {
-            let (texture_atlas, index) = basic::marble_small.info();
+        for i in 0..TRACER_N - 1 {
+            let (texture_atlas, index) = basic::tracer_tick.info();
             e[i] = world
                 .spawn((
                     SpriteSheetBundle {
                         texture_atlas,
-                        sprite: TextureAtlasSprite { index, ..default() },
+                        sprite: TextureAtlasSprite {
+                            index,
+                            color: TRACER_COLOR,
+                            ..default()
+                        },
                         visibility: Visibility::INVISIBLE,
                         ..default()
                     },
@@ -26,6 +38,23 @@ impl<const N: usize> FromWorld for TracerEntities<N> {
                 ))
                 .id();
         }
+        let (texture_atlas, index) = basic::target.info();
+        e[TRACER_N - 1] = world
+            .spawn((
+                SpriteSheetBundle {
+                    texture_atlas,
+                    sprite: TextureAtlasSprite {
+                        index,
+                        color: TRACER_COLOR,
+                        ..default()
+                    },
+                    visibility: Visibility::INVISIBLE,
+                    ..default()
+                },
+                Name::new("tracer.sprite"),
+            ))
+            .id();
+
         world
             .spawn((
                 Name::new("tracer.parent"),
@@ -41,8 +70,6 @@ impl<const N: usize> FromWorld for TracerEntities<N> {
 #[derive(Component)]
 pub struct Tracer;
 
-const TRACER_N: usize = 20;
-
 pub fn tracer(
     // mut commands: Commands,
     rapier_config: Res<RapierConfiguration>,
@@ -55,7 +82,7 @@ pub fn tracer(
     mut q_visibility: Query<&mut Visibility>,
     has_body: Query<With<marker::ModuleBody>>,
     // q_name: Query<&Name>,
-    tracers: Local<TracerEntities<TRACER_N>>,
+    tracers: Res<TracerEntities>,
 ) {
     // get the timestep factor
     let factor;
@@ -105,8 +132,8 @@ pub fn tracer(
         }
 
         // step through until either we rapier scene query turn up bad or we do <x> steps
-        let mut tracers = tracers.iter();
-        'tracer: while let Some(&tracer) = tracers.next() {
+        let mut tracer_iter = tracers.iter();
+        'tracer: while let Some(&tracer) = tracer_iter.next() {
             // update the tracers
             *q_visibility.entity_mut(tracer) = Visibility::VISIBLE;
             let mut shape_transform = q_transform.entity_mut(tracer);
@@ -115,7 +142,6 @@ pub fn tracer(
             let filter = QueryFilter::only_fixed().exclude_sensors();
 
             for _ in 0..per_step {
-                let prev = shape_pos;
                 shape_vel += rapier_config.gravity * factor;
                 shape_pos += shape_vel * factor;
                 // if the shape collides
@@ -150,12 +176,11 @@ pub fn tracer(
                         current /= 2.0;
                     }
 
-                    // now you can just
-                    if let Some(&tracer) = tracers.next() {
-                        *q_visibility.entity_mut(tracer) = Visibility::VISIBLE;
-                        let mut shape_transform = q_transform.entity_mut(tracer);
-                        *shape_transform = Transform::from_translation(shape_pos.extend(2.0));
-                    }
+                    let tracer = tracers[TRACER_N - 1];
+                    *q_visibility.entity_mut(tracer) = Visibility::VISIBLE;
+                    let mut shape_transform = q_transform.entity_mut(tracer);
+                    *shape_transform = Transform::from_translation(shape_pos.extend(2.0));
+
                     break 'tracer;
                 }
             }

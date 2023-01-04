@@ -116,6 +116,8 @@ pub enum basic {
     marble_input,
     body_small,
     body,
+    target,
+    tracer_tick,
 }
 
 impl AtlasDictionary for basic {
@@ -131,6 +133,8 @@ impl AtlasDictionary for basic {
             marble_input  => rect!(0, 1, 1, 3),
             body_small    => rect!(3, 0, 5, 2, 1),
             body          => rect!(5, 0, 8, 3, 1),
+            target        => raw_rect!(8, 8, 7, 7),
+            tracer_tick   => rect!(2, 1, 3, 2, 3),
         }
     }
 

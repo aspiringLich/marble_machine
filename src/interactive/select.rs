@@ -3,6 +3,8 @@ use std::f32::consts::TAU;
 use crate::{module::param::*, *};
 use iyes_loopless::prelude::{ConditionHelpers, IntoConditionalSystem};
 
+use super::interact::InteractiveRotation;
+
 /// update SelectedModule whenever the left cursor is clicked
 #[allow(clippy::too_many_arguments)]
 pub fn get_selected(
@@ -75,12 +77,16 @@ pub fn drag_selected(
     selected: Res<SelectedModules>,
     keyboard: Res<Input<KeyCode>>,
     q_children: Query<&Children>,
-    has_io: Query<Or<(With<marker::Input>, With<marker::Output>)>>,
     mut q_transform: Query<&mut Transform>,
     mut active: Local<bool>,
     mut starting_pos: Local<Vec2>,
+    mut q_interactive_rot: Query<&mut InteractiveRotation>,
 ) {
-    let snapping = 1.0;
+    let snapping = if keyboard.pressed(KeyCode::LShift) {
+        8.0
+    } else {
+        1.0
+    };
 
     // basically: if active is not true it needs these specific conditions to become true, or else the system will not run
     if !*active {
@@ -101,19 +107,11 @@ pub fn drag_selected(
 
     let Some(selected) = selected.selected else {*active = false; return};
 
-    let io = q_children
-        .entity(selected)
-        .iter()
-        .filter(|e| has_io.has(**e));
-    if keyboard.just_pressed(KeyCode::Q) {
-        for &e in io {
-            let mut tf = q_transform.entity_mut(e);
-            tf.rotate_z(TAU / 8.0)
-        }
-    } else if keyboard.just_pressed(KeyCode::E) {
-        for &e in io {
-            let mut tf = q_transform.entity_mut(e);
-            tf.rotate_z(-TAU / 8.0)
+    if let Ok(mut i_rot) = q_interactive_rot.get_mut(selected) {
+        if keyboard.just_pressed(KeyCode::Q) {
+            i_rot.rot += TAU / 8.0;
+        } else if keyboard.just_pressed(KeyCode::E) {
+            i_rot.rot -= TAU / 8.0;
         }
     }
 

@@ -143,7 +143,7 @@ pub fn spawn_despawn_interactive_components(
             Interactive::IORotation
         ));
         children.push(spawn_widget!(
-            Vec3::new(-body.offset(), body.offset(), 0.0),
+            Vec3::ZERO,
             Color::RED,
             "delete.widget",
             1.0,
@@ -202,6 +202,8 @@ pub fn use_widgets(
     mouse_pos: Res<CursorCoords>,
     mut diff: Local<Option<f32>>,
     keyboard: Res<Input<KeyCode>>,
+    tracers: Res<tracer::TracerEntities>,
+    mut q_visibility: Query<&mut Visibility>,
 ) {
     // uh just trust me this works
     // i kinda forgot the logic behind it like right after i wrote it
@@ -283,6 +285,10 @@ pub fn use_widgets(
             commands.entity(parent).despawn_recursive();
             *active = false;
             selected.clear_selected();
+            
+            for tracer in **tracers {
+                *q_visibility.entity_mut(tracer) = Visibility::INVISIBLE;
+            }
         },
     }
 }
