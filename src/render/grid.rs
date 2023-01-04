@@ -1,73 +1,71 @@
+use bevy::render::mesh::Indices;
+use bevy::render::render_resource::PrimitiveTopology;
+use bevy::sprite::{MaterialMesh2dBundle, Mesh2dHandle};
+
 use crate::*;
 
-const GRID: i32 = 30;
-const GRID_SIZE: f32 = 8.0;
-
-#[derive(Resource)]
-pub struct Grid {
-    pub size: usize,
-    pub active: bool,
-}
-
-#[derive(Component)]
-pub struct GridMarker;
+// these really should be in a resource but im too lazy
+pub const size: f32 = 128.0;
+pub const ext: f32 = 3.0;
+const grid: u32 = 32;
 
 pub fn spawn_background(
     mut commands: Commands,
-    grid: Res<Grid>,
-    q_grid_marker: Query<Entity, With<GridMarker>>,
+    assets: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<ColorMaterial>>,
 ) {
-    if !grid.is_changed() || !grid.active {
-        return;
-    }
+    // let bg_texture: Handle<Image> = assets.load("back.png");
+    // let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
 
-    for entity in q_grid_marker.iter() {
-        commands.entity(entity).despawn();
-    }
+    // let z = 4.0;
+    // mesh.insert_attribute(
+    //     Mesh::ATTRIBUTE_POSITION,
+    //     vec![
+    //         [size, size, z],
+    //         [size, -size, z],
+    //         [-size, -size, z],
+    //         [-size, size, z],
+    //         [size * ext, size * ext, z],
+    //         [size * ext, -size * ext, z],
+    //         [-size * ext, -size * ext, z],
+    //         [-size * ext, size * ext, z],
+    //     ],
+    // );
+    // mesh.set_indices(Some(Indices::U32(vec![
+    //     5, 4, 0, 0, 1, 5, 5, 1, 6, 6, 1, 2, 2, 3, 6, 6, 3, 7, 7, 3, 0, 7, 0, 4,
+    // ])));
 
     let mut path_builder = PathBuilder::new();
-    let g = grid.size as f32 / 2.0 * GRID_SIZE;
-
-    let base_1 = Vec2::new(-g, -g);
-    let base_2 = Vec2::new(-g, g);
-    for x in 0..=grid.size {
-        let offset = Vec2::X * GRID_SIZE * x as f32;
-        path_builder.move_to(base_1 + offset);
-        path_builder.line_to(base_2 + offset);
+    let grid_size = (size * 2.0) / grid as f32;
+    let base = Vec2::new(-size, -size);
+    for x in 1..grid {
+        let moved = base + Vec2::X * grid_size * x as f32;
+        path_builder.move_to(moved);
+        path_builder.line_to(moved + Vec2::Y * size * 2.0);
+    }
+    for y in 1..grid {
+        let moved = base + Vec2::Y * grid_size * y as f32;
+        path_builder.move_to(moved);
+        path_builder.line_to(moved + Vec2::X * size * 2.0);
     }
 
-    let base_1 = Vec2::new(-g, -g);
-    let base_2 = Vec2::new(g, -g);
-    for y in 0..=grid.size {
-        let offset = Vec2::Y * GRID_SIZE * y as f32;
-        path_builder.move_to(base_1 + offset);
-        path_builder.line_to(base_2 + offset);
-    }
-
-    // TODO: make this an image or something? idk
-    commands.spawn(SpriteBundle {
-        sprite: Sprite {
-            color: Color::rgb_u8(0, 192, 192),
-            ..default()
-        },
-        transform: Transform::from_scale(
-            [
-                grid.size as f32 * GRID_SIZE,
-                grid.size as f32 * GRID_SIZE,
-                1.0,
-            ]
-            .into(),
-        ),
-        ..default()
-    });
-
-    commands.spawn((
-        GeometryBuilder::build_as(
-            &path_builder.build(),
-            DrawMode::Stroke(StrokeMode::new(Color::rgba_u8(0, 127, 127, 20), 2.0)),
-            Transform::from_translation(Vec2::ZERO.extend(0.001)),
-        ),
-        Name::new("grid.geo"),
-        GridMarker,
+    // let geometry = GeometryBuilder::new().add(path_builder.build()).build();
+    let line = path_builder.build();
+    commands.spawn(GeometryBuilder::build_as(
+        &line,
+        DrawMode::Stroke(StrokeMode::new(Color::rgba_u32(0x00000010), 1.0)),
+        Transform::default(),
     ));
+
+    // // spawn the mesh around the background to cover up things that go past it
+    // commands.spawn((
+    //     MaterialMesh2dBundle {
+    //         mesh: Mesh2dHandle(meshes.add(mesh)),
+    //         material: materials.add(Color::hex("282c3c").unwrap().into()),
+    //         transform: Transform::from_xyz(0.0, 0.0, 8.0),
+    //         ..default()
+    //     },
+    //     Name::new("back.mesh"),
+    // ));
 }

@@ -240,7 +240,9 @@ pub fn spawning_ui(
 pub fn debug_ui(
     mut egui_context: ResMut<EguiContext>,
     mut rapier_config: ResMut<RapierConfiguration>,
+    mut q_pancam: Query<&mut PanCam>,
     mut step: Local<bool>,
+    mut prev_pancam: Local<Option<PanCam>>,
 ) {
     let active = &mut rapier_config.physics_pipeline_active;
     if *step {
@@ -266,5 +268,39 @@ pub fn debug_ui(
                     *step = true;
                 }
             });
+
+            // transfer the field from b to a and set b.field to none
+            macro transfer {
+                ($a:ident, $b:ident, $field:ident) => {
+                    $a.$field = $b.$field;
+                    $b.$field = None;
+                },
+
+                ($a:ident, $b:ident, $field:ident, $($tail:tt)*) => {
+                    $a.$field = $b.$field;
+                    $b.$field = None;
+
+                    transfer!($a, $b, $($tail)*)
+                }
+            }
+
+            if prev_pancam.is_some() {
+                if ui.button("Re-Lock Pancam").clicked() {
+                    let prev = prev_pancam.as_mut().unwrap();
+                    let mut pancam = q_pancam.single_mut();
+
+                    transfer!(pancam, prev, min_x, min_y, max_x, max_y);
+                    *prev_pancam = None;
+                }
+            } else {
+                if ui.button("Unlock Pancam").clicked() {
+                    *prev_pancam = Some(PanCam::default());
+
+                    let prev = prev_pancam.as_mut().unwrap();
+                    let mut pancam = q_pancam.single_mut();
+
+                    transfer!(prev, pancam, min_x, min_y, max_x, max_y);
+                }
+            }
         });
 }

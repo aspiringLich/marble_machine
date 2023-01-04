@@ -4,9 +4,6 @@ pub mod atlas;
 pub mod grid;
 
 pub fn app(app: &mut App) {
-    app.insert_resource(grid::Grid {
-        size: 40,
-        active: true,
-    })
-    .add_system(grid::spawn_background);
+    app.insert_resource(ClearColor(Color::rgb_u32(0x505e71)))
+        .add_startup_system(grid::spawn_background);
 }
