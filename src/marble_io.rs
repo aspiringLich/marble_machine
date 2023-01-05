@@ -61,7 +61,7 @@ pub fn fire_marbles(
             .spawn_atlas_sprite(
                 basic::marble_small,
                 Color::GREEN,
-                Transform::from_translation(pos - pos.z + 0.0625),
+                Transform::from_translation(pos + - pos.z + ZOrder::Marble),
             )
             .insert((
                 Collider::ball(basic::marble_small.width() * 0.5),

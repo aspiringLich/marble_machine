@@ -18,7 +18,7 @@ where
         transform.translation.z = 0.375;
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_input.info();
-        let offset_tf = Transform::from_translation(Vec3::X * offset);
+        let offset_tf = Transform::from_translation(Vec3::X * offset + ZOrder::InputComponent);
 
         let children = vec![
             commands
@@ -77,7 +77,7 @@ where
         transform.translation.z = 0.25;
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_output.info();
-        let offset_tf = Transform::from_translation(Vec3::X * offset);
+        let offset_tf = Transform::from_translation(Vec3::X * offset + ZOrder::OutputComponent);
 
         let children = vec![
             commands
@@ -148,7 +148,7 @@ where
         let mut out = commands.spawn((
             SpriteBundle {
                 transform: Transform {
-                    translation: pos + Vec3::Z * 0.125,
+                    translation: pos + ZOrder::IndicatorComponent,
                     ..default()
                 },
                 sprite: Sprite {

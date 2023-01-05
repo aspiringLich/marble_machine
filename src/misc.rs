@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{ecs::system::EntityCommands, prelude::*};
 
 pub mod marker {
     use bevy::prelude::Component;
@@ -54,5 +54,24 @@ impl ColorHex for Color {
             (hex >> 8 & 0xff) as u8,
             (hex & 0xff) as u8,
         )
+    }
+}
+
+/// a trait to allow us to run the name method on Commands
+pub trait CommandsName<'w, 's, 'a> {
+    fn name(
+        &'w mut self,
+        name: impl Into<std::borrow::Cow<'static, str>>,
+    ) -> &'w mut EntityCommands<'w, 's, 'a>;
+}
+
+impl<'w, 's, 'a> CommandsName<'w, 's, 'a> for EntityCommands<'w, 's, 'a> {
+    /// set this sprites name
+    fn name(
+        &'w mut self,
+        name: impl Into<std::borrow::Cow<'static, str>>,
+    ) -> &'w mut EntityCommands<'w, 's, 'a> {
+        let id = self.id();
+        self.insert(Name::new(format!("{} ({:#?})", name.into(), id)))
     }
 }

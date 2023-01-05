@@ -54,8 +54,8 @@ pub fn spawn_background(
     let line = path_builder.build();
     commands.spawn(GeometryBuilder::build_as(
         &line,
-        DrawMode::Stroke(StrokeMode::new(Color::rgba_u32(0x00000010), 1.0)),
-        Transform::default(),
+        DrawMode::Stroke(StrokeMode::new(Color::rgba_u32(0xffffff07), 1.0)),
+        Transform::from_xyz(0.0, 0.0, ZOrder::Background.f32()),
     ));
 
     // // spawn the mesh around the background to cover up things that go past it

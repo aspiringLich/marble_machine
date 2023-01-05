@@ -106,7 +106,7 @@ pub fn spawn_despawn_interactive_components(
                             ..default()
                         },
                         texture_atlas: basic::marble_small.info().0,
-                        transform: Transform::from_translation($translation + Vec3::Z * 10.0).with_scale(Vec3::ONE * 1.01),
+                        transform: Transform::from_translation($translation + Vec3::Z * ZOrder::Interactive.f32()).with_scale(Vec3::ONE * 1.01),
                         ..default()
                     },
                     Collider::ball(basic::marble_small.width() / 2.0 * $factor),

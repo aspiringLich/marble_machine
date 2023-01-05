@@ -17,6 +17,7 @@ const TRACER_COLOR: Color = Color::Rgba {
 };
 
 impl FromWorld for TracerEntities {
+    /// spawn all the tracer entities, invisibly
     fn from_world(world: &mut World) -> Self {
         let mut e: TracerEntities = unsafe { std::mem::zeroed() };
 
@@ -58,7 +59,11 @@ impl FromWorld for TracerEntities {
         world
             .spawn((
                 Name::new("tracer.parent"),
-                TransformBundle::from_transform(default()),
+                TransformBundle::from_transform(Transform::from_xyz(
+                    0.0,
+                    0.0,
+                    ZOrder::Tracer.f32(),
+                )),
                 VisibilityBundle::default(),
             ))
             .push_children(&*e);

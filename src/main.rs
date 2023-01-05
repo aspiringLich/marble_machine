@@ -25,6 +25,7 @@ use bevy_rapier2d::prelude::*;
 use misc::ColorHex;
 use module::ModuleType;
 use once_cell::sync::Lazy;
+use res::*;
 
 mod components;
 mod fps;
@@ -32,6 +33,7 @@ mod marble;
 mod marble_io;
 mod misc;
 mod module;
+mod res;
 mod spawn;
 mod ui;
 
@@ -164,7 +166,7 @@ fn pan_camera(
     // mut last_pos: Local<Option<Vec2>>,
     keys: Res<Input<KeyCode>>,
 ) {
-    let window = windows.get_primary().unwrap();
+    let Some(window) = windows.get_primary() else { error!("no window ya dingus"); return };
     let window_size = Vec2::new(window.width(), window.height());
 
     // // Use position instead of MouseMotion, otherwise we don't get acceleration movement

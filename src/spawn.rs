@@ -175,7 +175,7 @@ pub fn spawn_modules(
         macro spawn_body_circular($atlasdict:expr, $name:literal $($tail:tt)*) {
             children.push(
                 commands
-                    .spawn_atlas_sprite($atlasdict, MODULE_COLOR, Transform::from_xyz(0.0, 0.0, 0.5))
+                    .spawn_atlas_sprite($atlasdict, MODULE_COLOR, Transform::from_xyz(0.0, 0.0, ZOrder::BodyComponent.f32()))
                     .insert((
                         Name::new($name),
                         Collider::ball($atlasdict.width() * 0.5),
