@@ -10,6 +10,7 @@
 #![feature(return_position_impl_trait_in_trait)]
 #![feature(panic_backtrace_config)]
 #![feature(core_intrinsics)]
+#![feature(iter_array_chunks)]
 
 extern crate derive_more;
 extern crate rand;
@@ -86,12 +87,11 @@ fn main() {
     .add_event::<module::UpdateModule>()
     .add_event::<spawn::SpawnModule>()
     // startup systems
-    .add_startup_system_set(
-        SystemSet::new()
-            .with_system(atlas::init_texture_atlas)
-            .label("init"),
+    .add_startup_stage(
+        "init",
+        SystemStage::parallel().with_system(atlas::init_texture_atlas),
     )
-    .add_startup_system(setup.after("init"))
+    .add_startup_stage_after("init", "start", SystemStage::parallel().with_system(setup))
     // systems
     .add_stage(
         "start",
@@ -188,7 +188,7 @@ fn pan_camera(
                 let world_units_per_device_pixel = proj_size / window_size;
                 let mut delta_world = Vec2::ZERO;
 
-                let n = 1.8;
+                let n = 12.0;
                 if keys.pressed(KeyCode::W) {
                     delta_world.y -= n;
                 }
@@ -201,7 +201,7 @@ fn pan_camera(
                 if keys.pressed(KeyCode::D) {
                     delta_world.x -= n;
                 }
-                transform.translation - delta_world.extend(0.)
+                transform.translation - (delta_world * world_units_per_device_pixel).extend(0.)
             } else {
                 continue;
             };

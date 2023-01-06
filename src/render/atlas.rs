@@ -109,7 +109,7 @@ macro raw_rect($x:expr, $y:expr, $w:expr, $h:expr) {
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, EnumIter)]
 pub enum basic {
-    select,
+    corner,
     marble_small,
     marble,
     marble_output,
@@ -126,7 +126,7 @@ impl AtlasDictionary for basic {
 
         #[rustfmt::skip]
         match self {
-            select        => rect!(0, 0, 1, 1),
+            corner        => rect!(0, 0, 1, 1),
             marble_small  => rect!(1, 0, 2, 1, 2),
             marble        => rect!(2, 0, 3, 1, 1),
             marble_output => rect!(0, 3, 1, 5),

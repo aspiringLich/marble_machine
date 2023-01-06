@@ -158,8 +158,8 @@ pub fn tracer(
                     1.0,
                     filter,
                 ) {
-                    let mut current = shape_vel * factor;
-                    let goal = 1.0 / 256.0;
+                    let mut current = shape_vel * factor / 2.0;
+                    let goal = 1.0 / 1024.0;
                     // shape_pos += shape_vel * factor;
                     // step it closer to the colliding shape
                     while current.length() > goal {

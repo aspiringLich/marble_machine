@@ -41,7 +41,7 @@ fn init_res(mut commands: Commands) {
 }
 
 pub fn app(app: &mut App) {
-    app.add_startup_system(init_res.after("init"))
+    app.add_startup_system_to_stage("start", init_res)
         .add_system(
             select::get_selected
                 .run_if_not(place)
