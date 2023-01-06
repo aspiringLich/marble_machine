@@ -56,6 +56,11 @@ pub fn spawn_despawn_interactive_components(
     w_output: Query<Entity, With<marker::Output>>,
     mut before: Local<Option<Entity>>,
 ) {
+    // only run when SelectedModules is changed but not when its been added
+    if !selected.is_changed() || selected.is_added() || selected.place {
+        return;
+    }
+    
     // make sure its not the exact same value
     let mut hasher = DefaultHasher::new();
     selected.hash(&mut hasher);
@@ -65,10 +70,6 @@ pub fn spawn_despawn_interactive_components(
     }
     *prev_selected = hash;
 
-    // only run when SelectedModules is changed but not when its been added
-    if !selected.is_changed() || selected.is_added() || selected.place {
-        return;
-    }
 
     // spawn all the interactive components
     if let Some(module) = selected.selected {

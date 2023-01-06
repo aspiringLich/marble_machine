@@ -81,13 +81,13 @@ pub fn spawn_background(mut commands: Commands) {
         );
 
         // the "curve" at the corners of the collider
+        let radius = grid_size - 0.5;
         let center = Vec2::new((size - grid_size) * next_a, (size - grid_size) * next_b);
         let mut angle = rotation;
         for _ in 1..curve_segments {
             angle += -PI / 2.0 / curve_segments as f32;
             // dbg!(angle);
-            collider_vertices
-                .push(center + Vec2::new(f32::cos(angle), f32::sin(angle)) * grid_size);
+            collider_vertices.push(center + Vec2::new(f32::cos(angle), f32::sin(angle)) * radius);
         }
         flag = !flag;
         rotation -= PI / 2.0;
@@ -96,18 +96,21 @@ pub fn spawn_background(mut commands: Commands) {
         let n = size - grid_size / 2. + 1.5;
         let translation = Vec2::new(n * next_a, n * next_b);
         let (texture_atlas, index) = basic::corner.info();
-        commands.spawn(SpriteSheetBundle {
-            sprite: TextureAtlasSprite {
-                index,
-                color,
-                flip_x: i == 2 || i == 1,
-                flip_y: i & 2 != 0,
+        commands.spawn((
+            SpriteSheetBundle {
+                sprite: TextureAtlasSprite {
+                    index,
+                    color,
+                    flip_x: i == 2 || i == 1,
+                    flip_y: i & 2 != 0,
+                    ..default()
+                },
+                texture_atlas,
+                transform: Transform::from_translation(translation.extend(ZOrder::Border.f32())),
                 ..default()
             },
-            texture_atlas,
-            transform: Transform::from_translation(translation.extend(ZOrder::Border.f32())),
-            ..default()
-        });
+            Name::new("corner.sprite"),
+        ));
     }
     let mut indices = vec![];
     for i in 1..collider_vertices.len() as u32 {
@@ -123,5 +126,11 @@ pub fn spawn_background(mut commands: Commands) {
         ),
         Collider::polyline(collider_vertices, Some(indices)),
         Name::new("back.line"),
+    ));
+
+    commands.spawn((
+        Collider::cuboid(size, 10.0),
+        TransformBundle::from_transform(Transform::from_xyz(0.0, -size - 10.0 + 0.5, 0.0)),
+        Name::new("bottom.collider"),
     ));
 }

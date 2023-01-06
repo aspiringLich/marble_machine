@@ -16,6 +16,22 @@ extern crate derive_more;
 extern crate rand;
 extern crate strum;
 
+/// interactive: the interactive components, selection, etc.
+mod interactive;
+use interactive::*;
+
+/// render: anything to do with graphics
+mod graphics;
+use graphics::*;
+
+/// engine: spawning in stuff, simpler logic stuff, basically stuff interfacing directly with the game engine
+mod engine;
+use engine::*;
+
+/// game: game stuff
+mod game;
+use game::*;
+
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, sprite::Anchor};
 // use bevy_editor_pls::prelude::*;
 use bevy_egui::EguiPlugin;
@@ -28,21 +44,12 @@ use module::ModuleType;
 use once_cell::sync::Lazy;
 use res::*;
 
-mod components;
 mod fps;
 mod marble;
 mod marble_io;
 mod misc;
-mod module;
 mod res;
-mod spawn;
 mod ui;
-
-mod interactive;
-use interactive::*;
-
-mod render;
-use render::*;
 
 use atlas::basic;
 use misc::marker;
@@ -70,15 +77,19 @@ fn main() {
     .insert_resource(RapierConfiguration {
         physics_pipeline_active: true,
         query_pipeline_active: true,
+        timestep_mode: TimestepMode::Fixed {
+            dt: 1.0 / 60.0,
+            substeps: 1,
+        },
         ..default()
     })
     // plugins
-    .add_plugin(EguiPlugin)
     .add_plugin(ShapePlugin)
     .add_plugin(FrameTimeDiagnosticsPlugin::default())
     .add_plugin(fps::FpsText)
     .add_plugin(bevy_pancam::PanCamPlugin)
-    // .add_plugin(EditorPlugin)
+    .add_plugin(EguiPlugin)
+    // .add_plugin(bevy_editor_pls::EditorPlugin)
     .add_plugin(WorldInspectorPlugin::new())
     .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
     // .add_plugin(RapierDebugRenderPlugin::default())
@@ -125,7 +136,7 @@ fn main() {
     );
 
     interactive::app(&mut app);
-    render::app(&mut app);
+    graphics::app(&mut app);
     app.run();
 }
 
