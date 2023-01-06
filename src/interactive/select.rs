@@ -172,7 +172,7 @@ pub fn place_selected(
         }
 
         let pos = &mut q_transform.entity_mut(selected).translation;
-        let Vec2 { x, y } = **mouse_pos;
+        let Vec2 { x, y } = **mouse_pos - Vec2::splat(0.5);
 
         // rounding x and y to the nearest snapping #
         let (rx, ry) = (
@@ -180,8 +180,8 @@ pub fn place_selected(
             (y / snapping).round() * snapping,
         );
         if rx != x || ry != y {
-            pos.x = rx;
-            pos.y = ry;
+            pos.x = rx + 0.5;
+            pos.y = ry + 0.5;
         }
     }
 }

@@ -8,6 +8,7 @@ pub enum ZOrder {
     OutputComponent,
     BodyComponent,
     IndicatorComponent,
+    Border,
     Interactive,
 }
 

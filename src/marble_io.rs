@@ -49,8 +49,8 @@ pub fn fire_marbles(
                     .next()
                     .unwrap(),
             );
-        let z = transform.translation.z;
-        transform.rotate_around(Vec3::Z * z, q_transform.entity(event.from).rotation);
+        transform.translation.z = 0.0;
+        transform.rotate_around(Vec3::ZERO, q_transform.entity(event.from).rotation);
         let p_transform = q_transform.entity(parent);
 
         // get the rotation and position of the parent entity + the output

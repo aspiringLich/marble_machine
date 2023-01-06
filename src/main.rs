@@ -166,7 +166,7 @@ fn pan_camera(
     // mut last_pos: Local<Option<Vec2>>,
     keys: Res<Input<KeyCode>>,
 ) {
-    let Some(window) = windows.get_primary() else { error!("no window ya dingus"); return };
+    let Some(window) = windows.get_primary() else { error!("no window you dingus"); return };
     let window_size = Vec2::new(window.width(), window.height());
 
     // // Use position instead of MouseMotion, otherwise we don't get acceleration movement

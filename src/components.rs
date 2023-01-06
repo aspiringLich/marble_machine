@@ -148,7 +148,7 @@ where
         let mut out = commands.spawn((
             SpriteBundle {
                 transform: Transform {
-                    translation: pos + ZOrder::IndicatorComponent,
+                    translation: pos + ZOrder::IndicatorComponent - Vec3::Z * pos.z,
                     ..default()
                 },
                 sprite: Sprite {
