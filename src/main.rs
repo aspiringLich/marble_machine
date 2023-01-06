@@ -11,24 +11,25 @@
 #![feature(panic_backtrace_config)]
 #![feature(core_intrinsics)]
 #![feature(iter_array_chunks)]
+#![feature(drain_filter)]
 
 extern crate derive_more;
 extern crate rand;
 extern crate strum;
 
-/// interactive: the interactive components, selection, etc.
+/// the interactive components, selection, etc.
 mod interactive;
 use interactive::*;
 
-/// render: anything to do with graphics
+/// anything to do with graphics
 mod graphics;
 use graphics::*;
 
-/// engine: spawning in stuff, simpler logic stuff, basically stuff interfacing directly with the game engine
+/// spawning in stuff, simpler logic stuff, basically stuff interfacing directly with the game engine
 mod engine;
 use engine::*;
 
-/// game: game stuff
+/// game stuff
 mod game;
 use game::*;
 
@@ -45,18 +46,27 @@ use once_cell::sync::Lazy;
 use res::*;
 
 mod fps;
-mod marble;
-mod marble_io;
 mod misc;
 mod res;
 mod ui;
 
-use atlas::basic;
 use misc::marker;
+use misc::CommandsName;
 use ui::SelectedModules;
+
+#[derive(StageLabel)]
+pub enum Label {
+    StartupStageInit,
+    StartupStageStart,
+    StageStart,
+    StageSpawn,
+    StageUi,
+    StageMain,
+}
 
 fn main() {
     let mut app = App::new();
+
     // bevy plugins
     app.add_plugins(
         DefaultPlugins
@@ -99,34 +109,37 @@ fn main() {
     .add_event::<spawn::SpawnModule>()
     // startup systems
     .add_startup_stage(
-        "init",
+        Label::StartupStageInit,
         SystemStage::parallel().with_system(atlas::init_texture_atlas),
     )
-    .add_startup_stage_after("init", "start", SystemStage::parallel().with_system(setup))
+    .add_startup_stage_after(
+        Label::StartupStageInit,
+        Label::StartupStageStart,
+        SystemStage::parallel().with_system(setup),
+    )
     // systems
     .add_stage(
-        "start",
+        Label::StageStart,
         SystemStage::parallel().with_system(select::get_cursor_pos),
     )
     .add_stage_after(
-        "start",
-        "spawn",
+        Label::StageStart,
+        Label::StageSpawn,
         SystemStage::parallel()
             .with_system(spawn::spawn_modules)
-            .with_system(select::get_hovered_entities.after(spawn::spawn_modules))
             .with_system(marble_io::fire_marbles),
     )
     .add_stage_after(
-        "spawn",
-        "ui",
+        Label::StageSpawn,
+        Label::StageUi,
         SystemStage::parallel()
             .with_system(ui::inspector_ui)
             .with_system(ui::spawning_ui)
             .with_system(ui::debug_ui),
     )
     .add_stage_after(
-        "ui",
-        "main",
+        Label::StageUi,
+        Label::StageMain,
         SystemStage::parallel()
             .with_system(pan_camera)
             .with_system(marble::despawn_marbles)
@@ -137,6 +150,8 @@ fn main() {
 
     interactive::app(&mut app);
     graphics::app(&mut app);
+    engine::app(&mut app);
+
     app.run();
 }
 
@@ -149,7 +164,7 @@ fn setup(mut commands: Commands) {
                     ..default()
                 },
                 projection: OrthographicProjection {
-                    scale: 0.15,
+                    scale: 0.20,
                     ..default()
                 },
                 ..default()
@@ -159,7 +174,7 @@ fn setup(mut commands: Commands) {
         .insert((
             PanCam {
                 grab_buttons: vec![MouseButton::Middle],
-                max_scale: Some(2.0),
+                max_scale: Some(0.3),
                 max_x: Some(grid::size * grid::ext),
                 min_x: Some(-grid::size * grid::ext),
                 max_y: Some(grid::size * grid::ext),

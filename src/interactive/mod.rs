@@ -41,7 +41,8 @@ fn init_res(mut commands: Commands) {
 }
 
 pub fn app(app: &mut App) {
-    app.add_startup_system_to_stage("start", init_res)
+    app.add_startup_system_to_stage(Label::StartupStageStart, init_res)
+        .add_system(select::get_hovered_entities.after(spawn::spawn_modules))
         .add_system(
             select::get_selected
                 .run_if_not(place)

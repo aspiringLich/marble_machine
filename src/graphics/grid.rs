@@ -2,7 +2,7 @@ use std::f32::consts::PI;
 
 use crate::*;
 
-use super::atlas::AtlasDictionary;
+use super::atlas::{basic, AtlasDictionary};
 
 // these really should be in a resource but im too lazy
 #[allow(non_upper_case_globals)]
@@ -17,7 +17,7 @@ pub fn spawn_background(mut commands: Commands) {
     let mut grid_builder = PathBuilder::new();
     let base = Vec2::new(-size, -size);
     let grid = (size / grid_size) as u32 * 2;
-    dbg!(grid);
+    // dbg!(grid);
     for x in 1..grid {
         let moved = base + Vec2::X * grid_size * x as f32;
         grid_builder.move_to(moved);

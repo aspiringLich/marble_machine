@@ -1,10 +1,9 @@
 use crate::{
-    atlas::AtlasDictionary,
     module::param::{QueryQueryIter, QueryQuerySimple},
     spawn::{BodyType, CommandsSpawn},
     *,
 };
-
+use atlas::{basic, AtlasDictionary};
 const TRACER_N: usize = 20;
 #[derive(Deref, DerefMut, Resource)]
 pub struct TracerEntities([Entity; TRACER_N]);

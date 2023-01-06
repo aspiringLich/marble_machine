@@ -2,10 +2,12 @@ use crate::{
     module::param::{QueryQueryIter, QueryQuerySimple},
     *,
 };
-use atlas::AtlasDictionary;
+use atlas::{ AtlasDictionary, basic };
 use marble::Marble;
 use rand::Rng;
 use spawn::CommandsSpawn;
+
+use super::lifetime::Lifetime;
 
 /// an event that tells the program to fire a marble from this marble output.
 #[derive(Copy, Clone)]
@@ -72,9 +74,10 @@ pub fn fire_marbles(
                 },
                 ColliderMassProperties::Mass(1.0),
                 Restitution::coefficient(0.9),
+                Lifetime(600)
             ))
             .insert(event.marble)
-            .insert(Name::new("bit.marble"));
+            .name("bit.marble");
     }
 }
 

@@ -3,7 +3,8 @@ use crate::{
     module::{Module, ModuleType},
     *,
 };
-use atlas::AtlasDictionary;
+use atlas::{basic, AtlasDictionary};
+
 use bevy::ecs::system::EntityCommands;
 use components::SpawnComponents;
 // use bevy_rapier2d::{prelude::*, rapier::prelude::ColliderMaterial};

@@ -1,4 +1,5 @@
-use crate::{atlas::AtlasDictionary, misc::vec2, *};
+use crate::{misc::vec2, *};
+use atlas::{basic, AtlasDictionary};
 use bevy::ecs::system::EntityCommands;
 
 /// Spawn components that make up marble modules

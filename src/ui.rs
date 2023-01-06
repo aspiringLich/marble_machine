@@ -269,17 +269,15 @@ pub fn debug_ui(
                 }
             });
 
-            // transfer the field from b to a and set b.field to none
+            // transfer the field from b to a and set b.field to default()
             macro transfer {
                 ($a:ident, $b:ident, $field:ident) => {
                     $a.$field = $b.$field;
-                    $b.$field = None;
+                    $b.$field = default();
                 },
-
                 ($a:ident, $b:ident, $field:ident, $($tail:tt)*) => {
                     $a.$field = $b.$field;
-                    $b.$field = None;
-
+                    $b.$field = default();
                     transfer!($a, $b, $($tail)*)
                 }
             }
@@ -289,7 +287,7 @@ pub fn debug_ui(
                     let prev = prev_pancam.as_mut().unwrap();
                     let mut pancam = q_pancam.single_mut();
 
-                    transfer!(pancam, prev, min_x, min_y, max_x, max_y);
+                    transfer!(pancam, prev, min_x, min_y, max_x, max_y, max_scale);
                     *prev_pancam = None;
                 }
             } else {
@@ -299,7 +297,7 @@ pub fn debug_ui(
                     let prev = prev_pancam.as_mut().unwrap();
                     let mut pancam = q_pancam.single_mut();
 
-                    transfer!(prev, pancam, min_x, min_y, max_x, max_y);
+                    transfer!(prev, pancam, min_x, min_y, max_x, max_y, max_scale);
                 }
             }
         });

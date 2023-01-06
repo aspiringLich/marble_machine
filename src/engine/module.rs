@@ -2,11 +2,12 @@ use std::time::Duration;
 
 use bevy_egui::*;
 
-use crate::atlas::AtlasDictionary;
-use crate::marble::Marble;
-use crate::marble_io::FireMarble;
-use crate::spawn::{BodyType, SpawnInstructions};
 use crate::*;
+
+use crate::spawn::{BodyType, SpawnInstructions};
+use atlas::AtlasDictionary;
+use marble::Marble;
+use marble_io::FireMarble;
 
 use egui::*;
 

@@ -1,3 +1,4 @@
+use atlas::{basic, AtlasDictionary};
 use std::{
     collections::hash_map::DefaultHasher,
     f32::consts::PI,
@@ -5,7 +6,6 @@ use std::{
 };
 
 use crate::{
-    atlas::AtlasDictionary,
     module::{param::*, Module},
     select::CursorCoords,
     *,
