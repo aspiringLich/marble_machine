@@ -42,23 +42,27 @@ fn init_res(mut commands: Commands) {
 
 pub fn app(app: &mut App) {
     app.add_startup_system_to_stage(Label::StartupStageStart, init_res)
-        .add_system(select::get_hovered_entities.after(spawn::spawn_modules))
+        .add_system(select::get_hovered_entities.after("spawn::spawn_modules"))
         .add_system(
             select::get_selected
                 .run_if_not(place)
                 .run_if_not(egui)
-                .label("drag"),
+                .label("select::get_selected"),
         )
         .add_system(select::drag_selected.run_if_not(place).run_if_not(egui))
         .add_system(select::place_selected.run_if(place).run_if_not(egui))
-        .add_system(interact::spawn_despawn_interactive_components)
-        .add_system(interact::use_widgets.after(select::get_selected))
+        .add_system(interact::spawn_despawn_interactive_components.before("interact::use_widgets"))
+        .add_system(
+            interact::use_widgets
+                .after("select::get_selected")
+                .label("interact::use_widgets"),
+        )
         .add_system(interact::do_interactive_rotation.after(interact::use_widgets))
         .add_system(
             tracer::tracer
                 .run_if(select)
                 .run_if(|r: Res<SelectedModules>| !r.place)
-                .after("drag"),
+                .after("select::get_selected"),
         )
         .init_resource::<interact::InteractiveSelected>();
 }

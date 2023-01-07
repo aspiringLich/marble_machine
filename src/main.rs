@@ -126,7 +126,7 @@ fn main() {
         Label::StageStart,
         Label::StageSpawn,
         SystemStage::parallel()
-            .with_system(spawn::spawn_modules)
+            .with_system(spawn::spawn_modules.label("spawn::spawn_modules"))
             .with_system(marble_io::fire_marbles),
     )
     .add_stage_after(
