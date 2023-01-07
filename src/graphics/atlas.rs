@@ -2,6 +2,8 @@ use bevy::prelude::*;
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
+use crate::misc::builder_fn;
+
 /// implement on an enum to have it be a valid key to an atlas
 pub trait AtlasDictionary
 where
@@ -39,6 +41,32 @@ where
     /// get height of self.rect()
     fn height(self) -> f32 {
         self.rect().height()
+    }
+}
+
+#[derive(Deref, DerefMut, Default)]
+pub struct SpriteSheetBuilder(SpriteSheetBundle);
+
+impl SpriteSheetBuilder {
+    pub fn new() -> Self {
+        default()
+    }
+
+    builder_fn!(transform, Transform);
+    builder_fn!(visibility, Visibility);
+    builder_fn!(color, Color, sprite.color);
+    builder_fn!(flip_x, bool, sprite.flip_x);
+    builder_fn!(flip_y, bool, sprite.flip_y);
+    builder_fn!(custom_size, Vec2, {
+        sprite.custom_size = Some(custom_size)
+    });
+    builder_fn!(anchor, bevy::sprite::Anchor, sprite.anchor);
+
+    pub fn build<T: AtlasDictionary>(mut self, input: T) -> SpriteSheetBundle {
+        let (atlas, index) = input.info();
+        self.texture_atlas = atlas;
+        self.sprite.index = index;
+        self.0
     }
 }
 

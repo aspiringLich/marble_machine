@@ -1,5 +1,6 @@
 use crate::*;
 
+pub mod spawning;
 pub mod ui;
 
 pub fn app(app: &mut App) {
@@ -8,6 +9,7 @@ pub fn app(app: &mut App) {
         SystemSet::new()
             .with_system(ui::inspector_ui)
             .with_system(ui::spawning_ui)
+            .with_system(spawning::ui)
             .with_system(ui::debug_ui),
     );
 }

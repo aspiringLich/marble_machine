@@ -77,3 +77,24 @@ impl<'a> CommandsName for bevy::ecs::world::EntityMut<'a> {
         self.insert(Name::new(format!("{} ({:#?})", name.into(), id)))
     }
 }
+
+pub macro builder_fn{
+    ($name:ident, $type:ty, { $($tail:tt)* }) => {
+        pub fn $name(mut self, $name: $type) -> Self {
+            self.$($tail)*;
+            self
+        }
+    },
+    ($name:ident, $type:ty, $($path:tt)*) => {
+        pub fn $name(mut self, $name: $type) -> Self {
+            self.$($path)* = $name;
+            self
+        }
+    },
+    ($name:ident, $type:ty) => {
+        pub fn $name(mut self, $name: $type) -> Self {
+            self.$name = $name;
+            self
+        }
+    },
+}

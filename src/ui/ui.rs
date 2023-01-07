@@ -1,4 +1,4 @@
-use std::{f32::consts, f64};
+use std::f32::consts;
 
 use crate::{
     module::{param::ModuleResources, Module},
@@ -6,7 +6,6 @@ use crate::{
     *,
 };
 use bevy::prelude::Image;
-use bevy::prelude::Vec2;
 use bevy_egui::*;
 use egui::*;
 
