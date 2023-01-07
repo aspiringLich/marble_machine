@@ -106,34 +106,6 @@ macro default_impl_atlas_dictionary($t:ty, $n:expr) {
     }
 }
 
-macro rect {
-    ($a:expr,$b:expr,$c:expr,$d:expr) => {
-        Rect::new(
-            $a as f32 * GRID_SIZE,
-            $b as f32 * GRID_SIZE,
-            $c as f32 * GRID_SIZE,
-            $d as f32 * GRID_SIZE,
-        )
-    },
-    ($a:expr,$b:expr,$c:expr,$d:expr,$pad:expr) => {
-        Rect::new(
-            ($a as f32 * GRID_SIZE) + $pad as f32,
-            ($b as f32 * GRID_SIZE) + $pad as f32,
-            ($c as f32 * GRID_SIZE) - $pad as f32,
-            ($d as f32 * GRID_SIZE) - $pad as f32,
-        )
-    },
-}
-
-macro raw_rect($x:expr, $y:expr, $w:expr, $h:expr) {
-    Rect::new(
-        $x as f32,
-        $y as f32,
-        $x as f32 + $w as f32,
-        $y as f32 + $h as f32,
-    )
-}
-
 #[allow(non_camel_case_types)]
 #[derive(Copy, Clone, EnumIter)]
 pub enum basic {
@@ -146,6 +118,7 @@ pub enum basic {
     body,
     target,
     tracer_tick,
+    indicator,
 }
 
 impl AtlasDictionary for basic {
@@ -153,17 +126,25 @@ impl AtlasDictionary for basic {
         use basic::*;
 
         #[rustfmt::skip]
-        match self {
-            corner        => rect!(0, 0, 1, 1),
-            marble_small  => rect!(1, 0, 2, 1, 2),
-            marble        => rect!(2, 0, 3, 1, 1),
-            marble_output => rect!(0, 3, 1, 5),
-            marble_input  => rect!(0, 1, 1, 3),
-            body_small    => rect!(3, 0, 5, 2, 1),
-            body          => rect!(5, 0, 8, 3, 1),
-            target        => raw_rect!(8, 8, 7, 7),
-            tracer_tick   => rect!(2, 1, 3, 2, 3),
-        }
+        let args = match self {
+            corner        => (7, 3, 8, 8),
+            marble_small  => (0, 0, 4, 4),
+            marble        => (1, 0, 6, 6),
+            marble_output => (0, 2, 8, 10),
+            marble_input  => (0, 4, 8, 12),
+            body_small    => (3, 0, 14, 14),
+            body          => (5, 0, 22, 22),
+            target        => (1, 1, 7, 7),
+            tracer_tick   => (2, 1, 2, 2),
+            indicator     => (0, 1, 3, 3),
+        };
+
+        Rect::new(
+            args.0 as f32 * GRID_SIZE,
+            args.1 as f32 * GRID_SIZE,
+            args.0 as f32 * GRID_SIZE + args.2 as f32,
+            args.1 as f32 * GRID_SIZE + args.3 as f32,
+        )
     }
 
     default_impl_atlas_dictionary!(basic, 0);
