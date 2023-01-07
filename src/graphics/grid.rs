@@ -96,8 +96,8 @@ pub fn spawn_background(mut commands: Commands) {
         let n = size - grid_size / 2. + 1.5;
         let translation = Vec2::new(n * next_a, n * next_b);
         let (texture_atlas, index) = basic::corner.info();
-        commands.spawn((
-            SpriteSheetBundle {
+        commands
+            .spawn((SpriteSheetBundle {
                 sprite: TextureAtlasSprite {
                     index,
                     color,
@@ -108,9 +108,8 @@ pub fn spawn_background(mut commands: Commands) {
                 texture_atlas,
                 transform: Transform::from_translation(translation.extend(ZOrder::Border.f32())),
                 ..default()
-            },
-            Name::new("corner.sprite"),
-        ));
+            },))
+            .name("corner.sprite");
     }
     let mut indices = vec![];
     for i in 1..collider_vertices.len() as u32 {
@@ -118,19 +117,21 @@ pub fn spawn_background(mut commands: Commands) {
     }
     indices.push([collider_vertices.len() as u32 - 1, 0]);
 
-    commands.spawn((
-        GeometryBuilder::build_as(
-            &border_builder.build(),
-            DrawMode::Stroke(stroke_mode),
-            Transform::from_xyz(0.0, 0.0, ZOrder::Border.f32()),
-        ),
-        Collider::polyline(collider_vertices, Some(indices)),
-        Name::new("back.line"),
-    ));
+    commands
+        .spawn((
+            GeometryBuilder::build_as(
+                &border_builder.build(),
+                DrawMode::Stroke(stroke_mode),
+                Transform::from_xyz(0.0, 0.0, ZOrder::Border.f32()),
+            ),
+            Collider::polyline(collider_vertices, Some(indices)),
+        ))
+        .name("back.line");
 
-    commands.spawn((
-        Collider::cuboid(size, 10.0),
-        TransformBundle::from_transform(Transform::from_xyz(0.0, -size - 10.0 + 0.5, 0.0)),
-        Name::new("bottom.collider"),
-    ));
+    commands
+        .spawn((
+            Collider::cuboid(size, 10.0),
+            TransformBundle::from_transform(Transform::from_xyz(0.0, -size - 10.0 + 0.5, 0.0)),
+        ))
+        .name("bottom.collider");
 }

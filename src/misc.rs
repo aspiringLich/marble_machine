@@ -58,11 +58,19 @@ impl ColorHex for Color {
 }
 
 /// a trait to allow us to run the name method on Commands
-pub trait CommandsName<'w, 's, 'a> {
+pub trait CommandsName {
     fn name(&mut self, name: impl Into<std::borrow::Cow<'static, str>>) -> &mut Self;
 }
 
-impl<'w, 's, 'a> CommandsName<'w, 's, 'a> for EntityCommands<'w, 's, 'a> {
+impl<'w, 's, 'a> CommandsName for EntityCommands<'w, 's, 'a> {
+    /// set this sprites name
+    fn name(&mut self, name: impl Into<std::borrow::Cow<'static, str>>) -> &mut Self {
+        let id = self.id();
+        self.insert(Name::new(format!("{} ({:#?})", name.into(), id)))
+    }
+}
+
+impl<'a> CommandsName for bevy::ecs::world::EntityMut<'a> {
     /// set this sprites name
     fn name(&mut self, name: impl Into<std::borrow::Cow<'static, str>>) -> &mut Self {
         let id = self.id();

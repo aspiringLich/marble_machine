@@ -167,7 +167,7 @@ pub fn spawn_modules(
 
         let parent = commands
             .spawn(SpriteBundle { ..default() })
-            .insert(module.get_inner().get_identifier())
+            .name(module.get_inner().get_identifier())
             .insert((module, marker::Module))
             .id();
         let mut children: Vec<Entity> = vec![];
@@ -178,13 +178,13 @@ pub fn spawn_modules(
                 commands
                     .spawn_atlas_sprite($atlasdict, MODULE_COLOR, Transform::from_xyz(0.0, 0.0, ZOrder::BodyComponent.f32()))
                     .insert((
-                        Name::new($name),
                         Collider::ball($atlasdict.width() * 0.5),
                         RigidBody::Fixed,
                         Restitution::coefficient(0.8),
                         marker::ModuleBody
                         $($tail)*
                     ))
+                    .name($name)
                     .id()
             )
         }

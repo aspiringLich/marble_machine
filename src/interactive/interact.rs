@@ -97,7 +97,7 @@ pub fn spawn_despawn_interactive_components(
             .spawn_instructions()
             .body;
 
-        macro spawn_widget($translation:expr, $color:expr, $name:literal, $factor:literal $($tail:tt)*) {
+        macro spawn_widget($translation:expr, $color:expr, $name:literal, $factor:literal, ($($tail:tt)*)) {
             commands
                 .spawn((
                     SpriteSheetBundle {
@@ -112,9 +112,9 @@ pub fn spawn_despawn_interactive_components(
                     },
                     Collider::ball(basic::marble_small.width() / 2.0 * $factor),
                     Sensor,
-                    Name::new($name)
                     $($tail)*
                 ))
+                .name($name)
                 .id()
         }
 
@@ -132,7 +132,7 @@ pub fn spawn_despawn_interactive_components(
                 color,
                 "rotation.widget",
                 2.0,
-                Interactive::Rotation
+                (Interactive::Rotation)
             );
             commands.entity(*entity).add_child(child);
         }
@@ -141,14 +141,14 @@ pub fn spawn_despawn_interactive_components(
             color,
             "io_rotation.widget",
             1.0,
-            Interactive::IORotation
+            (Interactive::IORotation)
         ));
         children.push(spawn_widget!(
             Vec3::ZERO,
             Color::RED,
             "delete.widget",
             1.0,
-            Interactive::Delete
+            (Interactive::Delete)
         ));
 
         commands.entity(module).push_children(&children);

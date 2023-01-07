@@ -30,7 +30,7 @@ where
                     ),
                     TransformBundle::from_transform(offset_tf),
                 ))
-                .insert(Name::new("in.collider"))
+                .name("in.collider")
                 .id(),
             commands
                 .spawn_indicator(Vec3::new(-1.5, 0.0, 0.625) + offset_tf.translation)
@@ -50,9 +50,9 @@ where
                     Collider::ball(2.0),
                     Sensor,
                     ActiveEvents::COLLISION_EVENTS,
-                    Name::new("in.sprite"),
                     marker::Input(n),
                 ))
+                .name("in.sprite")
                 .id(),
         ];
 
@@ -61,10 +61,9 @@ where
                 transform,
                 ..default()
             },
-            Name::new("in.component"),
             marker::Input(n),
         ));
-        out.push_children(&children);
+        out.push_children(&children).name("in.component");
         out
     }
 
@@ -89,22 +88,20 @@ where
                     ),
                     TransformBundle::from_transform(offset_tf),
                 ))
-                .insert(Name::new("out.collider"))
+                .name("out.collider")
                 .id(),
             commands
-                .spawn((
-                    SpriteSheetBundle {
-                        texture_atlas,
-                        sprite: TextureAtlasSprite {
-                            index,
-                            anchor: Anchor::Center,
-                            ..default()
-                        },
-                        transform: offset_tf,
+                .spawn((SpriteSheetBundle {
+                    texture_atlas,
+                    sprite: TextureAtlasSprite {
+                        index,
+                        anchor: Anchor::Center,
                         ..default()
                     },
-                    Name::new("out.sprite"),
-                ))
+                    transform: offset_tf,
+                    ..default()
+                },))
+                .name("out.sprite")
                 .id(),
         ];
 
@@ -113,11 +110,10 @@ where
                 transform,
                 ..default()
             },
-            Name::new("out.component"),
             marker::Output(n),
         ));
 
-        out.push_children(&children);
+        out.push_children(&children).name("out.component");
         out
     }
 
@@ -143,7 +139,7 @@ where
                 },
                 ..default()
             })
-            .insert(Name::new("indicator.sprite"))
+            .name("indicator.sprite")
             .id();
 
         let mut out = commands.spawn((
@@ -164,9 +160,8 @@ where
                 ..default()
             },
             marker::Indicator,
-            Name::new("indicator.component"),
         ));
-        out.add_child(child);
+        out.add_child(child).name("indicator.component");
         out
     }
 }

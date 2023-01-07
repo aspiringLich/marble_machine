@@ -345,7 +345,7 @@ pub trait Module {
     /// the name of the module
     fn get_name(&self) -> &'static str;
     /// the identifier of the module
-    fn get_identifier(&self) -> Name;
+    fn get_identifier(&self) -> &'static str;
 }
 
 /// basically, imagine offsetting some object by `offset` in the x-axis, then rotating it around the origin `rotation` radians.
@@ -468,7 +468,7 @@ impl Module for Basic {
         "Basic Module"
     }
 
-    fn get_identifier(&self) -> Name {
-        Name::new("basic.module")
+    fn get_identifier(&self) -> &'static str {
+        "basic.module"
     }
 }

@@ -18,6 +18,9 @@ pub fn update_lifetime(
     }
 
     let mut q_lifetime = lifetime.p1();
+    // filter out entities that may not exist anymore
+    entities.drain_filter(|&mut e| commands.get_entity(e).is_none());
+    // do the lifetime thing
     entities
         .drain_filter(|&mut e| {
             let mut lifetime = q_lifetime.entity_mut(e);

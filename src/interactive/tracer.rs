@@ -23,25 +23,7 @@ impl FromWorld for TracerEntities {
         for i in 0..TRACER_N - 1 {
             let (texture_atlas, index) = basic::tracer_tick.info();
             e[i] = world
-                .spawn((
-                    SpriteSheetBundle {
-                        texture_atlas,
-                        sprite: TextureAtlasSprite {
-                            index,
-                            color: TRACER_COLOR,
-                            ..default()
-                        },
-                        visibility: Visibility::INVISIBLE,
-                        ..default()
-                    },
-                    Name::new("tracer.sprite"),
-                ))
-                .id();
-        }
-        let (texture_atlas, index) = basic::target.info();
-        e[TRACER_N - 1] = world
-            .spawn((
-                SpriteSheetBundle {
+                .spawn((SpriteSheetBundle {
                     texture_atlas,
                     sprite: TextureAtlasSprite {
                         index,
@@ -50,14 +32,27 @@ impl FromWorld for TracerEntities {
                     },
                     visibility: Visibility::INVISIBLE,
                     ..default()
+                },))
+                .name("tracer.sprite")
+                .id();
+        }
+        let (texture_atlas, index) = basic::target.info();
+        e[TRACER_N - 1] = world
+            .spawn((SpriteSheetBundle {
+                texture_atlas,
+                sprite: TextureAtlasSprite {
+                    index,
+                    color: TRACER_COLOR,
+                    ..default()
                 },
-                Name::new("tracer.sprite"),
-            ))
+                visibility: Visibility::INVISIBLE,
+                ..default()
+            },))
+            .name("tracer.sprite")
             .id();
 
         world
             .spawn((
-                Name::new("tracer.parent"),
                 TransformBundle::from_transform(Transform::from_xyz(
                     0.0,
                     0.0,
@@ -65,6 +60,7 @@ impl FromWorld for TracerEntities {
                 )),
                 VisibilityBundle::default(),
             ))
+            .name("tracer.parent")
             .push_children(&*e);
         return e;
     }
