@@ -16,28 +16,52 @@ where
         offset: f32,
         n: usize,
     ) -> EntityCommands<'a, 'b, '_> {
+        self.spawn_input_inner::<true>(transform, offset, n)
+    }
+
+    /// Spawn the input component but nonfunctional (no collider)
+    fn spawn_input_nonfunctional(
+        &mut self,
+        mut transform: Transform,
+        offset: f32,
+        n: usize,
+    ) -> EntityCommands<'a, 'b, '_> {
+        self.spawn_input_inner::<false>(transform, offset, n)
+    }
+
+    /// Spawn the normal input component but you can choose whether its functional or nonfunctional i guess
+    fn spawn_input_inner<const B: bool>(
+        &mut self,
+        mut transform: Transform,
+        offset: f32,
+        n: usize,
+    ) -> EntityCommands<'a, 'b, '_> {
         transform.translation.z = 0.375;
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_input.info();
         let offset_tf = Transform::from_translation(Vec3::X * offset + ZOrder::InputComponent);
 
-        let children = vec![
-            commands
-                .spawn((
-                    Collider::polyline(
-                        vec![vec2!(3, 5), vec2!(-3, 3), vec2!(-3, -3), vec2!(3, -5)],
-                        Some(vec![[0, 1], [2, 3]]),
-                    ),
-                    TransformBundle::from_transform(offset_tf),
-                ))
-                .name("in.collider")
-                .id(),
-            commands
-                .spawn_indicator(Vec3::new(-1.5, 0.0, 0.625) + offset_tf.translation)
-                .id(),
-            commands
-                .spawn((
-                    SpriteSheetBundle {
+        let indicator = commands
+            .spawn_indicator(Vec3::new(-1.5, 0.0, 0.625) + offset_tf.translation)
+            .id();
+
+        if B {}
+
+        let mut input: Entity = unsafe { std::mem::zeroed() };
+        let mut out = commands
+            .spawn((
+                SpriteBundle {
+                    transform,
+                    ..default()
+                },
+                marker::Input(n),
+            ))
+            .name("in.component")
+            .add_child(indicator)
+            .add_children(|children| {
+                // the sprite itself of the input component
+                input = children
+                    .spawn((SpriteSheetBundle {
                         texture_atlas,
                         sprite: TextureAtlasSprite {
                             index,
@@ -46,25 +70,32 @@ where
                         },
                         transform: offset_tf,
                         ..default()
-                    },
-                    Collider::ball(2.0),
-                    Sensor,
-                    ActiveEvents::COLLISION_EVENTS,
-                    marker::Input(n),
-                ))
-                .name("in.sprite")
-                .id(),
-        ];
-
-        let mut out = commands.spawn((
-            SpriteBundle {
-                transform,
-                ..default()
-            },
-            marker::Input(n),
-        ));
-        out.push_children(&children).name("in.component");
-        out
+                    },))
+                    .name("in.sprite")
+                    .id();
+                // insert the collider if we want it to be functional
+                if B {
+                    children
+                        .spawn((
+                            Collider::polyline(
+                                vec![vec2!(3, 5), vec2!(-3, 3), vec2!(-3, -3), vec2!(3, -5)],
+                                Some(vec![[0, 1], [2, 3]]),
+                            ),
+                            TransformBundle::from_transform(offset_tf),
+                        ))
+                        .name("in.collider");
+                }
+                children.parent_entity()
+            });
+        if B {
+            commands.entity(input).insert((
+                Collider::ball(2.0),
+                Sensor,
+                ActiveEvents::COLLISION_EVENTS,
+                marker::Input(n),
+            ));
+        }
+        commands.entity(out)
     }
 
     /// spawn the normal output component

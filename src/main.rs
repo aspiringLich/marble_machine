@@ -52,7 +52,7 @@ mod ui;
 
 use misc::marker;
 use misc::CommandsName;
-use ui::SelectedModules;
+use ui::ui::SelectedModules;
 
 #[derive(StageLabel)]
 pub enum Label {
@@ -83,7 +83,7 @@ fn main() {
     .init_resource::<SelectedModules>()
     .init_resource::<select::CursorCoords>()
     .init_resource::<select::HoveredEntities>()
-    .init_resource::<ui::SpawningUiImages>()
+    .init_resource::<ui::ui::SpawningUiImages>()
     .insert_resource(RapierConfiguration {
         physics_pipeline_active: true,
         query_pipeline_active: true,
@@ -129,14 +129,7 @@ fn main() {
             .with_system(spawn::spawn_modules.label("spawn::spawn_modules"))
             .with_system(marble_io::fire_marbles),
     )
-    .add_stage_after(
-        Label::StageSpawn,
-        Label::StageUi,
-        SystemStage::parallel()
-            .with_system(ui::inspector_ui)
-            .with_system(ui::spawning_ui)
-            .with_system(ui::debug_ui),
-    )
+    .add_stage_after(Label::StageSpawn, Label::StageUi, SystemStage::parallel())
     .add_stage_after(
         Label::StageUi,
         Label::StageMain,
@@ -151,6 +144,7 @@ fn main() {
     interactive::app(&mut app);
     graphics::app(&mut app);
     engine::app(&mut app);
+    ui::app(&mut app);
 
     app.run();
 }
