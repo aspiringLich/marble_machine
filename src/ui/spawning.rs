@@ -8,7 +8,7 @@ use crate::{
     *,
 };
 use bevy_egui::*;
-use egui::{Button, Image, Rect, Vec2, *};
+use egui::{Button, Image, Label, Rect, Vec2, *};
 
 use super::atlas_image::AtlasImage;
 
@@ -61,7 +61,13 @@ static MODULES: Vec<ModuleItem> = {
             instructions: $arg.get_inner().spawn_instructions(),
         }
     }
+
+    macro header($arg:literal) {
+        ModuleItem::SectionHeader($arg)
+    }
+
     vec![
+        header!("Standard Modules"),
         item!(ModuleType::Basic(Basic)),
         item!(ModuleType::Basic(Basic)),
         item!(ModuleType::Basic(Basic)),
@@ -91,9 +97,8 @@ pub fn ui(mut egui_context: ResMut<EguiContext>, images: Local<Images>) {
             ui.add_space(spacing);
             let mut i = 0;
             let cursor = ui.cursor().min.to_vec2();
-            let mut label = None;
 
-            while let Some(item) = iter.next() && i < i32::max(width, 1) {
+            while i < i32::max(width, 1)&& let Some(item) = iter.next() {
                 match item {
                     ModuleItem::Module {
                         module: _,
@@ -101,8 +106,11 @@ pub fn ui(mut egui_context: ResMut<EguiContext>, images: Local<Images>) {
                     } => {
                         // dbg!(cursor);
                         // allocate space
-                        let translate = cursor + Vec2::X * ((SIZE.x + spacing * 2.0) * i as f32);
+                        let translate = cursor + Vec2::X * ((SIZE.x + spacing + 3.0) * i as f32);
                         let allocated = size_rect.translate(translate);
+                        // dbg!(allocated.min);
+                        
+                        // put down the button
                         ui.put(allocated, Button::new(""));
                         ui.allocate_rect(allocated, Sense::focusable_noninteractive());
                         let mut new_ui = ui.child_ui(allocated, Layout::default());
@@ -111,12 +119,9 @@ pub fn ui(mut egui_context: ResMut<EguiContext>, images: Local<Images>) {
                         i += 1;
                     }
                     ModuleItem::SectionHeader(str) => {
-                        label = Some(str);
+                        ui.add(Label::new(*str).wrap(false));
+                        break;
                     }
-                }
-
-                if let Some(str) = label {
-                    ui.label(*str);
                 }
             }
         }
