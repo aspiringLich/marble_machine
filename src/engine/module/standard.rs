@@ -1,11 +1,9 @@
-use bevy::prelude::{warn, Entity};
+use crate::{engine::module::BodyType, *};
 use bevy_egui::egui::Ui;
 use ctor::ctor;
 
 use crate::{
-    engine::{
-        marble::Marble, marble_io::FireMarble, module::body::BodyType, spawn::SpawnInstructions,
-    },
+    engine::{marble::Marble, marble_io::FireMarble, spawn::SpawnInstructions},
     query::{QueryQueryIter, QueryQuerySimple},
 };
 
@@ -20,12 +18,11 @@ impl Default for Basic {
     }
 }
 
-#[ctor]
-static BASIC_INSTRUCTIONS: SpawnInstructions = {
+static BASIC_INSTRUCTIONS: Lazy<SpawnInstructions> = Lazy::new(|| {
     SpawnInstructions::from_body(BodyType::Small)
         .with_input_rotations([270.].into_iter())
         .with_output_rotations([90.].into_iter())
-};
+});
 
 impl Module for Basic {
     fn spawn_instructions(&self) -> &'static SpawnInstructions {
