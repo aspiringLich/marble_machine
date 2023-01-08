@@ -25,8 +25,8 @@ fn text_init(mut commands: Commands, asset_server: Res<AssetServer>) {
         .with_style(Style {
             position_type: PositionType::Absolute,
             position: UiRect {
-                bottom: Val::Px(5.0),
-                left: Val::Px(15.0),
+                top: Val::Px(5.0),
+                right: Val::Px(15.0),
                 ..default()
             },
             ..default()

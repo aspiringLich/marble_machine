@@ -115,9 +115,29 @@ pub fn offset_of<T: AtlasDictionary>(input: T) -> f32 {
 
 impl BodyType {
     pub fn offset(&self) -> f32 {
+        use BodyType::*;
         match self {
-            BodyType::Small => offset_of(basic::body_small),
-            BodyType::Large => todo!(),
+            Small => offset_of(basic::body_small),
+            Large => todo!(),
+        }
+    }
+
+    pub fn color(&self) -> Color {
+        Color::rgb_u32(self.color_internal())
+    }
+
+    pub fn color32(&self) -> bevy_egui::egui::Color32 {
+        bevy_egui::egui::Color32::rgb_u32(self.color_internal())
+    }
+
+    fn color_internal(&self) -> u32 {
+        use BodyType::*;
+
+        let cyanish = 0x65edc0;
+
+        match self {
+            Small => cyanish,
+            Large => cyanish,
         }
     }
 }
@@ -173,10 +193,10 @@ pub fn spawn_modules(
         let mut children: Vec<Entity> = vec![];
 
         // spawn a small circular body and return the id
-        macro spawn_body_circular($atlasdict:expr, $name:literal $($tail:tt)*) {
+        macro spawn_body_circular($body_type:expr, $atlasdict:expr, $name:literal $($tail:tt)*) {
             children.push(
                 commands
-                    .spawn_atlas_sprite($atlasdict, MODULE_COLOR, Transform::from_xyz(0.0, 0.0, ZOrder::BodyComponent.f32()))
+                    .spawn_atlas_sprite($atlasdict, $body_type.color(), Transform::from_xyz(0.0, 0.0, ZOrder::BodyComponent.f32()))
                     .insert((
                         Collider::ball($atlasdict.width() * 0.5),
                         RigidBody::Fixed,
@@ -198,8 +218,8 @@ pub fn spawn_modules(
 
         // spawn the body
         match body {
-            BodyType::Small => {
-                spawn_body_circular!(basic::body_small, "body_small.component");
+            body @ BodyType::Small => {
+                spawn_body_circular!(body, basic::body_small, "body_small.component");
             }
             _ => todo!(),
         }

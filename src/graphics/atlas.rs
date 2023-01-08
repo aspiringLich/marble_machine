@@ -9,6 +9,10 @@ pub trait AtlasDictionary
 where
     Self: Sized + Copy + Clone,
 {
+    fn atlas_rect() -> Vec2 {
+        unsafe { ATLAS_SIZE[Self::atlas_n()] }
+    }
+
     /// the rect each individual item represents
     fn rect(self) -> Rect;
     /// the path to the atlas this enum is referring to
@@ -75,6 +79,7 @@ const GRID_SIZE: f32 = 8.0;
 /// kinda bad but its the easiest way i could think of
 /// stores every handle for all the atlases we init
 static mut ATLAS_HANDLES: Vec<Handle<TextureAtlas>> = vec![];
+static mut ATLAS_SIZE: Vec<Vec2> = vec![];
 
 pub fn init_texture_atlas(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
@@ -88,7 +93,10 @@ pub fn init_texture_atlas(
             atlas.add_texture(rect);
         });
         let handle = texture_atlases.add(atlas);
-        unsafe { ATLAS_HANDLES.push(handle) };
+        unsafe {
+            ATLAS_HANDLES.push(handle);
+            ATLAS_SIZE.push($dimensions.into());
+        }
     }}
 
     init_atlas!(basic, [64.0, 64.0]);

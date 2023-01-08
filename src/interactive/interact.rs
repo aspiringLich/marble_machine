@@ -93,7 +93,7 @@ pub fn spawn_despawn_interactive_components(
 
         let body = &q_module
             .entity_mut(module)
-            .get_inner()
+            .get_inner_mut()
             .spawn_instructions()
             .body;
 

@@ -40,6 +40,7 @@ use bevy_inspector_egui::prelude::*;
 use bevy_pancam::PanCam;
 use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
+use ctor::ctor;
 use misc::ColorHex;
 use module::ModuleType;
 use once_cell::sync::Lazy;
@@ -100,7 +101,7 @@ fn main() {
     .add_plugin(bevy_pancam::PanCamPlugin)
     .add_plugin(EguiPlugin)
     // .add_plugin(bevy_editor_pls::EditorPlugin)
-    .add_plugin(WorldInspectorPlugin::new())
+    // .add_plugin(WorldInspectorPlugin::new())
     .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
     // .add_plugin(RapierDebugRenderPlugin::default())
     // events

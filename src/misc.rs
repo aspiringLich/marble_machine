@@ -34,13 +34,13 @@ pub macro vec2($x:expr, $y:expr) {
 }
 
 pub trait ColorHex {
-    fn rgba_u32(hex: u32) -> Color;
-    fn rgb_u32(hex: u32) -> Color;
+    fn rgba_u32(hex: u32) -> Self;
+    fn rgb_u32(hex: u32) -> Self;
 }
 
 impl ColorHex for Color {
-    fn rgba_u32(hex: u32) -> Color {
-        Color::rgba_u8(
+    fn rgba_u32(hex: u32) -> Self {
+        Self::rgba_u8(
             (hex >> 24 & 0xff) as u8,
             (hex >> 16 & 0xff) as u8,
             (hex >> 8 & 0xff) as u8,
@@ -48,8 +48,27 @@ impl ColorHex for Color {
         )
     }
 
-    fn rgb_u32(hex: u32) -> Color {
-        Color::rgb_u8(
+    fn rgb_u32(hex: u32) -> Self {
+        Self::rgb_u8(
+            (hex >> 16 & 0xff) as u8,
+            (hex >> 8 & 0xff) as u8,
+            (hex & 0xff) as u8,
+        )
+    }
+}
+
+impl ColorHex for bevy_egui::egui::Color32 {
+    fn rgba_u32(hex: u32) -> Self {
+        Self::from_rgba_unmultiplied(
+            (hex >> 24 & 0xff) as u8,
+            (hex >> 16 & 0xff) as u8,
+            (hex >> 8 & 0xff) as u8,
+            (hex & 0xff) as u8,
+        )
+    }
+
+    fn rgb_u32(hex: u32) -> Self {
+        Self::from_rgb(
             (hex >> 16 & 0xff) as u8,
             (hex >> 8 & 0xff) as u8,
             (hex & 0xff) as u8,

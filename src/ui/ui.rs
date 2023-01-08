@@ -54,7 +54,7 @@ pub fn inspector_ui(
 
     let binding = unsafe { &mut *res };
     let mut binding = binding.q_module_type.get_mut(selected).unwrap();
-    let module = binding.get_inner();
+    let module = binding.get_inner_mut();
 
     egui::Window::new(module.get_name())
         .resizable(true)
@@ -217,12 +217,15 @@ pub fn spawning_ui(
     mut egui_context: ResMut<EguiContext>,
     images: Res<SpawningUiImages>,
     mut spawn_module: EventWriter<SpawnModule>,
+    windows: Res<bevy::prelude::Windows>,
 ) {
     let basic = egui_context.add_image(images.basic.clone());
+    let Some(window) = windows.get_primary() else { error!("nah no window brah"); return };
 
     egui::Window::new("Le epic temp Module Spawner thingyyy")
         .resizable(true)
         .collapsible(false)
+        .default_pos([window.width(), window.height()])
         .show(egui_context.ctx_mut(), |ui| {
             if ui
                 .add(ImageButton::new(basic, [100.0, 100.0]))
@@ -242,6 +245,7 @@ pub fn debug_ui(
     mut q_pancam: Query<&mut PanCam>,
     mut step: Local<bool>,
     mut prev_pancam: Local<Option<PanCam>>,
+    windows: Res<bevy::prelude::Windows>,
 ) {
     let active = &mut rapier_config.physics_pipeline_active;
     if *step {
@@ -249,9 +253,12 @@ pub fn debug_ui(
         *step = false;
     }
 
+    let Some(window) = windows.get_primary() else { error!("no window on god fr"); return };
+
     egui::Window::new("debug ui thing")
         .resizable(true)
         .collapsible(false)
+        .default_pos([window.width(), window.height()])
         .show(egui_context.ctx_mut(), |ui| {
             ui.horizontal(|ui| {
                 ui.label("Physics Pipeline");

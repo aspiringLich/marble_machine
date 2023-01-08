@@ -23,7 +23,13 @@ impl Default for ModuleType {
 }
 
 impl ModuleType {
-    pub fn get_inner(&mut self) -> &mut impl Module {
+    pub fn get_inner_mut(&mut self) -> &mut impl Module {
+        match self {
+            Self::Basic(x) => x,
+        }
+    }
+
+    pub const fn get_inner(&self) -> &impl Module {
         match self {
             Self::Basic(x) => x,
         }
@@ -301,7 +307,7 @@ pub fn update_module_callbacks(
         timer.tick(Duration::from_secs(1));
 
         if timer.finished() {
-            module.get_inner().callback_update(res_module, entity);
+            module.get_inner_mut().callback_update(res_module, entity);
             res_module
                 .commands
                 .entity(entity)
@@ -329,7 +335,7 @@ pub fn update_modules(
     let res_module = &set.p0() as *const ModuleResources as *mut ModuleResources;
     for (mut module, entity) in set.p1().iter_mut() {
         module
-            .get_inner()
+            .get_inner_mut()
             .update(unsafe { &mut *res_module }, entity)
     }
 }
