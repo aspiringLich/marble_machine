@@ -1,10 +1,7 @@
-use std::f32::consts;
-
 use crate::{
     engine::spawn::{BodyType, SpawnInstructions},
     graphics::atlas::{basic, AtlasDictionary},
-    module::{param::ModuleResources, Module},
-    spawn::SpawnModule,
+    CursorIcon,
     *,
 };
 use bevy_egui::*;
@@ -76,15 +73,24 @@ static MODULES: Vec<ModuleItem> = {
 
 const SIZE: Vec2 = Vec2::new(120., 120.);
 
-pub fn ui(mut egui_context: ResMut<EguiContext>, images: Local<Images>) {
+pub fn ui(
+    mut egui_context: ResMut<EguiContext>,
+    images: Local<Images>,
+    mut windows: ResMut<Windows>,
+    mut spawn_modules: EventWriter<spawn::SpawnModule>,
+) {
+    let Some(window) = windows.get_primary_mut() else { error!("take a guess what the error is"); return };
+    
     let ctx = egui_context.ctx_mut();
 
     let size_rect = Rect {
         min: Pos2::ZERO,
         max: SIZE.to_pos2(),
     };
+    
+    // set cursor
 
-    SidePanel::left("spawning").resizable(true).show(ctx, |ui| {
+    SidePanel::left("spawning").resizable(true).show_separator_line(true).show(ctx, |ui| {        
         let spacing = ui.spacing().window_margin.top;
 
         let width = (ui.available_size().x) / (SIZE.x + spacing);
@@ -101,7 +107,7 @@ pub fn ui(mut egui_context: ResMut<EguiContext>, images: Local<Images>) {
             while i < i32::max(width, 1)&& let Some(item) = iter.next() {
                 match item {
                     ModuleItem::Module {
-                        module: _,
+                        module,
                         instructions,
                     } => {
                         // dbg!(cursor);
@@ -111,7 +117,12 @@ pub fn ui(mut egui_context: ResMut<EguiContext>, images: Local<Images>) {
                         // dbg!(allocated.min);
                         
                         // put down the button
-                        ui.put(allocated, Button::new(""));
+                        let button = ui.put(allocated, Button::new(""));
+                        if button.clicked() {
+                            spawn_modules.send(spawn::SpawnModule::new(*module).place());
+                        }
+                        
+                        // allocate the area to draw the module and throw stuff there
                         ui.allocate_rect(allocated, Sense::focusable_noninteractive());
                         let mut new_ui = ui.child_ui(allocated, Layout::default());
                         recreate_module(&mut new_ui, &images, instructions);
