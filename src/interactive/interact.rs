@@ -6,9 +6,8 @@ use std::{
 };
 
 use crate::{
-    module::{param::*, Module},
     select::CursorCoords,
-    *,
+    *, query::{QueryQuerySimple, QueryQueryIter},
 };
 
 #[derive(Component, Debug)]

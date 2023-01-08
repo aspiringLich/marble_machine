@@ -1,6 +1,5 @@
 use crate::{
-    module::param::{QueryQueryIter, QueryQuerySimple},
-    *,
+    *, query::{QueryQuerySimple, QueryQueryIter}, engine::module::framework::UpdateModule,
 };
 use atlas::{ AtlasDictionary, basic };
 use marble::Marble;
@@ -119,7 +118,7 @@ pub fn update_inputs(
     q_marble: Query<&Marble>,
     q_input: Query<&marker::Input>,
     has_marble: Query<With<Marble>>,
-    mut update_event: EventWriter<module::UpdateModule>,
+    mut update_event: EventWriter<UpdateModule>,
 ) {
     for event in collision_events.iter() {
         use CollisionEvent::*;
@@ -142,7 +141,7 @@ pub fn update_inputs(
                 if input_state[index].is_none() {
                     input_state[index] = Some(marble);
                     commands.entity(marble_e).despawn();
-                    update_event.send(module::UpdateModule(parent));
+                    update_event.send(UpdateModule(parent));
                 }
             }
         };

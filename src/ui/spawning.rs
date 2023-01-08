@@ -1,5 +1,5 @@
 use crate::{
-    engine::spawn::{BodyType, SpawnInstructions},
+    engine::{spawn::{SpawnInstructions}, module::body::BodyType},
     graphics::atlas::{basic, AtlasDictionary},
     CursorIcon,
     *,
@@ -11,9 +11,12 @@ use super::atlas_image::AtlasImage;
 
 pub struct Images {
     body_small: Image,
+    input: Image,
+    output: Image,
+    indicator: Image,
 }
 
-const SCALING: f32 = 5.0;
+const SCALING: f32 = 4.5;
 
 impl FromWorld for Images {
     fn from_world(world: &mut World) -> Self {
@@ -36,6 +39,9 @@ impl FromWorld for Images {
 
         Self {
             body_small: new_atlas!(basic::body_small).tint(BodyType::Small.color32()),
+            input: *new_atlas!(basic::marble_input),
+            output: *new_atlas!(basic::marble_output),
+            indicator: *new_atlas!(basic::indicator),
         }
     }
 }
@@ -71,15 +77,15 @@ static MODULES: Vec<ModuleItem> = {
     ]
 };
 
-const SIZE: Vec2 = Vec2::new(120., 120.);
+const SIZE: Vec2 = Vec2::new(80., 80.);
 
 pub fn ui(
     mut egui_context: ResMut<EguiContext>,
     images: Local<Images>,
-    mut windows: ResMut<Windows>,
+    // mut windows: ResMut<Windows>,
     mut spawn_modules: EventWriter<spawn::SpawnModule>,
 ) {
-    let Some(window) = windows.get_primary_mut() else { error!("take a guess what the error is"); return };
+    // let Some(window) = windows.get_primary_mut() else { error!("take a guess what the error is"); return };
     
     let ctx = egui_context.ctx_mut();
 
@@ -90,11 +96,12 @@ pub fn ui(
     
     // set cursor
 
-    SidePanel::left("spawning").resizable(true).show_separator_line(true).show(ctx, |ui| {        
+    SidePanel::left("spawning").resizable(true).default_width(SIZE.x * 2.0).show_separator_line(true).show(ctx, |ui| {        
         let spacing = ui.spacing().window_margin.top;
 
         let width = (ui.available_size().x) / (SIZE.x + spacing);
-        let width = width.round() as i32;
+        let width = width.round();
+        ui.set_width(width as f32 * SIZE.x + spacing);
         // dbg!(width);
 
         let mut iter = MODULES.iter().peekable();
@@ -104,7 +111,7 @@ pub fn ui(
             let mut i = 0;
             let cursor = ui.cursor().min.to_vec2();
 
-            while i < i32::max(width, 1)&& let Some(item) = iter.next() {
+            while i < i32::max(width as i32, 1)&& let Some(item) = iter.next() {
                 match item {
                     ModuleItem::Module {
                         module,
@@ -142,25 +149,39 @@ pub fn ui(
 }
 
 fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstructions) {
+    let ui_min = ui.max_rect().min.to_vec2();
     let make_rect = |center: Vec2, size: Vec2| {
-        let min: Vec2 = center - size / 2.0 + ui.max_rect().min.to_vec2();
-        let max: Vec2 = center + size / 2.0 + ui.max_rect().min.to_vec2();
+        let min: Vec2 = center - size / 2.0 + ui_min;
+        let max: Vec2 = center + size / 2.0 + ui_min;
         Rect::from_min_max(min.to_pos2(), max.to_pos2())
     };
+
+    macro put($center:expr, $image:expr) {
+        ui.put(make_rect($center, $image.size()), $image);
+    }
+    macro put_tf($transform:expr, $image:expr) {
+        let center = $transform.translation.truncate() * SCALING;
+        let center = Vec2 {
+            x: center.x,
+            y: center.y
+        };
+        
+        ui.put(make_rect(center, $image.size()), $image.rotate(-$transform.rotation.to_euler(EulerRot::XYZ).2, Vec2::splat(0.5)));
+    }
 
     let center = SIZE / 2.0;
 
     // spawn inputs
     for &transform in instructions.input_transforms.iter() {
-        // let size =
+        // dbg!(transform);
+        put_tf!(transform, images.input);
     }
 
     // spawn body
     let atlas_image = match instructions.body {
-        spawn::BodyType::Small => &images.body_small,
-        spawn::BodyType::Large => todo!(),
+        BodyType::Small => &images.body_small,
+        BodyType::Large => todo!(),
     };
 
-    let size = atlas_image.size();
-    ui.put(make_rect(center, size), *atlas_image);
+    put!(center, *atlas_image);
 }

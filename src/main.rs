@@ -33,6 +33,9 @@ use engine::*;
 mod game;
 use game::*;
 
+/// take a wild guess
+mod ui;
+
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, sprite::Anchor};
 // use bevy_editor_pls::prelude::*;
 use bevy_egui::EguiPlugin;
@@ -48,8 +51,8 @@ use res::*;
 
 mod fps;
 mod misc;
+mod query;
 mod res;
-mod ui;
 
 use misc::marker;
 use misc::CommandsName;

@@ -1,6 +1,6 @@
 use crate::{
     module::param::{QueryQueryIter, QueryQuerySimple},
-    spawn::{BodyType, CommandsSpawn},
+    spawn::CommandsSpawn,
     *,
 };
 use atlas::{basic, AtlasDictionary};

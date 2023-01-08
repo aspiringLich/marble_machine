@@ -1,6 +1,4 @@
-use crate::*;
-
-use super::module::param::QueryQuerySimple;
+use crate::{query::QueryQuerySimple, *};
 
 /// a struct that stores the number of ticks left until it gets borked
 #[derive(Deref, DerefMut, Component)]
