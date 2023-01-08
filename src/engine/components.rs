@@ -12,7 +12,7 @@ where
     /// Spawn the normal input component
     fn spawn_input(
         &mut self,
-        mut transform: Transform,
+        transform: Transform,
         offset: f32,
         n: usize,
     ) -> EntityCommands<'a, 'b, '_> {
@@ -22,7 +22,7 @@ where
     /// Spawn the input component but nonfunctional (no collider)
     fn spawn_input_nonfunctional(
         &mut self,
-        mut transform: Transform,
+        transform: Transform,
         offset: f32,
         n: usize,
     ) -> EntityCommands<'a, 'b, '_> {
@@ -48,7 +48,7 @@ where
         if B {}
 
         let mut input: Entity = unsafe { std::mem::zeroed() };
-        let mut out = commands
+        let out = commands
             .spawn((
                 SpriteBundle {
                     transform,

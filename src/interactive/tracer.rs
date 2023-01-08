@@ -1,5 +1,5 @@
 use crate::{
-    module::param::{QueryQueryIter, QueryQuerySimple},
+    query::{QueryQueryIter, QueryQuerySimple},
     spawn::CommandsSpawn,
     *,
 };

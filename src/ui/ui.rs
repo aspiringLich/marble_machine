@@ -1,7 +1,11 @@
 use std::f32::consts;
 
 use crate::{
-    module::{param::ModuleResources, Module},
+    engine::module::{
+        header::{Module, ModuleResources},
+        standard::Basic,
+        ModuleType,
+    },
     spawn::SpawnModule,
     *,
 };
@@ -232,8 +236,7 @@ pub fn spawning_ui(
                 .on_hover_text("The first one")
                 .clicked()
             {
-                spawn_module
-                    .send(SpawnModule::new(ModuleType::Basic(module::Basic::default())).place());
+                spawn_module.send(SpawnModule::new(ModuleType::Basic(Basic::default())).place());
             }
         });
 }

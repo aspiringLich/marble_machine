@@ -19,6 +19,7 @@ extern crate strum;
 
 /// the interactive components, selection, etc.
 mod interactive;
+use engine::module::header::UpdateModule;
 use interactive::*;
 
 /// anything to do with graphics
@@ -45,7 +46,6 @@ use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
 use ctor::ctor;
 use misc::ColorHex;
-use module::ModuleType;
 use once_cell::sync::Lazy;
 use res::*;
 
@@ -109,7 +109,7 @@ fn main() {
     // .add_plugin(RapierDebugRenderPlugin::default())
     // events
     .add_event::<marble_io::FireMarble>()
-    .add_event::<module::UpdateModule>()
+    .add_event::<UpdateModule>()
     .add_event::<spawn::SpawnModule>()
     // startup systems
     .add_startup_stage(

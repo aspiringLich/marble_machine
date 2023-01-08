@@ -1,8 +1,12 @@
+use crate::engine::module::header::Module;
 use crate::{
-    engine::{spawn::{SpawnInstructions}, module::body::BodyType},
+    engine::{
+        module::{body::BodyType, ModuleType},
+        spawn::SpawnInstructions,
+    },
     graphics::atlas::{basic, AtlasDictionary},
-    CursorIcon,
-    *,
+    module::standard::*,
+    CursorIcon, *,
 };
 use bevy_egui::*;
 use egui::{Button, Image, Label, Rect, Vec2, *};

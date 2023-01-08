@@ -1,6 +1,6 @@
 use std::f32::consts::TAU;
 
-use crate::{module::param::*, *};
+use crate::{query::QueryQuerySimple, *};
 use iyes_loopless::prelude::{ConditionHelpers, IntoConditionalSystem};
 
 use super::interact::InteractiveRotation;

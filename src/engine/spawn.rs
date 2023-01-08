@@ -1,10 +1,10 @@
-use crate::{marble_io::InputState, *};
+use crate::{engine::module::header::Module, marble_io::InputState, *};
 use atlas::{basic, AtlasDictionary};
 
 use bevy::ecs::system::EntityCommands;
 use components::SpawnComponents;
 
-use super::module::body::BodyType;
+use super::module::{body::BodyType, ModuleType};
 // use bevy_rapier2d::{prelude::*, rapier::prelude::ColliderMaterial};
 /// methods for spawning random things to make my code more reasonable
 pub trait CommandsSpawn<'a, 'b>

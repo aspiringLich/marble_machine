@@ -1,14 +1,19 @@
-use bevy_editor_pls::egui::Ui;
-use ctor::ctor;
-use once_cell::sync::Lazy;
+use std::time::Duration;
+
+use bevy::ecs::system::SystemParam;
+use bevy_egui::egui::Ui;
 
 use crate::{
-    engine::{
-        marble::Marble, marble_io::FireMarble, module::body::BodyType, spawn::SpawnInstructions,
-    },
-    query::{QueryQueryIter, QueryQuerySimple},
+    engine::{marble_io::FireMarble, spawn::SpawnInstructions},
+    query::{QueryOutput, QueryQueryIter, QueryQuerySimple},
     *,
 };
+
+use super::ModuleType;
+
+type QuerySimple<'w, 's, T> = Query<'w, 's, &'static mut T>;
+// type QueryWith<'w, 's, T, W> = Query<'w, 's, &'static mut T, bevy::prelude::With<W>>;
+type QueryEntity<'w, 's, W> = Query<'w, 's, bevy::prelude::Entity, bevy::prelude::With<W>>;
 
 // information the modules get to mess around with
 #[derive(SystemParam)]
@@ -16,7 +21,7 @@ pub struct ModuleResources<'w, 's> {
     pub commands: Commands<'w, 's>,
     // simple queries
     pub q_name: QuerySimple<'w, 's, Name>,
-    pub q_module_type: QuerySimple<'w, 's, module::ModuleType>,
+    pub q_module_type: QuerySimple<'w, 's, ModuleType>,
     pub q_input_state: QuerySimple<'w, 's, marble_io::InputState>,
     pub q_transform: QuerySimple<'w, 's, Transform>,
     pub q_children: QuerySimple<'w, 's, Children>,
@@ -26,7 +31,7 @@ pub struct ModuleResources<'w, 's> {
     pub w_output: QueryEntity<'w, 's, marker::Output>,
     pub w_indicator: QueryEntity<'w, 's, marker::Indicator>,
     // events
-    pub fire_marble: EventWriter<'w, 's, module::FireMarble>,
+    pub fire_marble: EventWriter<'w, 's, FireMarble>,
     // resources
     pub keyboard: Res<'w, Input<KeyCode>>,
 }
@@ -69,8 +74,6 @@ impl<'w, 's> ModuleResources<'w, 's> {
         }
     }
 }
-
-use param::{ModuleResources, QueryQueryIter, QueryQuerySimple};
 
 /// "i want to do something after x second(s) pls help"
 #[derive(Deref, DerefMut, Component)]

@@ -1,6 +1,15 @@
-use bevy::prelude::Entity;
+use bevy::prelude::{warn, Entity};
+use bevy_egui::egui::Ui;
+use ctor::ctor;
 
-use super::header::{ModuleCallbackTimer, ModuleResources};
+use crate::{
+    engine::{
+        marble::Marble, marble_io::FireMarble, module::body::BodyType, spawn::SpawnInstructions,
+    },
+    query::{QueryQueryIter, QueryQuerySimple},
+};
+
+use super::header::{Module, ModuleCallbackTimer, ModuleResources};
 
 #[derive(Copy, Clone)]
 pub struct Basic;
@@ -65,12 +74,7 @@ impl Module for Basic {
         res.update_input_indicators(module);
     }
 
-    fn interactive(
-        &mut self,
-        res: &mut ModuleResources,
-        ui: &mut bevy_egui::egui::Ui,
-        module: Entity,
-    ) {
+    fn interactive(&mut self, res: &mut ModuleResources, ui: &mut Ui, module: Entity) {
         // let inputs: Vec<_> = res.inputs(module).collect();
         let outputs: Vec<_> = res.outputs(module).collect();
 

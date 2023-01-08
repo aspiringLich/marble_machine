@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     select::CursorCoords,
-    *, query::{QueryQuerySimple, QueryQueryIter},
+    *, query::{QueryQuerySimple, QueryQueryIter}, engine::module::{ModuleType, header::Module},
 };
 
 #[derive(Component, Debug)]
@@ -94,7 +94,7 @@ pub fn spawn_despawn_interactive_components(
             .entity_mut(module)
             .get_inner_mut()
             .spawn_instructions()
-            .body;
+            .body;  
 
         macro spawn_widget($translation:expr, $color:expr, $name:literal, $factor:literal, ($($tail:tt)*)) {
             commands
