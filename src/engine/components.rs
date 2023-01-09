@@ -10,40 +10,31 @@ where
     fn get(&mut self) -> &mut Commands<'a, 'b>;
 
     /// Spawn the normal input component
-    fn spawn_input(
-        &mut self,
-        transform: Transform,
-        offset: f32,
-        n: usize,
-    ) -> EntityCommands<'a, 'b, '_> {
-        self.spawn_input_inner::<true>(transform, offset, n)
+    fn spawn_input(&mut self, transform: Transform, n: usize) -> EntityCommands<'a, 'b, '_> {
+        self.spawn_input_inner::<true>(transform, n)
     }
 
     /// Spawn the input component but nonfunctional (no collider)
     fn spawn_input_nonfunctional(
         &mut self,
         transform: Transform,
-        offset: f32,
         n: usize,
     ) -> EntityCommands<'a, 'b, '_> {
-        self.spawn_input_inner::<false>(transform, offset, n)
+        self.spawn_input_inner::<false>(transform, n)
     }
 
     /// Spawn the normal input component but you can choose whether its functional or nonfunctional i guess
     fn spawn_input_inner<const B: bool>(
         &mut self,
-        mut transform: Transform,
-        offset: f32,
+        transform: Transform,
         n: usize,
     ) -> EntityCommands<'a, 'b, '_> {
-        transform.translation.z = 0.375;
+        // transform.translation.z = 0.375;
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_input.info();
-        let offset_tf = Transform::from_translation(Vec3::X * offset + ZOrder::InputComponent);
 
-        let indicator = commands
-            .spawn_indicator(Vec3::new(-1.5, 0.0, 0.625) + offset_tf.translation)
-            .id();
+        let len = transform.translation.length();
+        let indicator = commands.spawn_indicator(Vec3::X * (len - 1.5)).id();
 
         if B {}
 
@@ -51,7 +42,7 @@ where
         let out = commands
             .spawn((
                 SpriteBundle {
-                    transform,
+                    transform: Transform::from_rotation(transform.rotation),
                     ..default()
                 },
                 marker::Input(n),
@@ -68,7 +59,7 @@ where
                             anchor: Anchor::Center,
                             ..default()
                         },
-                        transform: offset_tf,
+                        transform: Transform::from_translation(Vec3::X * len),
                         ..default()
                     },))
                     .name("in.sprite")
@@ -81,7 +72,9 @@ where
                                 vec![vec2!(3, 5), vec2!(-3, 3), vec2!(-3, -3), vec2!(3, -5)],
                                 Some(vec![[0, 1], [2, 3]]),
                             ),
-                            TransformBundle::from_transform(offset_tf),
+                            TransformBundle::from_transform(Transform::from_translation(
+                                Vec3::X * len,
+                            )),
                         ))
                         .name("in.collider");
                 }
@@ -99,16 +92,12 @@ where
     }
 
     /// spawn the normal output component
-    fn spawn_output(
-        &mut self,
-        mut transform: Transform,
-        offset: f32,
-        n: usize,
-    ) -> EntityCommands<'a, 'b, '_> {
+    fn spawn_output(&mut self, mut transform: Transform, n: usize) -> EntityCommands<'a, 'b, '_> {
         transform.translation.z = 0.25;
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_output.info();
-        let offset_tf = Transform::from_translation(Vec3::X * offset + ZOrder::OutputComponent);
+
+        let len = transform.translation.length();
 
         let children = vec![
             commands
@@ -117,7 +106,7 @@ where
                         vec![vec2!(3, 5), vec2!(-3, 3), vec2!(-3, -3), vec2!(3, -5)],
                         Some(vec![[0, 1], [2, 3]]),
                     ),
-                    TransformBundle::from_transform(offset_tf),
+                    TransformBundle::from_transform(Transform::from_translation(Vec3::X * len)),
                 ))
                 .name("out.collider")
                 .id(),
@@ -129,7 +118,7 @@ where
                         anchor: Anchor::Center,
                         ..default()
                     },
-                    transform: offset_tf,
+                    transform: Transform::from_translation(Vec3::X * len),
                     ..default()
                 },))
                 .name("out.sprite")
@@ -138,7 +127,7 @@ where
 
         let mut out = commands.spawn((
             SpriteBundle {
-                transform,
+                transform: Transform::from_rotation(transform.rotation),
                 ..default()
             },
             marker::Output(n),

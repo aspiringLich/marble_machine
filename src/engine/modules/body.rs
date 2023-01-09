@@ -3,16 +3,16 @@ use crate::{
     *,
 };
 
-macro color($r:expr, $g:expr, $b:expr) {
-    Color::Rgba {
-        red: $r as f32 / 255.0,
-        green: $g as f32 / 255.0,
-        blue: $b as f32 / 255.0,
-        alpha: 1.0,
-    }
-}
+// macro color($r:expr, $g:expr, $b:expr) {
+//     Color::Rgba {
+//         red: $r as f32 / 255.0,
+//         green: $g as f32 / 255.0,
+//         blue: $b as f32 / 255.0,
+//         alpha: 1.0,
+//     }
+// }
 
-pub static MODULE_COLOR: Color = color!(101, 237, 192);
+// pub static MODULE_COLOR: Color = color!(101, 237, 192);
 
 #[derive(Default)]
 pub enum BodyType {

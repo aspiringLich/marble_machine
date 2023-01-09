@@ -123,6 +123,7 @@ pub fn drag_selected(
         (x / snapping).round() * snapping,
         (y / snapping).round() * snapping,
     );
+    // let round = Vec2::new(x, y);
     if round.x != 0.0 {
         starting_pos.x += round.x;
         pos.x += round.x;
@@ -144,7 +145,11 @@ pub fn place_selected(
     q_children: Query<&Children>,
     has_io: Query<Or<(With<marker::Input>, With<marker::Output>)>>,
 ) {
-    let snapping = 1.0;
+    let snapping = if keyboard.pressed(KeyCode::LShift) {
+        8.0
+    } else {
+        1.0
+    };
 
     // if we click then place the module
     if mouse_buttons.pressed(MouseButton::Left) {

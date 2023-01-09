@@ -1,12 +1,7 @@
-use crate::engine::module::header::Module;
 use crate::{
-    engine::{
-        module::{body::BodyType, ModuleType},
-        spawn::SpawnInstructions,
-    },
+    engine::{modules::{body::BodyType, ModuleType, SpawnInstructions}},
     graphics::atlas::{basic, AtlasDictionary},
-    module::standard::*,
-    CursorIcon, *,
+    *,
 };
 use bevy_egui::*;
 use egui::{Button, Image, Label, Rect, Vec2, *};
@@ -60,7 +55,7 @@ pub enum ModuleItem {
 
 #[ctor]
 static MODULES: Vec<ModuleItem> = {
-    use crate::engine::module::*;
+    use crate::engine::modules::*;
 
     macro item($arg:expr) {
         ModuleItem::Module {
@@ -164,13 +159,17 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
         ui.put(make_rect($center, $image.size()), $image);
     }
     macro put_tf($transform:expr, $image:expr) {
-        let center = $transform.translation.truncate() * SCALING;
+        let mut transform = $transform;
+        // rotate 45 deg
+        transform.rotate_around(Vec3::new(0.,0.,$transform.translation.z), Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, std::f32::consts::PI / 4.0));
+
+        let center = transform.translation.truncate() * SCALING;
         let center = Vec2 {
             x: center.x,
             y: center.y
-        };
-        
-        ui.put(make_rect(center, $image.size()), $image.rotate(-$transform.rotation.to_euler(EulerRot::XYZ).2, Vec2::splat(0.5)));
+        } + SIZE / 2.0;
+
+        ui.put(make_rect(center, $image.size()), $image.rotate(transform.rotation.to_euler(EulerRot::XYZ).2, Vec2::splat(0.5)));
     }
 
     let center = SIZE / 2.0;
@@ -179,6 +178,10 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
     for &transform in instructions.input_transforms.iter() {
         // dbg!(transform);
         put_tf!(transform, images.input);
+    }
+    for &transform in instructions.output_transforms.iter() {
+        // dbg!(transform);
+        put_tf!(transform, images.output);
     }
 
     // spawn body

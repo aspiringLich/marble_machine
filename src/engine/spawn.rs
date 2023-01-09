@@ -1,10 +1,14 @@
-use crate::{engine::module::header::Module, marble_io::InputState, *};
+use crate::{
+    engine::modules::{header::Module, SpawnInstructions},
+    marble_io::InputState,
+    *,
+};
 use atlas::{basic, AtlasDictionary};
 
 use bevy::ecs::system::EntityCommands;
 use components::SpawnComponents;
 
-use super::module::{body::BodyType, ModuleType};
+use super::modules::{body::BodyType, ModuleType};
 // use bevy_rapier2d::{prelude::*, rapier::prelude::ColliderMaterial};
 /// methods for spawning random things to make my code more reasonable
 pub trait CommandsSpawn<'a, 'b>
@@ -89,40 +93,6 @@ impl SpawnModule {
     }
 }
 
-#[derive(Default)]
-pub struct SpawnInstructions {
-    pub body: BodyType,
-    pub input_transforms: Vec<Transform>,
-    pub output_transforms: Vec<Transform>,
-}
-
-unsafe impl Sync for SpawnInstructions {}
-unsafe impl Send for SpawnInstructions {}
-
-impl SpawnInstructions {
-    pub fn from_body(body: BodyType) -> Self {
-        Self { body, ..default() }
-    }
-
-    pub fn with_input_rotations<T: Iterator<Item = f32>>(mut self, input_transforms: T) -> Self {
-        self.input_transforms = input_transforms
-            .map(|r| {
-                Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, r.to_radians()))
-            })
-            .collect();
-        self
-    }
-
-    pub fn with_output_rotations<T: Iterator<Item = f32>>(mut self, output_transforms: T) -> Self {
-        self.output_transforms = output_transforms
-            .map(|r| {
-                Transform::from_rotation(Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, r.to_radians()))
-            })
-            .collect();
-        self
-    }
-}
-
 /// spawn a module based on [`SpawnModule`] events fired
 pub fn spawn_modules(
     mut commands: Commands,
@@ -130,12 +100,12 @@ pub fn spawn_modules(
     mut selected: ResMut<SelectedModules>,
 ) {
     for event in spawn_events.iter() {
-        let SpawnModule { mut module, place } = event;
+        let SpawnModule { module, place } = event;
 
         let parent = commands
             .spawn(SpriteBundle { ..default() })
             .name(module.get_inner().get_identifier())
-            .insert((module, marker::Module))
+            .insert((*module, marker::Module))
             .id();
         let mut children: Vec<Entity> = vec![];
 
@@ -180,14 +150,14 @@ pub fn spawn_modules(
             input_transforms
                 .iter()
                 .enumerate()
-                .map(|(i, &x)| commands.spawn_input(x, body.offset(), i).id()),
+                .map(|(i, &x)| commands.spawn_input(x, i).id()),
         );
         // outputs
         children.extend(
             output_transforms
                 .iter()
                 .enumerate()
-                .map(|(i, &x)| commands.spawn_output(x, body.offset(), i).id()),
+                .map(|(i, &x)| commands.spawn_output(x, i).id()),
         );
         commands.entity(parent).push_children(&children);
 

@@ -19,7 +19,7 @@ extern crate strum;
 
 /// the interactive components, selection, etc.
 mod interactive;
-use engine::module::header::UpdateModule;
+use engine::modules::header::UpdateModule;
 use interactive::*;
 
 /// anything to do with graphics
@@ -106,7 +106,7 @@ fn main() {
     // .add_plugin(bevy_editor_pls::EditorPlugin)
     // .add_plugin(WorldInspectorPlugin::new())
     .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-    // .add_plugin(RapierDebugRenderPlugin::default())
+    .add_plugin(RapierDebugRenderPlugin::default())
     // events
     .add_event::<marble_io::FireMarble>()
     .add_event::<UpdateModule>()
@@ -138,11 +138,11 @@ fn main() {
         Label::StageUi,
         Label::StageMain,
         SystemStage::parallel()
-            .with_system(pan_camera)
+            .with_system(pan_camera.label(bevy_pancam::PanCamSystemLabel))
             .with_system(marble::despawn_marbles)
             .with_system(marble_io::update_inputs)
-            .with_system(module::update_modules)
-            .with_system(module::update_module_callbacks),
+            .with_system(modules::update_modules)
+            .with_system(modules::update_module_callbacks),
     );
 
     interactive::app(&mut app);

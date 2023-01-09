@@ -7,7 +7,7 @@ use std::{
 
 use crate::{
     select::CursorCoords,
-    *, query::{QueryQuerySimple, QueryQueryIter}, engine::module::{ModuleType, header::Module},
+    *, query::{QueryQuerySimple, QueryQueryIter}, engine::modules::{ModuleType, header::Module},
 };
 
 #[derive(Component, Debug)]

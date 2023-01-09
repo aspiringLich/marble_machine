@@ -1,13 +1,15 @@
-use crate::{engine::module::BodyType, *};
+use crate::{engine::modules::BodyType, *};
 use bevy_egui::egui::Ui;
-use ctor::ctor;
 
 use crate::{
-    engine::{marble::Marble, marble_io::FireMarble, spawn::SpawnInstructions},
+    engine::{marble::Marble, marble_io::FireMarble},
     query::{QueryQueryIter, QueryQuerySimple},
 };
 
-use super::header::{Module, ModuleCallbackTimer, ModuleResources};
+use super::{
+    header::{Module, ModuleCallbackTimer, ModuleResources},
+    SpawnInstructions,
+};
 
 #[derive(Copy, Clone)]
 pub struct Basic;
@@ -20,8 +22,8 @@ impl Default for Basic {
 
 static BASIC_INSTRUCTIONS: Lazy<SpawnInstructions> = Lazy::new(|| {
     SpawnInstructions::from_body(BodyType::Small)
-        .with_input_rotations([270.].into_iter())
-        .with_output_rotations([90.].into_iter())
+        .with_input_rotations([-180.].into_iter())
+        .with_output_rotations([0.].into_iter())
 });
 
 impl Module for Basic {

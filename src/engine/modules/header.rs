@@ -4,12 +4,12 @@ use bevy::ecs::system::SystemParam;
 use bevy_egui::egui::Ui;
 
 use crate::{
-    engine::{marble_io::FireMarble, spawn::SpawnInstructions},
+    engine::marble_io::FireMarble,
     query::{QueryOutput, QueryQueryIter, QueryQuerySimple},
     *,
 };
 
-use super::ModuleType;
+use super::{BodyType, ModuleType};
 
 type QuerySimple<'w, 's, T> = Query<'w, 's, &'static mut T>;
 // type QueryWith<'w, 's, T, W> = Query<'w, 's, &'static mut T, bevy::prelude::With<W>>;
@@ -158,5 +158,50 @@ pub fn transform_from_offset_rotate(offset: f32, rotation: f32, z: f32) -> Trans
         rotation,
         translation,
         scale: Vec3::ONE,
+    }
+}
+
+#[derive(Default)]
+pub struct SpawnInstructions {
+    pub body: BodyType,
+    pub input_transforms: Vec<Transform>,
+    pub output_transforms: Vec<Transform>,
+}
+
+impl SpawnInstructions {
+    pub fn from_body(body: BodyType) -> Self {
+        Self { body, ..default() }
+    }
+
+    pub fn with_input_rotations<T: Iterator<Item = f32>>(mut self, input_transforms: T) -> Self {
+        self.input_transforms = input_transforms
+            .map(|r| {
+                let rot = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, r.to_radians());
+                let mut transform = Transform::from_xyz(
+                    1.0 * self.body.offset(),
+                    0.0,
+                    ZOrder::InputComponent.f32(),
+                );
+                transform.rotate_around(Vec3::ZERO, rot);
+                transform
+            })
+            .collect();
+        self
+    }
+
+    pub fn with_output_rotations<T: Iterator<Item = f32>>(mut self, output_transforms: T) -> Self {
+        self.output_transforms = output_transforms
+            .map(|r| {
+                let rot = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, r.to_radians());
+                let mut transform = Transform::from_xyz(
+                    1.0 * self.body.offset(),
+                    0.0,
+                    ZOrder::OutputComponent.f32(),
+                );
+                transform.rotate_around(Vec3::ZERO, rot);
+                transform
+            })
+            .collect();
+        self
     }
 }

@@ -1,6 +1,7 @@
 use std::collections::VecDeque;
 
 use crate::*;
+use bevy_pancam::PanCamSystemLabel;
 use iyes_loopless::prelude::*;
 
 pub mod interact;
@@ -49,8 +50,19 @@ pub fn app(app: &mut App) {
                 .run_if_not(egui)
                 .label("select::get_selected"),
         )
-        .add_system(select::drag_selected.run_if_not(place).run_if_not(egui))
-        .add_system(select::place_selected.run_if(place).run_if_not(egui))
+        .add_system(
+            select::drag_selected
+                .run_if_not(place)
+                .run_if_not(egui)
+                .after(PanCamSystemLabel)
+                .label("select::drag_selected"),
+        )
+        .add_system(
+            select::place_selected
+                .run_if(place)
+                .run_if_not(egui)
+                .after(PanCamSystemLabel),
+        )
         .add_system(interact::spawn_despawn_interactive_components.before("interact::use_widgets"))
         .add_system(
             interact::use_widgets
@@ -62,7 +74,8 @@ pub fn app(app: &mut App) {
             tracer::tracer
                 .run_if(select)
                 .run_if(|r: Res<SelectedModules>| !r.place)
-                .after("select::get_selected"),
+                .after("select::get_selected")
+                .after("select::drag_selected"),
         )
         .init_resource::<interact::InteractiveSelected>();
 }

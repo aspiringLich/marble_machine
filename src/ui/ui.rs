@@ -1,7 +1,7 @@
 use std::f32::consts;
 
 use crate::{
-    engine::module::{
+    engine::modules::{
         header::{Module, ModuleResources},
         standard::Basic,
         ModuleType,
@@ -70,64 +70,64 @@ pub fn inspector_ui(
     // println!("{}", window.unwrap().response.rect.width());
 }
 
-type LayoutFn<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
+// type LayoutFn<'a> = Box<dyn FnOnce(&mut Ui) + 'a>;
 
-#[non_exhaustive]
-pub struct Layout<'a> {
-    main: Vec<LayoutFn<'a>>,
-}
+// #[non_exhaustive]
+// pub struct Layout<'a> {
+//     main: Vec<LayoutFn<'a>>,
+// }
 
-impl<'a> Layout<'a> {
-    /// create a new layout with everything blank
-    pub fn new() -> Self {
-        Self { main: vec![] }
-    }
+// impl<'a> Layout<'a> {
+//     /// create a new layout with everything blank
+//     pub fn new() -> Self {
+//         Self { main: vec![] }
+//     }
 
-    /// make default rotation sliders
-    /// so one slider for every input and output
-    /// TODO: rotate everything on q and r
-    pub fn default_rotation_sliders<I, J, T>(mut self, i: I, o: I, transform_fn: &'a T) -> Self
-    where
-        I: IntoIterator<Item = J> + 'a,
-        J: AsMut<Transform> + 'a,
-        T: Fn(f32) -> Transform + 'static,
-    {
-        self.main.push(Box::new(|ui: &mut Ui| {
-            // add sliders, if theres only one of the type dont add a # to the label
-            // so like "Input" or "Input #1" and "Input #2"
-            let mut make_sliders = |transforms: I, name: &str| {
-                let mut make_slider = |label: String, transform: &mut Transform| {
-                    ui.angle_slider_transform(&label, transform, transform_fn)
-                };
-                let mut transforms: Vec<J> = transforms.into_iter().collect();
-                let len = transforms.len();
-                let name_fn = |name: &str, i| {
-                    if len == 1 {
-                        name.to_string()
-                    } else {
-                        format!("{} #{}", name, i)
-                    }
-                };
-                for (i, transform) in transforms.iter_mut().enumerate() {
-                    make_slider(name_fn(name, i), transform.as_mut())
-                }
-            };
-            make_sliders(i, "Input");
-            make_sliders(o, "Output");
-        }));
-        self
-    }
+//     /// make default rotation sliders
+//     /// so one slider for every input and output
+//     /// TODO: rotate everything on q and r
+//     pub fn default_rotation_sliders<I, J, T>(mut self, i: I, o: I, transform_fn: &'a T) -> Self
+//     where
+//         I: IntoIterator<Item = J> + 'a,
+//         J: AsMut<Transform> + 'a,
+//         T: Fn(f32) -> Transform + 'static,
+//     {
+//         self.main.push(Box::new(|ui: &mut Ui| {
+//             // add sliders, if theres only one of the type dont add a # to the label
+//             // so like "Input" or "Input #1" and "Input #2"
+//             let mut make_sliders = |transforms: I, name: &str| {
+//                 let mut make_slider = |label: String, transform: &mut Transform| {
+//                     ui.angle_slider_transform(&label, transform, transform_fn)
+//                 };
+//                 let mut transforms: Vec<J> = transforms.into_iter().collect();
+//                 let len = transforms.len();
+//                 let name_fn = |name: &str, i| {
+//                     if len == 1 {
+//                         name.to_string()
+//                     } else {
+//                         format!("{} #{}", name, i)
+//                     }
+//                 };
+//                 for (i, transform) in transforms.iter_mut().enumerate() {
+//                     make_slider(name_fn(name, i), transform.as_mut())
+//                 }
+//             };
+//             make_sliders(i, "Input");
+//             make_sliders(o, "Output");
+//         }));
+//         self
+//     }
 
-    /// build the ui
-    pub fn build(self, ui: &mut Ui) {
-        for build_fn in self.main {
-            egui::Grid::new("main")
-                .min_col_width(0.0)
-                .striped(true)
-                .show(ui, build_fn);
-        }
-    }
-}
+//     /// build the ui
+//     pub fn build(self, ui: &mut Ui) {
+//         for build_fn in self.main {
+//             egui::Grid::new("main")
+//                 .min_col_width(0.0)
+//                 .striped(true)
+//                 .show(ui, build_fn);
+//         }
+//     }
+// }
 
 pub trait UiElements {
     fn get(&mut self) -> &mut Ui;
@@ -140,7 +140,7 @@ pub trait UiElements {
     ) where
         T: Fn(f32) -> Transform + 'static,
     {
-        let mut rot: Vec3 = transform.rotation.to_euler(EulerRot::XYZ).into();
+        let rot: Vec3 = transform.rotation.to_euler(EulerRot::XYZ).into();
         let mut angle = rot.z;
         self.angle_slider(label, &mut angle);
 

@@ -3,7 +3,7 @@ use crate::*;
 #[derive(Copy, Clone, Debug, Component)]
 pub enum Marble {
     Bit { value: bool },
-    Basic { value: u8 },
+    Basic { value: i32 },
 }
 
 /// despawn marbles if they go too low (and should be despawned cuz theyre out of bounds)
