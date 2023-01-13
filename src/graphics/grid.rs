@@ -125,6 +125,7 @@ pub fn spawn_background(mut commands: Commands) {
                 Transform::from_xyz(0.0, 0.0, ZOrder::Border.f32()),
             ),
             Collider::polyline(collider_vertices, Some(indices)),
+            RigidBody::Fixed,
         ))
         .name("back.line");
 
@@ -132,6 +133,7 @@ pub fn spawn_background(mut commands: Commands) {
         .spawn((
             Collider::cuboid(size, 10.0),
             TransformBundle::from_transform(Transform::from_xyz(0.0, -size - 10.0 + 0.5, 0.0)),
+            RigidBody::Fixed,
         ))
         .name("bottom.collider");
 }
