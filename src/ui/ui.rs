@@ -202,44 +202,44 @@ impl UiElements for Ui {
     }
 }
 
-#[derive(Resource)]
-pub struct SpawningUiImages {
-    basic: Handle<Image>,
-}
+// #[derive(Resource)]
+// pub struct SpawningUiImages {
+//     basic: Handle<Image>,
+// }
 
-impl FromWorld for SpawningUiImages {
-    fn from_world(world: &mut World) -> Self {
-        let asset_server = world.get_resource_mut::<AssetServer>().unwrap();
-        Self {
-            basic: asset_server.load("module_pictures/basic.png"),
-        }
-    }
-}
+// impl FromWorld for SpawningUiImages {
+//     fn from_world(world: &mut World) -> Self {
+//         let asset_server = world.get_resource_mut::<AssetServer>().unwrap();
+//         Self {
+//             basic: asset_server.load("module_pictures/basic.png"),
+//         }
+//     }
+// }
 
-/// creates the spawning ui where you can spawn stuff
-pub fn spawning_ui(
-    mut egui_context: ResMut<EguiContext>,
-    images: Res<SpawningUiImages>,
-    mut spawn_module: EventWriter<SpawnModule>,
-    windows: Res<bevy::prelude::Windows>,
-) {
-    let basic = egui_context.add_image(images.basic.clone());
-    let Some(window) = windows.get_primary() else { error!("nah no window brah"); return };
+// /// creates the spawning ui where you can spawn stuff
+// pub fn spawning_ui(
+//     mut egui_context: ResMut<EguiContext>,
+//     images: Res<SpawningUiImages>,
+//     mut spawn_module: EventWriter<SpawnModule>,
+//     windows: Res<bevy::prelude::Windows>,
+// ) {
+//     let basic = egui_context.add_image(images.basic.clone());
+//     let Some(window) = windows.get_primary() else { error!("nah no window brah"); return };
 
-    egui::Window::new("Le epic temp Module Spawner thingyyy")
-        .resizable(true)
-        .collapsible(false)
-        .default_pos([window.width(), window.height()])
-        .show(egui_context.ctx_mut(), |ui| {
-            if ui
-                .add(ImageButton::new(basic, [100.0, 100.0]))
-                .on_hover_text("The first one")
-                .clicked()
-            {
-                spawn_module.send(SpawnModule::new(ModuleType::Basic(Basic::default())).place());
-            }
-        });
-}
+//     egui::Window::new("Le epic temp Module Spawner thingyyy")
+//         .resizable(true)
+//         .collapsible(false)
+//         .default_pos([window.width(), window.height()])
+//         .show(egui_context.ctx_mut(), |ui| {
+//             if ui
+//                 .add(ImageButton::new(basic, [100.0, 100.0]))
+//                 .on_hover_text("The first one")
+//                 .clicked()
+//             {
+//                 spawn_module.send(SpawnModule::new(ModuleType::Basic(Basic::default())).place());
+//             }
+//         });
+// }
 
 /// creates the master debug ui thing
 pub fn debug_ui(

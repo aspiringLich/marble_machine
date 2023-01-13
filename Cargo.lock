@@ -258,15 +258,29 @@ dependencies = [
 
 [[package]]
 name = "bevy-inspector-egui"
-version = "0.15.0"
+version = "0.16.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "cd4c06a380d02588eac43f8a56d2d370614fe6b2e7467041e57b064e93ec7620"
+checksum = "5d57e85cf3aed73e4f8e5d06aab17966f0f4adc61c325e4e15878c55c74ed3b5"
 dependencies = [
- "bevy",
- "bevy-inspector-egui-derive 0.15.0",
+ "bevy-inspector-egui-derive 0.16.1",
+ "bevy_app",
+ "bevy_asset",
+ "bevy_core",
+ "bevy_core_pipeline",
+ "bevy_ecs",
  "bevy_egui 0.18.0",
+ "bevy_hierarchy",
+ "bevy_log",
+ "bevy_math",
+ "bevy_pbr",
+ "bevy_reflect",
+ "bevy_render",
+ "bevy_utils",
+ "egui 0.20.1",
  "image 0.24.5",
+ "once_cell",
  "pretty-type-name",
+ "smallvec",
 ]
 
 [[package]]
@@ -282,9 +296,9 @@ dependencies = [
 
 [[package]]
 name = "bevy-inspector-egui-derive"
-version = "0.15.0"
+version = "0.16.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2c6a0ceb52115321ef304a5a875e975bba5bbf2ceb802e1dfa07221e8bbc8178"
+checksum = "8927db6cc2e377e3148ab6cc8404c4d4af45ed93bc30acfbcca2404edccde9fb"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -2201,7 +2215,6 @@ checksum = "1885e79c1fc4b10f0e172c475f458b7f7b93061064d98c3293e98c5ba0c8b399"
 dependencies = [
  "autocfg",
  "hashbrown",
- "serde",
 ]
 
 [[package]]
@@ -2400,6 +2413,12 @@ dependencies = [
 
 [[package]]
 name = "libm"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7fc7aa29613bd6a620df431842069224d8bc9011086b1db4c0e0cd47fa03ec9a"
+
+[[package]]
+name = "libm"
 version = "0.2.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "348108ab3fba42ec82ff6e9564fc4ca0247bdccdc68dd8af9764bbc79c3c8ffb"
@@ -2490,7 +2509,7 @@ dependencies = [
  "anyhow",
  "auto_unwrap",
  "bevy",
- "bevy-inspector-egui 0.15.0",
+ "bevy-inspector-egui 0.16.6",
  "bevy-trait-query",
  "bevy_editor_pls",
  "bevy_egui 0.18.0",
@@ -2923,7 +2942,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "578ede34cf02f8924ab9447f50c28075b4d3e5b269972345e7e0372b38c6cdcd"
 dependencies = [
  "autocfg",
- "libm",
+ "libm 0.2.6",
 ]
 
 [[package]]
@@ -3066,6 +3085,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "packed_simd_2"
+version = "0.3.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a1914cd452d8fccd6f9db48147b29fd4ae05bea9dc5d9ad578509f72415de282"
+dependencies = [
+ "cfg-if",
+ "libm 0.1.4",
+]
+
+[[package]]
 name = "parking"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3105,7 +3134,6 @@ dependencies = [
  "bitflags",
  "downcast-rs",
  "either",
- "indexmap",
  "nalgebra",
  "num-derive",
  "num-traits",
@@ -3296,7 +3324,6 @@ dependencies = [
  "bitflags",
  "crossbeam",
  "downcast-rs",
- "indexmap",
  "nalgebra",
  "num-derive",
  "num-traits",
@@ -3304,6 +3331,7 @@ dependencies = [
  "rayon",
  "rustc-hash",
  "simba",
+ "vec_map",
 ]
 
 [[package]]
@@ -3588,9 +3616,9 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2f3fd720c48c53cace224ae62bef1bbff363a70c68c4802a78b5cc6159618176"
 dependencies = [
  "approx",
- "libm",
  "num-complex",
  "num-traits",
+ "packed_simd_2",
  "paste",
  "wide",
 ]

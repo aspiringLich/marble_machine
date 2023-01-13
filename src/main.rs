@@ -19,6 +19,7 @@ extern crate strum;
 
 /// the interactive components, selection, etc.
 mod interactive;
+use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use engine::modules::header::UpdateModule;
 use interactive::*;
 
@@ -87,7 +88,6 @@ fn main() {
     .init_resource::<SelectedModules>()
     .init_resource::<select::CursorCoords>()
     .init_resource::<select::HoveredEntities>()
-    .init_resource::<ui::ui::SpawningUiImages>()
     .insert_resource(RapierConfiguration {
         physics_pipeline_active: true,
         query_pipeline_active: true,
@@ -103,10 +103,10 @@ fn main() {
     .add_plugin(fps::FpsText)
     .add_plugin(bevy_pancam::PanCamPlugin)
     .add_plugin(EguiPlugin)
-    // .add_plugin(bevy_editor_pls::EditorPlugin)
-    // .add_plugin(WorldInspectorPlugin::new())
     .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-    .add_plugin(RapierDebugRenderPlugin::default())
+    // .add_plugin(bevy_editor_pls::EditorPlugin)
+    // .add_plugin(WorldInspectorPlugin {})
+    // .add_plugin(RapierDebugRenderPlugin::default())
     // events
     .add_event::<marble_io::FireMarble>()
     .add_event::<UpdateModule>()

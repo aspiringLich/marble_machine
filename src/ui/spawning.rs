@@ -15,7 +15,7 @@ pub struct Images {
     indicator: Image,
 }
 
-const SCALING: f32 = 4.5;
+const SCALING: f32 = 3.5;
 
 impl FromWorld for Images {
     fn from_world(world: &mut World) -> Self {
@@ -154,14 +154,16 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
         let max: Vec2 = center + size / 2.0 + ui_min;
         Rect::from_min_max(min.to_pos2(), max.to_pos2())
     };
+    
+    let angle = -std::f32::consts::PI / 4.0;
 
     macro put($center:expr, $image:expr) {
-        ui.put(make_rect($center, $image.size()), $image);
+        ui.put(make_rect($center, $image.size()), $image.rotate(angle, Vec2::splat(0.5)));
     }
     macro put_tf($transform:expr, $image:expr) {
         let mut transform = $transform;
         // rotate 45 deg
-        transform.rotate_around(Vec3::new(0.,0.,$transform.translation.z), Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, std::f32::consts::PI / 4.0));
+        transform.rotate_around(Vec3::new(0.,0.,$transform.translation.z), Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, angle));
 
         let center = transform.translation.truncate() * SCALING;
         let center = Vec2 {
@@ -176,19 +178,27 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
 
     // spawn inputs
     for &transform in instructions.input_transforms.iter() {
-        // dbg!(transform);
         put_tf!(transform, images.input);
     }
+    // spawn outputs
     for &transform in instructions.output_transforms.iter() {
-        // dbg!(transform);
         put_tf!(transform, images.output);
     }
-
+    
     // spawn body
     let atlas_image = match instructions.body {
         BodyType::Small => &images.body_small,
         BodyType::Large => todo!(),
     };
-
     put!(center, *atlas_image);
+    
+    // spawn indicators
+    for transform in instructions.input_transforms.iter() {
+        let mut transform = *transform;
+        let pos = &mut transform.translation;
+        let len = pos.length();
+        *pos = pos.normalize() * (len - 1.5);
+        
+        put_tf!(transform, images.indicator);
+    }
 }

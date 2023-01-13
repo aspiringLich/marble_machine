@@ -42,7 +42,8 @@ where
         let out = commands
             .spawn((
                 SpriteBundle {
-                    transform: Transform::from_rotation(transform.rotation),
+                    transform: Transform::from_rotation(transform.rotation)
+                        .with_translation(Vec3::Z * (ZOrder::InputComponent.f32())),
                     ..default()
                 },
                 marker::Input(n),
@@ -127,7 +128,8 @@ where
 
         let mut out = commands.spawn((
             SpriteBundle {
-                transform: Transform::from_rotation(transform.rotation),
+                transform: Transform::from_rotation(transform.rotation)
+                    .with_translation(Vec3::Z * (ZOrder::OutputComponent.f32())),
                 ..default()
             },
             marker::Output(n),

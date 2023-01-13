@@ -66,7 +66,7 @@ pub fn app(app: &mut App) {
         .add_system(interact::spawn_despawn_interactive_components.before("interact::use_widgets"))
         .add_system(
             interact::use_widgets
-                .after("select::get_selected")
+                .after("select::selected")
                 .label("interact::use_widgets"),
         )
         .add_system(interact::do_interactive_rotation.after(interact::use_widgets))

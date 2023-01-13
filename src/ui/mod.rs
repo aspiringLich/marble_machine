@@ -14,7 +14,7 @@ pub fn app(app: &mut App) {
         Label::StageUi,
         SystemSet::new()
             .with_system(ui::inspector_ui)
-            .with_system(ui::spawning_ui)
+            // .with_system(ui::spawning_ui)
             .with_system(spawning::ui)
             .with_system(ui::debug_ui),
     )
