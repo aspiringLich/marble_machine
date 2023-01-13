@@ -4,7 +4,9 @@ use crate::*;
 use bevy_pancam::PanCamSystemLabel;
 use iyes_loopless::prelude::*;
 
+pub mod drag;
 pub mod interact;
+pub mod intersect;
 pub mod select;
 pub mod tracer;
 
@@ -42,7 +44,8 @@ fn init_res(mut commands: Commands) {
 }
 
 pub fn app(app: &mut App) {
-    app.add_startup_system_to_stage(Label::StartupStageStart, init_res)
+    app.init_resource::<intersect::IntersectingModules>()
+        .add_startup_system_to_stage(Label::StartupStageStart, init_res)
         .add_system(select::get_hovered_entities.after("spawn::spawn_modules"))
         .add_system(
             select::get_selected
@@ -51,10 +54,11 @@ pub fn app(app: &mut App) {
                 .label("select::get_selected"),
         )
         .add_system(
-            select::drag_selected
+            drag::drag_selected
+                .pipe(intersect::update_intersecting_modules)
                 .run_if_not(place)
-                .run_if_not(egui)
                 .after(PanCamSystemLabel)
+                .run_if_not(egui)
                 .label("select::drag_selected"),
         )
         .add_system(

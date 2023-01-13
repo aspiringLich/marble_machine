@@ -117,3 +117,36 @@ pub macro builder_fn{
         }
     },
 }
+
+use bevy_rapier2d::prelude::*;
+
+pub trait CastShapeTransform {
+    fn cast_shape_transform(
+        &self,
+        transform: Transform,
+        collider: Collider,
+        velocity: Vect,
+        max_toi: Real,
+        filter: QueryFilter,
+    ) -> Option<(Entity, Toi)>;
+}
+
+impl CastShapeTransform for RapierContext {
+    fn cast_shape_transform(
+        &self,
+        transform: Transform,
+        collider: Collider,
+        velocity: Vect,
+        max_toi: Real,
+        filter: QueryFilter,
+    ) -> Option<(Entity, Toi)> {
+        self.cast_shape(
+            transform.translation.truncate(),
+            transform.rotation.to_euler(EulerRot::XYZ).2,
+            velocity,
+            &collider,
+            max_toi,
+            filter,
+        )
+    }
+}

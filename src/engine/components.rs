@@ -76,6 +76,7 @@ where
                             TransformBundle::from_transform(Transform::from_translation(
                                 Vec3::X * len,
                             )),
+                            RigidBody::Fixed,
                         ))
                         .name("in.collider");
                 }
@@ -108,6 +109,7 @@ where
                         Some(vec![[0, 1], [2, 3]]),
                     ),
                     TransformBundle::from_transform(Transform::from_translation(Vec3::X * len)),
+                    RigidBody::Fixed,
                 ))
                 .name("out.collider")
                 .id(),
