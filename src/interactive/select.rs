@@ -72,6 +72,7 @@ pub fn get_selected(
 /// runs if SelectedModules's place flag is true
 /// place the selected module somewhere
 pub fn place_selected(
+    mut commands: Commands,
     keyboard: Res<Input<KeyCode>>,
     mouse_pos: Res<CursorCoords>,
     mouse_buttons: Res<Input<MouseButton>>,
@@ -93,10 +94,18 @@ pub fn place_selected(
     }
     // else the module follows the mouse
     else {
-        let Some(selected) = selected.selected else { unreachable!() };
+        let Some(sel_entity) = selected.selected else { unreachable!() };
+        
+        // if escape is pressed, then clear and return
+        if keyboard.pressed(KeyCode::Escape) {
+            commands.entity(sel_entity).despawn_recursive();
+            selected.clear_selected();
+            selected.place = false;
+            return;
+        }
 
         let io = q_children
-            .entity(selected)
+            .entity(sel_entity)
             .iter()
             .filter(|e| has_io.has(**e));
         if keyboard.just_pressed(KeyCode::Q) {
@@ -111,7 +120,7 @@ pub fn place_selected(
             }
         }
 
-        let pos = &mut q_transform.entity_mut(selected).translation;
+        let pos = &mut q_transform.entity_mut(sel_entity).translation;
         let Vec2 { x, y } = **mouse_pos - Vec2::splat(0.5);
 
         // rounding x and y to the nearest snapping #

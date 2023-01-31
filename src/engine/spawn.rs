@@ -118,7 +118,7 @@ pub fn spawn_modules(
                         Collider::ball($atlasdict.width() * 0.5),
                         RigidBody::Fixed,
                         Restitution::coefficient(0.8),
-                        marker::ModuleBody
+                        marker::ModuleBody,
                         $($tail)*
                     ))
                     .name($name)

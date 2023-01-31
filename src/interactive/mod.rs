@@ -44,7 +44,7 @@ fn init_res(mut commands: Commands) {
 }
 
 pub fn app(app: &mut App) {
-    app.init_resource::<intersect::IntersectingModules>()
+    app.init_resource::<intersect::RequestedMove>()
         .add_startup_system_to_stage(Label::StartupStageStart, init_res)
         .add_system(select::get_hovered_entities.after("spawn::spawn_modules"))
         .add_system(
@@ -55,10 +55,9 @@ pub fn app(app: &mut App) {
         )
         .add_system(
             drag::drag_selected
-                .pipe(intersect::update_intersecting_modules)
                 .run_if_not(place)
-                .after(PanCamSystemLabel)
                 .run_if_not(egui)
+                .before("intersect::do_requested_move")
                 .label("select::drag_selected"),
         )
         .add_system(
@@ -71,9 +70,11 @@ pub fn app(app: &mut App) {
         .add_system(
             interact::use_widgets
                 .after("select::selected")
+                .before("intersect::do_requested_move")
                 .label("interact::use_widgets"),
         )
-        .add_system(interact::do_interactive_rotation.after(interact::use_widgets))
+        .add_system(interact::do_interactive_rotation.after(interact::use_widgets).before("intersect::do_requested_move"))
+        .add_system(intersect::do_requested_move.label("intersect::do_requested_move"))
         .add_system(
             tracer::tracer
                 .run_if(select)

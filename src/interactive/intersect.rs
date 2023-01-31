@@ -1,105 +1,78 @@
 use bevy::utils::HashSet;
+use itertools::Itertools;
 
 use crate::{misc::CastShapeTransform, query::QueryQuerySimple, *};
 
-#[derive(Deref, DerefMut, Resource, Default)]
-pub struct IntersectingModules(HashSet<Entity>);
-
-pub fn update_intersecting_modules(
-    In(input): In<Option<Entity>>,
-    ctx: Res<RapierContext>,
-    q_parent: Query<&Parent>,
-    q_children: Query<&Children>,
-    q_static_physics_obj: Query<(&RigidBody, Entity, &Collider), Without<Sensor>>,
-    q_global_transform: Query<&GlobalTransform>,
-    q_name: Query<&Name>,
-    mut intersecting_modules: ResMut<IntersectingModules>,
-) {
-    let Some(dragged) = input else { return };
-
-    let is_fixed_collider = |e| {
-        // if its a dynamic rigidbody that isn't a sensor
-        if let Ok((rigidbody, entity, collider)) = q_static_physics_obj.get(e)
-        && *rigidbody == RigidBody::Fixed {
-            return Some((entity, collider));
-        } else {
-            None
-        }
-    };
-
-    debug_assert!(q_parent.get(dragged).is_err());
-
-    let colliders = q_children
-        .iter_descendants(dragged)
-        .filter_map(is_fixed_collider)
-        .collect::<Vec<_>>();
-    let entities = colliders.iter().map(|(e, _)| *e).collect::<Vec<_>>();
-
-    macro test_collider($test:expr, $collider:expr, $($tail:tt)*) {{
-        let transform = q_global_transform.entity($test).compute_transform();
-        ctx.cast_shape_transform(
-            transform,
-            $collider,
-            // for some reason this does not work without a velocity
-            Vect::splat(1.0 / 128.0),
-            1.0,
-            QueryFilter::only_fixed()
-                .exclude_sensors()
-                .predicate(&$($tail)*),
-        )
-    }}
-
-    // remove the ones that arent colliding with anything
-    intersecting_modules.drain_filter(|&e| {
-        let colliders = q_children
-            .iter_descendants(e)
-            .filter_map(is_fixed_collider)
-            .collect::<Vec<_>>();
-        let entities = colliders.iter().map(|(e, _)| *e).collect::<Vec<_>>();
-
-        // get the collider
-        colliders.iter().all(|(e, collider)| {
-            // query the collider
-            if let Some((e, _)) = test_collider!(*e, (*collider).clone(), |other| {
-                other != *e && !entities.contains(e)
-            }) {
-                // if the top-level intersecting object is not equal to the original
-                let parent = q_parent.iter_ancestors(e).last().unwrap_or(e);
-                parent != e
-            } else {
-                false
-            }
-        })
-    });
-
-    // see if we have to add anything new
-    for (test, collider) in colliders {
-        // all the colliders weve already seen
-        let mut visited: HashSet<_> = default();
-
-        // keep trying intersections until we run out
-        loop {
-            let intersect = test_collider!(test, collider.clone(), |e| {
-                let parent = q_parent.iter_ancestors(e).last().unwrap_or(e);
-                !visited.contains(&parent) && !entities.contains(&parent)
-            });
-
-            // if they intersect:
-            if let Some((e, _)) = intersect {
-                // get the parent and the original and mark em off as intersecting
-                let parent = q_parent.iter_ancestors(e).last().unwrap_or(e);
-                intersecting_modules.insert(parent);
-                intersecting_modules.insert(dragged);
-                visited.insert(parent);
-                visited.insert(dragged);
-                // dbg!(&visited);
-            } else {
-                break;
-            }
-        }
-    }
-
-    dbg!(&**intersecting_modules);
+#[derive(Resource)]
+pub struct RequestedMove {
+    pub requesting: Entity,
+    pub to: Transform,
+    pub ignore: Vec<Entity>,
 }
 
-pub fn draw_intersection_warnings() {}
+impl Default for RequestedMove {
+    fn default() -> Self {
+        Self {
+            requesting: unsafe { std::mem::zeroed() },
+            to: Transform::default(),
+            ignore: default(),
+        }
+    }
+}
+
+pub fn do_requested_move(
+    requested_move: Res<RequestedMove>,
+    mut q_transform: Query<&mut Transform>,
+    q_children: Query<&Children>,
+    q_collider: Query<(Entity, &Collider)>,
+    q_global_transform: Query<&GlobalTransform>,
+    rapier_ctx: Res<RapierContext>,
+) {
+    if requested_move.is_changed() {
+        
+        let colliders = q_children
+            .iter_descendants(requested_move.requesting)
+            .filter_map(|e| q_collider.get(e).ok())
+            .collect::<Vec<_>>();
+        let ignore = colliders.iter().map(|(e, _)| *e).collect::<Vec<_>>();
+
+        let predicate = |e| !ignore.contains(&e);
+        let filter = QueryFilter::new().exclude_sensors().predicate(&predicate);
+        
+        let requesting = q_transform.entity(requested_move.requesting).clone();
+        let to = requested_move.to;
+        let diff = Transform {
+            translation: requesting.translation - to.translation,
+            rotation: requesting.rotation - to.rotation,
+            scale: default(),
+        };
+
+        for (e, c) in colliders.iter() {
+            let mut transformed = q_global_transform.entity(*e).compute_transform();
+            transformed.translation += diff.translation;
+            // transformed.rotate_around(transformed.translation - requesting.translation, -diff.rotation);
+            dbg!(transformed);
+            // transformed.scale = scale * diff.scale;
+            
+            // if we detect a collision
+            if let Some((_, _)) = rapier_ctx.cast_shape_transform(
+                transformed,
+                (*c).clone(),
+                Vec2::splat(1.0 / 512.0),
+                1.0,
+                filter,
+            ) {
+                // oh noes a collision! panic!
+                return;
+                // jk no panic
+            }
+        }
+        
+        if let Ok(mut transform) = q_transform.get_component_mut(requested_move.requesting) {
+            // were good
+            *transform = requested_move.to;
+        } else {
+            error!("Could not find transform component on requested_move.requesting, also this shouldnt have hapenned")
+        }
+    }
+}

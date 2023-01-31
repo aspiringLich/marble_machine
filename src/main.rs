@@ -14,6 +14,7 @@
 #![feature(drain_filter)]
 
 extern crate derive_more;
+extern crate itertools;
 extern crate rand;
 extern crate strum;
 
