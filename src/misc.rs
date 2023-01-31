@@ -120,22 +120,29 @@ pub macro builder_fn{
 
 use bevy_rapier2d::prelude::*;
 
-pub trait CastShapeTransform {
+pub trait RapierContextMethods {
     fn cast_shape_transform(
         &self,
         transform: Transform,
-        collider: Collider,
+        collider: &Collider,
         velocity: Vect,
         max_toi: Real,
         filter: QueryFilter,
     ) -> Option<(Entity, Toi)>;
+
+    fn intersection_with_shape_transform(
+        &self,
+        transform: Transform,
+        shape: &Collider,
+        filter: QueryFilter,
+    ) -> Option<Entity>;
 }
 
-impl CastShapeTransform for RapierContext {
+impl RapierContextMethods for RapierContext {
     fn cast_shape_transform(
         &self,
         transform: Transform,
-        collider: Collider,
+        collider: &Collider,
         velocity: Vect,
         max_toi: Real,
         filter: QueryFilter,
@@ -144,8 +151,22 @@ impl CastShapeTransform for RapierContext {
             transform.translation.truncate(),
             transform.rotation.to_euler(EulerRot::XYZ).2,
             velocity,
-            &collider,
+            collider,
             max_toi,
+            filter,
+        )
+    }
+
+    fn intersection_with_shape_transform(
+        &self,
+        transform: Transform,
+        shape: &Collider,
+        filter: QueryFilter,
+    ) -> Option<Entity> {
+        self.intersection_with_shape(
+            transform.translation.truncate(),
+            transform.rotation.to_euler(EulerRot::XYZ).2,
+            shape,
             filter,
         )
     }

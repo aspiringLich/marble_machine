@@ -159,12 +159,10 @@ pub fn tracer(
                     // step it closer to the colliding shape
                     while current.length() > goal {
                         if rapier_ctx
-                            .cast_shape(
+                            .intersection_with_shape(
                                 shape_pos,
                                 0.0,
-                                Vec2::ZERO,
                                 &Collider::ball(basic::marble_small.width() * 0.5),
-                                1.0,
                                 filter,
                             )
                             .is_some()
