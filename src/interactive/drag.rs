@@ -2,12 +2,16 @@ use std::f32::consts::TAU;
 
 use crate::{query::QueryQuerySimple, *};
 
-use super::{interact::InteractiveRotation, intersect::RequestedMove, select::CursorCoords};
+use super::{
+    interact::InteractiveRotation,
+    intersect::{MoveType, RequestedMove},
+    select::CursorCoords,
+};
 
 /// drag the selected module(s) around
 #[allow(clippy::too_many_arguments)]
 pub fn drag_selected(
-    mut requested_move: ResMut<RequestedMove>,
+    mut requested_move: EventWriter<RequestedMove>,
     mouse_pos: Res<CursorCoords>,
     mouse_buttons: Res<Input<MouseButton>>,
     selected: Res<SelectedModules>,
@@ -54,12 +58,12 @@ pub fn drag_selected(
     }
 
     let mut transform = *q_transform.entity(selected);
-    let Vec2 { x, y } = **mouse_pos - *starting_pos;
+    let Vec2 { x, y } = **mouse_pos - *starting_pos - 0.5;
 
     // rounding x and y to the nearest snapping #
     let round = Vec2::new(
-        (x / snapping).round() * snapping,
-        (y / snapping).round() * snapping,
+        (x / snapping).round() * snapping + 0.5,
+        (y / snapping).round() * snapping + 0.5,
     );
     // let round = Vec2::new(x, y);
 
@@ -67,8 +71,9 @@ pub fn drag_selected(
         transform.translation.x = round.x;
         transform.translation.y = round.y;
 
-        requested_move.requesting = selected;
-        requested_move.to = transform;
+        requested_move.send(
+            RequestedMove::new(selected, MoveType::TranslateTo(transform.translation)).snapping(),
+        );
 
         *prev = round;
     }

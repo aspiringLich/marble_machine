@@ -178,7 +178,7 @@ impl SpawnInstructions {
             .map(|r| {
                 let rot = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, r.to_radians());
                 let mut transform = Transform::from_xyz(
-                    1.0 * self.body.offset(),
+                    self.body.offset() - 4.0,
                     0.0,
                     ZOrder::InputComponent.f32(),
                 );
@@ -194,7 +194,7 @@ impl SpawnInstructions {
             .map(|r| {
                 let rot = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, r.to_radians());
                 let mut transform = Transform::from_xyz(
-                    1.0 * self.body.offset(),
+                    self.body.offset() - 3.5,
                     0.0,
                     ZOrder::OutputComponent.f32(),
                 );

@@ -22,7 +22,7 @@ pub enum BodyType {
 }
 
 pub fn offset_of<T: AtlasDictionary>(input: T) -> f32 {
-    input.width() * 0.5 + 1.0
+    f32::round(input.width() * 0.5 + 1.0) - 0.5
 }
 
 impl BodyType {

@@ -175,14 +175,24 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
     }
 
     let center = SIZE / 2.0;
+    
+    let extend_pos = |pos: &mut Vec3, mut units: f32| {
+        units *= SCALING / 2.0;
+        let len = pos.length();
+        *pos = pos.normalize() * (len + units);
+    };
 
     // spawn inputs
     for &transform in instructions.input_transforms.iter() {
-        put_tf!(transform, images.input);
+        let mut tf = transform;
+        extend_pos(&mut tf.translation, 3.0);
+        put_tf!(tf, images.input);
     }
     // spawn outputs
     for &transform in instructions.output_transforms.iter() {
-        put_tf!(transform, images.output);
+        let mut tf = transform;
+        extend_pos(&mut tf.translation, 3.0);
+        put_tf!(tf, images.output);
     }
     
     // spawn body
@@ -193,12 +203,10 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
     put!(center, *atlas_image);
     
     // spawn indicators
-    for transform in instructions.input_transforms.iter() {
-        let mut transform = *transform;
-        let pos = &mut transform.translation;
-        let len = pos.length();
-        *pos = pos.normalize() * (len - 1.5);
+    for &transform in instructions.input_transforms.iter() {
+        let mut tf = transform;
+        extend_pos(&mut tf.translation, 2.0);
         
-        put_tf!(transform, images.indicator);
+        put_tf!(tf, images.indicator);
     }
 }

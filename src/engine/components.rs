@@ -34,7 +34,7 @@ where
         let (texture_atlas, index) = basic::marble_input.info();
 
         let len = transform.translation.length();
-        let indicator = commands.spawn_indicator(Vec3::X * (len - 1.5)).id();
+        let indicator = commands.spawn_indicator(Vec3::X * (len + 2.0)).id();
 
         if B {}
 
@@ -57,7 +57,7 @@ where
                         texture_atlas,
                         sprite: TextureAtlasSprite {
                             index,
-                            anchor: Anchor::Center,
+                            anchor: Anchor::CenterLeft,
                             ..default()
                         },
                         transform: Transform::from_translation(Vec3::X * len),
@@ -118,7 +118,7 @@ where
                     texture_atlas,
                     sprite: TextureAtlasSprite {
                         index,
-                        anchor: Anchor::Center,
+                        anchor: Anchor::CenterLeft,
                         ..default()
                     },
                     transform: Transform::from_translation(Vec3::X * len),
