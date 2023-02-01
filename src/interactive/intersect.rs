@@ -65,7 +65,7 @@ pub fn do_requested_move(
         colliders.retain(|(e, _)| has_rigidbody.get(*e).is_ok());
 
         let predicate = |e| !ignore.contains(&e);
-        let filter = QueryFilter::new().exclude_sensors().predicate(&predicate);
+        let filter = QueryFilter::only_fixed().exclude_sensors().predicate(&predicate);
 
         let requesting = q_transform.entity(requested_move.requesting).clone();
         let mut diff = requesting;

@@ -76,10 +76,13 @@ pub fn spawn_background(mut commands: Commands, grid_info: Res<GridInfo>) {
         .windows(2)
         .enumerate();
 
+    let extend = 0.1;
+        
     while let Some((i, [(a, b), (next_a, next_b)])) = iter.next() {
         // get point and next point
-        let mut point = Vec2::new((size - 0.5) * a, (size - 0.5) * b);
-        let mut next_point = Vec2::new((size - 0.5) * next_a, (size - 0.5) * next_b);
+        let n = size - 0.5;
+        let mut point = Vec2::new(n * a, n * b);
+        let mut next_point = Vec2::new(n * next_a, n * next_b);
         if flag {
             point.x -= grid_size * a;
             next_point.x -= grid_size * next_a;
@@ -101,7 +104,7 @@ pub fn spawn_background(mut commands: Commands, grid_info: Res<GridInfo>) {
         );
 
         // the "curve" at the corners of the collider
-        let radius = grid_size - 0.5;
+        let radius = grid_size - 0.5 + extend;
         let center = Vec2::new((size - grid_size) * next_a, (size - grid_size) * next_b);
         let mut angle = rotation;
         for _ in 1..curve_segments {

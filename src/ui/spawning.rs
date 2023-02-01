@@ -184,15 +184,11 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
 
     // spawn inputs
     for &transform in instructions.input_transforms.iter() {
-        let mut tf = transform;
-        extend_pos(&mut tf.translation, 3.0);
-        put_tf!(tf, images.input);
+        put_tf!(transform, images.input);
     }
     // spawn outputs
     for &transform in instructions.output_transforms.iter() {
-        let mut tf = transform;
-        extend_pos(&mut tf.translation, 3.0);
-        put_tf!(tf, images.output);
+        put_tf!(transform, images.output);
     }
     
     // spawn body
@@ -205,8 +201,7 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
     // spawn indicators
     for &transform in instructions.input_transforms.iter() {
         let mut tf = transform;
-        extend_pos(&mut tf.translation, 2.0);
-        
+        extend_pos(&mut tf.translation, -1.0);
         put_tf!(tf, images.indicator);
     }
 }

@@ -34,7 +34,7 @@ where
         let (texture_atlas, index) = basic::marble_input.info();
 
         let len = transform.translation.length();
-        let indicator = commands.spawn_indicator(Vec3::X * (len + 2.0)).id();
+        let indicator = commands.spawn_indicator(Vec3::X * len).id();
 
         if B {}
 
@@ -57,7 +57,7 @@ where
                         texture_atlas,
                         sprite: TextureAtlasSprite {
                             index,
-                            anchor: Anchor::CenterLeft,
+                            anchor: Anchor::Center,
                             ..default()
                         },
                         transform: Transform::from_translation(Vec3::X * len),
@@ -74,7 +74,7 @@ where
                                 Some(vec![[0, 1], [2, 3]]),
                             ),
                             TransformBundle::from_transform(Transform::from_translation(
-                                Vec3::X * (len + 4.0),
+                                Vec3::X * len,
                             )),
                             RigidBody::Fixed,
                         ))
@@ -84,7 +84,7 @@ where
             });
         if B {
             commands.entity(input).insert((
-                Collider::compound(vec![(Vec2::new(4.0, 0.0), 0.0, Collider::ball(2.0))]),
+                Collider::ball(2.0),
                 Sensor,
                 ActiveEvents::COLLISION_EVENTS,
                 marker::Input(n),
@@ -108,7 +108,7 @@ where
                         vec![vec2!(3, 5), vec2!(-3, 3), vec2!(-3, -3), vec2!(3, -5)],
                         Some(vec![[0, 1], [2, 3]]),
                     ),
-                    TransformBundle::from_transform(Transform::from_translation(Vec3::X * (len + 4.0))),
+                    TransformBundle::from_transform(Transform::from_translation(Vec3::X * (len - 1.0))),
                     RigidBody::Fixed,
                 ))
                 .name("out.collider")
@@ -118,7 +118,7 @@ where
                     texture_atlas,
                     sprite: TextureAtlasSprite {
                         index,
-                        anchor: Anchor::CenterLeft,
+                        anchor: Anchor::Center,
                         ..default()
                     },
                     transform: Transform::from_translation(Vec3::X * len),
