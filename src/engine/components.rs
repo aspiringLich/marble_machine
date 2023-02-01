@@ -74,7 +74,7 @@ where
                                 Some(vec![[0, 1], [2, 3]]),
                             ),
                             TransformBundle::from_transform(Transform::from_translation(
-                                Vec3::X * len,
+                                Vec3::X * (len + 4.0),
                             )),
                             RigidBody::Fixed,
                         ))
@@ -108,7 +108,7 @@ where
                         vec![vec2!(3, 5), vec2!(-3, 3), vec2!(-3, -3), vec2!(3, -5)],
                         Some(vec![[0, 1], [2, 3]]),
                     ),
-                    TransformBundle::from_transform(Transform::from_translation(Vec3::X * len)),
+                    TransformBundle::from_transform(Transform::from_translation(Vec3::X * (len + 4.0))),
                     RigidBody::Fixed,
                 ))
                 .name("out.collider")

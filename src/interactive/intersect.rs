@@ -76,18 +76,11 @@ pub fn do_requested_move(
                 RotateTo(_) => transformed.rotate_around(requesting.translation, diff.rotation),
             }
             
-            // transformed.rotate_around(requesting.translation, diff.rotation);
-
             // if we detect a collision
             if let Some(_) = rapier_ctx.intersection_with_shape_transform(transformed, c, filter) {
-                // oh noes a collision! panic!
-                // info!("{:#?} colllision with {:#?}", c, e);
                 return;
-                // jk no panic
             }
         }
-        // info!("good to go");
-        // dbg!(colliders);
 
         if let Ok(mut transform) = q_transform.get_mut(requested_move.requesting) {
             // were good
