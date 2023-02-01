@@ -52,7 +52,7 @@ pub fn do_requested_move(
     has_rigidbody: Query<With<RigidBody>>,
     q_global_transform: Query<&GlobalTransform>,
     rapier_ctx: Res<RapierContext>,
-    mut lines: ResMut<DebugLines>,
+    // mut lines: ResMut<DebugLines>,
 ) {
     use MoveType::*;
 
@@ -100,29 +100,26 @@ pub fn do_requested_move(
                 })
                 .any(|x| x.is_some())
         };
-        
+
         // let mut factor = 0.5;
         if test(1.0) {
-            // i give up on this for now maybe come back to it?
-            
-            // let mut d = 0.25;
-
-            // for _ in 0..6 {
-            //     if !test(factor) {
-            //         factor += d;
-            //     } else {
-            //         factor -= d;
-            //     }
-            //     d /= 2.0;
-            // }
-            // if !test(factor) {
-            //     if let Ok(mut tf) = q_transform.get_mut(requested_move.requesting) {
-            //         let save = *tf;
-            //         *tf = transform(-factor, requested_move.to_transform());
-            //         dbg!(diff);
-            //         lines.line_colored(save.translation, tf.translation, 5.0, Color::RED);
-            //     }
-            // }
+            const N: f32 = 64.0;
+            for i in 0..N as i32 {
+                let factor = 1.0 - (i as f32 / N);
+                if !test(factor) &&
+                let Ok(tf) = q_transform.get(requested_move.requesting){
+                    let mut out = unsafe { q_transform.get_unchecked(requested_move.requesting) }.unwrap();
+                    
+                    *out = transform(factor - 1.0 / N, *tf);
+                    if requested_move.snap_flag {
+                        let pos = &mut out.translation;
+                        pos.x = (pos.x - 0.5).round() + 0.5;
+                        pos.y = (pos.y - 0.5).round() + 0.5;
+                    }
+                    
+                    return;
+                }
+            }
             return;
         }
 
