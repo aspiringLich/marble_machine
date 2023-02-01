@@ -1,10 +1,11 @@
 use crate::{
-    engine::{modules::{body::BodyType, ModuleType, SpawnInstructions}},
+    engine::modules::{body::BodyType, ModuleType, SpawnInstructions},
     graphics::atlas::{basic, AtlasDictionary},
     *,
 };
 use bevy_egui::*;
 use egui::{Button, Image, Label, Rect, Vec2, *};
+use trait_enum::Deref;
 
 use super::atlas_image::AtlasImage;
 
@@ -60,7 +61,7 @@ static MODULES: Vec<ModuleItem> = {
     macro item($arg:expr) {
         ModuleItem::Module {
             module: $arg,
-            instructions: $arg.get_inner().spawn_instructions(),
+            instructions: $arg.deref().spawn_instructions(),
         }
     }
 

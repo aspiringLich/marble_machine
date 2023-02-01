@@ -1,17 +1,12 @@
 use std::f32::consts;
 
 use crate::{
-    engine::modules::{
-        header::{Module, ModuleResources},
-        standard::Basic,
-        ModuleType,
-    },
-    spawn::SpawnModule,
+    engine::modules::header::ModuleResources,
     *,
 };
-use bevy::prelude::Image;
 use bevy_egui::*;
 use egui::*;
+use trait_enum::Deref;
 
 /// stores the selected entities
 #[derive(Resource, Debug, Default, Hash)]
@@ -57,8 +52,8 @@ pub fn inspector_ui(
     let res = &mut res as *mut ModuleResources;
 
     let binding = unsafe { &mut *res };
-    let mut binding = binding.q_module_type.get_mut(selected).unwrap();
-    let module = binding.get_inner_mut();
+    let binding = binding.q_module_type.get_mut(selected).unwrap();
+    let mut module = *binding.deref();
 
     egui::Window::new(module.get_name())
         .resizable(true)

@@ -2287,15 +2287,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "itertools"
-version = "0.10.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b0fd2260e829bddf4cb6ea802289de2f86d6a7a690192fbe91b3f46e0f2c8473"
-dependencies = [
- "either",
-]
-
-[[package]]
 name = "itoa"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2549,12 +2540,12 @@ dependencies = [
  "bevy_rapier2d",
  "ctor",
  "derive_more",
- "itertools",
  "iyes_loopless",
  "once_cell",
  "rand",
  "strum",
  "strum_macros",
+ "trait_enum",
 ]
 
 [[package]]
@@ -3964,6 +3955,12 @@ dependencies = [
  "tracing-subscriber",
  "wasm-bindgen",
 ]
+
+[[package]]
+name = "trait_enum"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "130dd741d3c71f76d031e58caffff3624eaaa2db9bd8c4b05406a71885300fc7"
 
 [[package]]
 name = "ttf-parser"

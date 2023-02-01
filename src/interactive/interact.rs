@@ -1,4 +1,5 @@
 use atlas::{basic, AtlasDictionary};
+use trait_enum::DerefMut;
 use std::{
     collections::hash_map::DefaultHasher,
     f32::consts::PI,
@@ -92,7 +93,7 @@ pub fn spawn_despawn_interactive_components(
 
         let body = &q_module
             .entity_mut(module)
-            .get_inner_mut()
+            .deref_mut()
             .spawn_instructions()
             .body;  
 

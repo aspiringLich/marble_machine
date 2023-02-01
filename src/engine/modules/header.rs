@@ -2,6 +2,7 @@ use std::time::Duration;
 
 use bevy::ecs::system::SystemParam;
 use bevy_egui::egui::Ui;
+use trait_enum::DerefMut;
 
 use crate::{
     engine::marble_io::FireMarble,
@@ -101,7 +102,7 @@ pub fn update_module_callbacks(
         timer.tick(Duration::from_secs(1));
 
         if timer.finished() {
-            module.get_inner_mut().callback_update(res_module, entity);
+            module.deref_mut().callback_update(res_module, entity);
             res_module
                 .commands
                 .entity(entity)
@@ -129,7 +130,7 @@ pub fn update_modules(
     let res_module = &set.p0() as *const ModuleResources as *mut ModuleResources;
     for (mut module, entity) in set.p1().iter_mut() {
         module
-            .get_inner_mut()
+            .deref_mut()
             .update(unsafe { &mut *res_module }, entity)
     }
 }

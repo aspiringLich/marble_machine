@@ -14,13 +14,11 @@
 #![feature(drain_filter)]
 
 extern crate derive_more;
-extern crate itertools;
 extern crate rand;
 extern crate strum;
 
 /// the interactive components, selection, etc.
 mod interactive;
-use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_prototype_debug_lines::DebugLinesPlugin;
 use engine::modules::header::UpdateModule;
 use interactive::*;

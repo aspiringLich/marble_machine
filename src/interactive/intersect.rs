@@ -1,5 +1,4 @@
 use bevy_prototype_debug_lines::DebugLines;
-use itertools::Itertools;
 
 use crate::{misc::RapierContextMethods, query::QueryQuerySimple, *};
 

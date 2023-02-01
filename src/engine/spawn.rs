@@ -7,6 +7,7 @@ use atlas::{basic, AtlasDictionary};
 
 use bevy::ecs::system::EntityCommands;
 use components::SpawnComponents;
+use trait_enum::Deref;
 
 use super::modules::{body::BodyType, ModuleType};
 // use bevy_rapier2d::{prelude::*, rapier::prelude::ColliderMaterial};
@@ -104,7 +105,7 @@ pub fn spawn_modules(
 
         let parent = commands
             .spawn(SpriteBundle { ..default() })
-            .name(module.get_inner().get_identifier())
+            .name(module.deref().get_identifier())
             .insert((*module, marker::Module))
             .id();
         let mut children: Vec<Entity> = vec![];
@@ -131,7 +132,7 @@ pub fn spawn_modules(
             body,
             input_transforms,
             output_transforms,
-        } = module.get_inner().spawn_instructions();
+        } = module.deref().spawn_instructions();
 
         // spawn the body
         match body {
