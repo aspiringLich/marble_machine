@@ -22,6 +22,7 @@ pub fn drag_selected(
     mut starting_pos: Local<Vec2>,
     mut q_interactive_rot: Query<&mut InteractiveRotation>,
     mut prev: Local<Vec2>,
+    grid_info: Res<grid::GridInfo>,
     // returns an option to pipe into
 ) {
     let snapping = if keyboard.pressed(KeyCode::LShift) {
@@ -67,7 +68,7 @@ pub fn drag_selected(
     );
     // let round = Vec2::new(x, y);
 
-    if round != *prev {
+    if round != *prev && f32::max(round.x.abs(), round.y.abs()) < grid_info.size {
         transform.translation.x = round.x;
         transform.translation.y = round.y;
 

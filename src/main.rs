@@ -158,7 +158,13 @@ fn main() {
     app.run();
 }
 
-fn setup(mut commands: Commands) {
+fn setup(mut commands: Commands, grid_info: Res<grid::GridInfo>, window: Res<Windows>) {
+    let window = window.get_primary().unwrap();
+    let screen_size = Vec2::new(window.width(), window.height());
+    let grid::GridInfo { size, ext, .. } = *grid_info;
+    
+    let factor = 12.0;
+    
     commands
         .spawn((
             Camera2dBundle {
@@ -177,11 +183,11 @@ fn setup(mut commands: Commands) {
         .insert((
             PanCam {
                 grab_buttons: vec![MouseButton::Middle],
-                max_scale: Some(0.3),
-                max_x: Some(grid::size * grid::ext),
-                min_x: Some(-grid::size * grid::ext),
-                max_y: Some(grid::size * grid::ext),
-                min_y: Some(-grid::size * grid::ext),
+                // max_scale: Some(0.3),
+                max_x: Some(size * ext + screen_size.x / factor),
+                min_x: Some(-size * ext - screen_size.x / factor),
+                max_y: Some(size * ext + screen_size.y / factor),
+                min_y: Some(-size * ext - screen_size.y / factor),
                 ..default()
             },
             marker::Camera,

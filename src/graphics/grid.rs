@@ -4,15 +4,35 @@ use crate::*;
 
 use super::atlas::{basic, AtlasDictionary};
 
-// these really should be in a resource but im too lazy
-#[allow(non_upper_case_globals)]
-pub const size: f32 = 96.0;
-#[allow(non_upper_case_globals)]
-pub const ext: f32 = 3.0;
-#[allow(non_upper_case_globals)]
-const grid_size: f32 = 8.;
+#[derive(Resource)]
+pub struct GridInfo {
+    pub size: f32,
+    pub ext: f32,
+    pub grid_size: f32,
+}
 
-pub fn spawn_background(mut commands: Commands) {
+impl Default for GridInfo {
+    fn default() -> Self {
+        Self {
+            size: 96.0,
+            ext: 3.0,
+            grid_size: 8.0,
+        }
+    }
+}
+
+
+pub fn spawn_background(mut commands: Commands, grid_info: Res<GridInfo>) {
+    if !grid_info.is_changed() {
+        return;
+    }
+    
+    let GridInfo {
+        size,
+        ext: _,
+        grid_size,
+    } = *grid_info;
+    
     // the grid of the background
     let mut grid_builder = PathBuilder::new();
     let base = Vec2::new(-size, -size);
