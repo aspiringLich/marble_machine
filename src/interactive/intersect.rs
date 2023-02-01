@@ -64,7 +64,7 @@ pub fn do_requested_move(
         let ignore = colliders.iter().map(|(e, _)| *e).collect::<Vec<_>>();
         colliders.retain(|(e, _)| has_rigidbody.get(*e).is_ok());
 
-        let predicate = |e| !ignore.contains(&e);
+        let predicate = |e| !ignore.contains(&e) && has_rigidbody.get(e).is_ok();
         let filter = QueryFilter::only_fixed().exclude_sensors().predicate(&predicate);
 
         let requesting = q_transform.entity(requested_move.requesting).clone();

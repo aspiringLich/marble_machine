@@ -34,7 +34,7 @@ where
         let (texture_atlas, index) = basic::marble_input.info();
 
         let len = transform.translation.length();
-        let indicator = commands.spawn_indicator(Vec3::X * len).id();
+        let indicator = commands.spawn_indicator(Vec3::X * (len - 2.0)).id();
 
         if B {}
 
@@ -76,7 +76,7 @@ where
                             TransformBundle::from_transform(Transform::from_translation(
                                 Vec3::X * len,
                             )),
-                            RigidBody::Fixed,
+                            // RigidBody::Fixed,
                         ))
                         .name("in.collider");
                 }
@@ -109,7 +109,7 @@ where
                         Some(vec![[0, 1], [2, 3]]),
                     ),
                     TransformBundle::from_transform(Transform::from_translation(Vec3::X * (len - 1.0))),
-                    RigidBody::Fixed,
+                    // RigidBody::Fixed,
                 ))
                 .name("out.collider")
                 .id(),

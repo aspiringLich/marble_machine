@@ -73,7 +73,7 @@ pub fn get_selected(
 /// place the selected module somewhere
 pub fn place_selected(
     rapier_ctx: Res<RapierContext>,
-    q_collider: Query<(Entity, &Collider), With<RigidBody>>,
+    q_collider: Query<(Entity, &Collider), Without<Sensor>>,
     mut commands: Commands,
     keyboard: Res<Input<KeyCode>>,
     mouse_pos: Res<CursorCoords>,
