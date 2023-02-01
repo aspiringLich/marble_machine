@@ -84,7 +84,7 @@ where
             });
         if B {
             commands.entity(input).insert((
-                Collider::ball(2.0),
+                Collider::compound(vec![(Vec2::new(4.0, 0.0), 0.0, Collider::ball(2.0))]),
                 Sensor,
                 ActiveEvents::COLLISION_EVENTS,
                 marker::Input(n),
