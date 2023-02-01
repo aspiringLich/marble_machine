@@ -108,10 +108,10 @@ fn main() {
     .add_plugin(bevy_pancam::PanCamPlugin)
     .add_plugin(EguiPlugin)
     .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
+    .add_plugin(DebugLinesPlugin::default())
     // .add_plugin(bevy_editor_pls::EditorPlugin)
     // .add_plugin(WorldInspectorPlugin {})
-    .add_plugin(DebugLinesPlugin::default())
-    .add_plugin(RapierDebugRenderPlugin::default())
+    // .add_plugin(RapierDebugRenderPlugin::default())
     // events
     .add_event::<marble_io::FireMarble>()
     .add_event::<UpdateModule>()

@@ -1,6 +1,6 @@
 use std::f32::consts::TAU;
 
-use crate::{query::QueryQuerySimple, *};
+use crate::{misc::RapierContextMethods, query::QueryQuerySimple, *};
 use iyes_loopless::prelude::{ConditionHelpers, IntoConditionalSystem};
 
 use super::interact::InteractiveRotation;
@@ -72,14 +72,18 @@ pub fn get_selected(
 /// runs if SelectedModules's place flag is true
 /// place the selected module somewhere
 pub fn place_selected(
+    rapier_ctx: Res<RapierContext>,
+    q_collider: Query<(Entity, &Collider), With<RigidBody>>,
     mut commands: Commands,
     keyboard: Res<Input<KeyCode>>,
     mouse_pos: Res<CursorCoords>,
     mouse_buttons: Res<Input<MouseButton>>,
     mut selected: ResMut<SelectedModules>,
     mut q_transform: Query<&mut Transform>,
+    q_global_transform: Query<&GlobalTransform>,
     q_children: Query<&Children>,
     has_io: Query<Or<(With<marker::Input>, With<marker::Output>)>>,
+    grid_info: Res<grid::GridInfo>,
 ) {
     let snapping = if keyboard.pressed(KeyCode::LShift) {
         8.0
@@ -88,50 +92,74 @@ pub fn place_selected(
     };
 
     // if we click then place the module
-    if mouse_buttons.pressed(MouseButton::Left) {
-        // dont be confused, set selected.place to false so that it now the place_selected fn no longer runs
-        selected.place = false
-    }
-    // else the module follows the mouse
-    else {
-        let Some(sel_entity) = selected.selected else { unreachable!() };
-        
-        // if escape is pressed, then clear and return
-        if keyboard.pressed(KeyCode::Escape) {
-            commands.entity(sel_entity).despawn_recursive();
-            selected.clear_selected();
+    if mouse_buttons.just_pressed(MouseButton::Left) && f32::max(mouse_pos.x.abs(), mouse_pos.y.abs()) < grid_info.size {
+        // check if any of the colliders are colliding with a rigidbody, ignoring the colliders of the module itself
+        let s_entity = selected.selected.unwrap();
+        let colliders = q_children
+            .iter_descendants(s_entity)
+            .filter_map(|e| q_collider.get(e).ok())
+            .collect::<Vec<_>>();
+        let ignore = colliders.iter().map(|(e, _)| *e).collect::<Vec<_>>();
+        let predicate = |e| !ignore.contains(&e);
+        let filter = QueryFilter::only_fixed()
+            .exclude_sensors()
+            .predicate(&predicate);
+
+        // dbg!(&colliders);
+
+        // if were clear
+        if !colliders.iter().any(|(e, c)| {
+            rapier_ctx
+                .intersection_with_shape_transform(
+                    q_global_transform.entity(*e).compute_transform(),
+                    c,
+                    filter,
+                )
+                .is_some()
+        }) {
+            // dont be confused, set selected.place to false so that it now the place_selected fn no longer runs
             selected.place = false;
             return;
         }
+    }
+    // else the module follows the mouse
+    let Some(sel_entity) = selected.selected else { unreachable!() };
 
-        let io = q_children
-            .entity(sel_entity)
-            .iter()
-            .filter(|e| has_io.has(**e));
-        if keyboard.just_pressed(KeyCode::Q) {
-            for &e in io {
-                let mut tf = q_transform.entity_mut(e);
-                tf.rotate_z(TAU / 8.0)
-            }
-        } else if keyboard.just_pressed(KeyCode::E) {
-            for &e in io {
-                let mut tf = q_transform.entity_mut(e);
-                tf.rotate_z(-TAU / 8.0)
-            }
+    // if escape is pressed, then clear and return
+    if keyboard.pressed(KeyCode::Escape) {
+        commands.entity(sel_entity).despawn_recursive();
+        selected.clear_selected();
+        selected.place = false;
+        return;
+    }
+
+    let io = q_children
+        .entity(sel_entity)
+        .iter()
+        .filter(|e| has_io.has(**e));
+    if keyboard.just_pressed(KeyCode::Q) {
+        for &e in io {
+            let mut tf = q_transform.entity_mut(e);
+            tf.rotate_z(TAU / 8.0)
         }
-
-        let pos = &mut q_transform.entity_mut(sel_entity).translation;
-        let Vec2 { x, y } = **mouse_pos - Vec2::splat(0.5);
-
-        // rounding x and y to the nearest snapping #
-        let (rx, ry) = (
-            (x / snapping).round() * snapping,
-            (y / snapping).round() * snapping,
-        );
-        if rx != x || ry != y {
-            pos.x = rx + 0.5;
-            pos.y = ry + 0.5;
+    } else if keyboard.just_pressed(KeyCode::E) {
+        for &e in io {
+            let mut tf = q_transform.entity_mut(e);
+            tf.rotate_z(-TAU / 8.0)
         }
+    }
+
+    let pos = &mut q_transform.entity_mut(sel_entity).translation;
+    let Vec2 { x, y } = **mouse_pos - Vec2::splat(0.5);
+
+    // rounding x and y to the nearest snapping #
+    let (rx, ry) = (
+        (x / snapping).round() * snapping,
+        (y / snapping).round() * snapping,
+    );
+    if rx != x || ry != y {
+        pos.x = rx + 0.5;
+        pos.y = ry + 0.5;
     }
 }
 
