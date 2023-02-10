@@ -117,7 +117,7 @@ fn main() {
     // startup systems
     .add_startup_stage(
         Label::StartupStageInit,
-        SystemStage::parallel().with_system(atlas::init_texture_atlas),
+        SystemStage::parallel().with_system(atlas::init_texture_atlas.label("atlas::init_texture_atlas")),
     )
     .add_startup_stage_after(
         Label::StartupStageInit,

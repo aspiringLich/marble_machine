@@ -1,9 +1,6 @@
 use std::f32::consts;
 
-use crate::{
-    engine::modules::header::ModuleResources,
-    *,
-};
+use crate::{engine::modules::header::ModuleResources, *};
 use bevy_egui::*;
 use egui::*;
 use trait_enum::Deref;
@@ -59,7 +56,7 @@ pub fn inspector_ui(
         .resizable(true)
         .collapsible(false)
         .show(egui_context.ctx_mut(), |ui| {
-            module.interactive(unsafe { &mut *res }, ui, selected)
+            module.debug_ui(ui, unsafe { &mut *res }, selected)
         });
 
     // println!("{}", window.unwrap().response.rect.width());

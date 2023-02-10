@@ -9,6 +9,7 @@ use trait_enum::Deref;
 
 use super::atlas_image::AtlasImage;
 
+#[derive(Resource)]
 pub struct Images {
     body_small: Image,
     input: Image,
@@ -81,7 +82,7 @@ const SIZE: Vec2 = Vec2::new(80., 80.);
 
 pub fn ui(
     mut egui_context: ResMut<EguiContext>,
-    images: Local<Images>,
+    images: Res<Images>,
     // mut windows: ResMut<Windows>,
     mut spawn_modules: EventWriter<spawn::SpawnModule>,
 ) {
@@ -132,7 +133,7 @@ pub fn ui(
                         // allocate the area to draw the module and throw stuff there
                         ui.allocate_rect(allocated, Sense::focusable_noninteractive());
                         let mut new_ui = ui.child_ui(allocated, Layout::default());
-                        recreate_module(&mut new_ui, &images, instructions);
+                        recreate_module(&mut new_ui, &images, instructions, 1.0);
 
                         i += 1;
                     }
@@ -148,7 +149,7 @@ pub fn ui(
     });
 }
 
-fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstructions) {
+fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstructions, scale: f32) {
     let ui_min = ui.max_rect().min.to_vec2();
     let make_rect = |center: Vec2, size: Vec2| {
         let min: Vec2 = center - size / 2.0 + ui_min;
@@ -159,7 +160,7 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
     let angle = -std::f32::consts::PI / 4.0;
 
     macro put($center:expr, $image:expr) {
-        ui.put(make_rect($center, $image.size()), $image.rotate(angle, Vec2::splat(0.5)));
+        ui.put(make_rect($center, $image.size() * scale), $image.rotate(angle, Vec2::splat(0.5)));
     }
     macro put_tf($transform:expr, $image:expr) {
         let mut transform = $transform;
@@ -172,7 +173,7 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
             y: center.y
         } + SIZE / 2.0;
 
-        ui.put(make_rect(center, $image.size()), $image.rotate(transform.rotation.to_euler(EulerRot::XYZ).2, Vec2::splat(0.5)));
+        ui.put(make_rect(center, $image.size() * scale), $image.rotate(transform.rotation.to_euler(EulerRot::XYZ).2, Vec2::splat(0.5)));
     }
 
     let center = SIZE / 2.0;

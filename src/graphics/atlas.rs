@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, log::info};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 
@@ -85,6 +85,7 @@ pub fn init_texture_atlas(
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
     asset_server: Res<AssetServer>,
 ) {
+    info!("Texture atlases are being initialized");
     macro init_atlas($target:ty, $dimensions:expr) {{
         let mut atlas =
             TextureAtlas::new_empty(asset_server.load(<$target>::path()), $dimensions.into());

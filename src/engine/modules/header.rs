@@ -135,18 +135,29 @@ pub fn update_modules(
     }
 }
 
+// static mut 
+
 pub trait Module {
     /// return instructions on spawning this module
     fn spawn_instructions(&self) -> &'static SpawnInstructions;
     /// function that runs to update this module
     fn update(&mut self, res: &mut ModuleResources, module: Entity);
     fn callback_update(&mut self, res: &mut ModuleResources, module: Entity);
-    /// function to build the ui / interactive elements
-    fn interactive(&mut self, res: &mut ModuleResources, ui: &mut Ui, entity: Entity);
     /// the name of the module
     fn get_name(&self) -> &'static str;
     /// the identifier of the module
     fn get_identifier(&self) -> &'static str;
+    
+    fn log_warn(&self, msg: &'static str, module: Entity) {
+        warn!(
+            "callback_update on {} ({:#?}): {}",
+            self.get_name(),
+            module,
+            msg
+        )
+    }
+    
+    fn debug_ui(&mut self, ui: &mut Ui, res: &mut ModuleResources, module: Entity) {}
 }
 
 /// basically, imagine offsetting some object by `offset` in the x-axis, then rotating it around the origin `rotation` radians.
@@ -174,8 +185,12 @@ impl SpawnInstructions {
         Self { body, ..default() }
     }
 
-    pub fn with_input_rotations<T: Iterator<Item = f32>>(mut self, input_transforms: T) -> Self {
+    pub fn with_input_rotations<T: IntoIterator<Item = f32>>(
+        mut self,
+        input_transforms: T,
+    ) -> Self {
         self.input_transforms = input_transforms
+            .into_iter()
             .map(|r| {
                 let rot = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, r.to_radians());
                 let mut transform = Transform::from_xyz(
@@ -190,8 +205,12 @@ impl SpawnInstructions {
         self
     }
 
-    pub fn with_output_rotations<T: Iterator<Item = f32>>(mut self, output_transforms: T) -> Self {
+    pub fn with_output_rotations<T: IntoIterator<Item = f32>>(
+        mut self,
+        output_transforms: T,
+    ) -> Self {
         self.output_transforms = output_transforms
+            .into_iter()
             .map(|r| {
                 let rot = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, r.to_radians());
                 let mut transform = Transform::from_xyz(

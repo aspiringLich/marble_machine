@@ -32,19 +32,11 @@ impl Module for Basic {
     }
 
     fn update(&mut self, res: &mut ModuleResources, module: Entity) {
-        // update indicators
         res.update_input_indicators(module);
-
-        let ModuleResources {
-            commands,
-            q_input_state,
-            ..
-        } = res;
-
-        let input_state = q_input_state.entity(module);
-        // if we have a marble then activate the callback
+        let input_state = res.q_input_state.entity(module);
+        
         if input_state[0].is_some() {
-            commands.entity(module).insert(ModuleCallbackTimer::new(10));
+            res.commands.entity(module).insert(ModuleCallbackTimer::new(10));
         }
     }
 
@@ -53,51 +45,15 @@ impl Module for Basic {
 
         // if theres a marble in there (there should be)
         if let Some(marble) = input_state[0] {
-            let ModuleResources {
-                fire_marble,
-                w_output,
-                q_children,
-                ..
-            } = res;
-            let outputs = q_children.entity(module).iter().with_collect(w_output);
+            let outputs = res.q_children.entity(module).iter().with_collect(&res.w_output);
 
             // fire it outta the input and mark that the input is empty
-            fire_marble.send(FireMarble::new(marble, outputs[0], 1.0));
+            res.fire_marble.send(FireMarble::new(marble, outputs[0], 1.0));
             input_state[0] = None;
         } else {
-            warn!(
-                "callback_update on {}: expected marble in input state",
-                self.get_name()
-            )
+            self.log_warn("expected marble in input state", module);
         }
         res.update_input_indicators(module);
-    }
-
-    fn interactive(&mut self, res: &mut ModuleResources, ui: &mut Ui, module: Entity) {
-        // let inputs: Vec<_> = res.inputs(module).collect();
-        let outputs: Vec<_> = res.outputs(module).collect();
-
-        let ModuleResources {
-            fire_marble: spawn_marble,
-            // q_transform,
-            // keyboard,
-            ..
-        } = &mut *res;
-        // let input_tfs = inputs.query_collect_mut(q_transform);
-        // let output_tfs = outputs.query_collect_mut(q_transform);
-
-        // ui::Layout::new()
-        //     .default_rotation_sliders(input_tfs, output_tfs, &body_small_transform)
-        //     .build(ui);
-
-        // cool epic le hacker debug button
-        if ui.button("Fire Marble!").clicked() {
-            spawn_marble.send(FireMarble {
-                marble: Marble::Bit { value: true },
-                from: outputs[0],
-                power: 1.0,
-            })
-        }
     }
 
     fn get_name(&self) -> &'static str {
@@ -106,5 +62,16 @@ impl Module for Basic {
 
     fn get_identifier(&self) -> &'static str {
         "basic.module"
+    }
+
+    fn debug_ui(&mut self, ui: &mut Ui, res: &mut ModuleResources, module: Entity) {
+        let outputs: Vec<_> = res.outputs(module).collect();
+        if ui.button("Fire Marble!").clicked() {
+            res.fire_marble.send(FireMarble {
+                marble: Marble::Bit { value: true },
+                from: outputs[0],
+                power: 1.0,
+            })
+        }
     }
 }

@@ -5,8 +5,10 @@ use egui::{Color32, Style, Vec2};
 
 pub mod atlas_image;
 
-// the following contain a ui function for ui stuff
+// module spawner thingy
 pub mod spawning;
+// info panel
+pub mod info;
 pub mod ui;
 
 pub fn app(app: &mut App) {
@@ -18,10 +20,16 @@ pub fn app(app: &mut App) {
             .with_system(spawning::ui)
             .with_system(ui::debug_ui),
     )
-    .add_startup_system(set_style);
+    .add_startup_system_to_stage(Label::StartupStageStart, set_style);
 }
 
-fn set_style(mut context: ResMut<EguiContext>) {
+fn set_style(mut context: ResMut<EguiContext>, mut commands: Commands) {
+    use bevy_egui::egui::style::*;
+    use bevy_egui::egui::*;
+    use epaint::Shadow;
+    
+    commands.init_resource::<spawning::Images>();
+
     let mut style: Style = context.ctx_mut().style().as_ref().clone();
 
     let Style {
@@ -31,7 +39,31 @@ fn set_style(mut context: ResMut<EguiContext>) {
         ..
     } = style;
 
-    visuals.panel_fill = Color32::rgba_u32(0x000000f0);
+    *visuals = Visuals {
+        // dark_mode: false,
+        override_text_color: Some(Color32::from_gray(220)),
+        // widgets: Widgets::default(),
+        // selection: Selection::default(),
+        // hyperlink_color: Color32::default(),
+        // faint_bg_color: Color32::default(),
+        // extreme_bg_color: Color32::default(),
+        // code_bg_color: Color32::default(),
+        // warn_fg_color: Color32::default(),
+        // error_fg_color: Color32::default(),
+        // window_rounding: Rounding::default(),
+        window_shadow: Shadow::small_light(),
+        window_fill: Color32::rgba_u32(0x000000d0),
+        panel_fill: Color32::rgba_u32(0x000000d0),
+        // popup_shadow: Shadow::default(),
+        // resize_corner_size: 0.0,
+        // text_cursor_width: 0.0,
+        // text_cursor_preview: false,
+        // clip_rect_margin: 0.0,
+        // button_frame: false,
+        // collapsing_header_frame: false,
+        ..default()
+    };
+
     spacing.button_padding = Vec2::ZERO;
     // debug.debug_on_hover = true;
     // debug.show_resize = true;
