@@ -10,6 +10,7 @@ pub enum ZOrder {
     IndicatorComponent,
     Border,
     Interactive,
+    HoverIndicator = 100,
 }
 
 impl ZOrder {

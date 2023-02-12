@@ -1,10 +1,12 @@
 use std::collections::VecDeque;
 
 use crate::*;
+use bevy::transform::TransformSystem;
 use bevy_pancam::PanCamSystemLabel;
 use iyes_loopless::prelude::*;
 
 pub mod drag;
+pub mod hover;
 pub mod interact;
 pub mod intersect;
 pub mod select;
@@ -45,42 +47,55 @@ fn init_res(mut commands: Commands) {
 
 pub fn app(app: &mut App) {
     app.add_event::<intersect::RequestedMove>()
-        .add_startup_system_to_stage(Label::StartupStageStart, init_res)
-        .add_system(select::get_hovered_entities.after("spawn::spawn_modules"))
-        .add_system(
+        .init_resource::<select::CursorCoords>()
+        .init_resource::<hover::HoveredEntities>()
+        .init_resource::<interact::InteractiveSelected>()
+        .add_startup_system_to_stage(Label::StartupStageStart, init_res);
+    
+    app.add_system_set_to_stage(
+            Label::StageInteract,
+            SystemSet::new().with_system(hover::get_hovered_entities.after("spawn::spawn_modules"))
+        .with_system(
             select::get_selected
                 .run_if_not(place)
                 .run_if_not(egui)
                 .label("select::get_selected"),
         )
-        .add_system(
+        .with_system(
             drag::drag_selected
                 .run_if_not(place)
                 .run_if_not(egui)
                 .before("intersect::do_requested_move")
                 .label("select::drag_selected"),
         )
-        .add_system(
+        .with_system(
             select::place_selected
                 .run_if(place)
                 .run_if_not(egui)
                 .after(PanCamSystemLabel),
         )
-        .add_system(interact::spawn_despawn_interactive_components.before("interact::use_widgets"))
-        .add_system(
+        .with_system(interact::spawn_despawn_interactive_components.before("interact::use_widgets"))
+        .with_system(
             interact::use_widgets
                 .after("select::selected")
                 .before("intersect::do_requested_move")
                 .label("interact::use_widgets"),
         )
-        .add_system(interact::do_interactive_rotation.after(interact::use_widgets).before("intersect::do_requested_move"))
-        .add_system(intersect::do_requested_move.label("intersect::do_requested_move"))
-        .add_system(
+        .with_system(
+            interact::do_interactive_rotation
+                .after(interact::use_widgets)
+                .before("intersect::do_requested_move")
+                .label("interact::do_interactive_rotation"),
+        )
+        .with_system(intersect::do_requested_move.label("intersect::do_requested_move"))
+        .with_system(
             tracer::tracer
                 .run_if(select)
                 .run_if(|r: Res<SelectedModules>| !r.place)
                 .after("select::get_selected")
                 .after("select::drag_selected"),
         )
-        .init_resource::<interact::InteractiveSelected>();
+    );
+    
+    app.add_system_to_stage(CoreStage::PostUpdate, hover::draw_selection_on_hovered.after(TransformSystem::TransformPropagate));
 }

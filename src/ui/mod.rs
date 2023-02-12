@@ -27,7 +27,7 @@ fn set_style(mut context: ResMut<EguiContext>, mut commands: Commands) {
     use bevy_egui::egui::style::*;
     use bevy_egui::egui::*;
     use epaint::Shadow;
-    
+
     commands.init_resource::<spawning::Images>();
 
     let mut style: Style = context.ctx_mut().style().as_ref().clone();

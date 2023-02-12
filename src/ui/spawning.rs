@@ -87,32 +87,36 @@ pub fn ui(
     mut spawn_modules: EventWriter<spawn::SpawnModule>,
 ) {
     // let Some(window) = windows.get_primary_mut() else { error!("take a guess what the error is"); return };
-    
+
     let ctx = egui_context.ctx_mut();
 
     let size_rect = Rect {
         min: Pos2::ZERO,
         max: SIZE.to_pos2(),
     };
-    
+
     // set cursor
 
-    SidePanel::left("spawning").resizable(true).default_width(SIZE.x * 2.0).show_separator_line(true).show(ctx, |ui| {        
-        let spacing = ui.spacing().window_margin.top;
+    SidePanel::left("spawning")
+        .resizable(true)
+        .default_width(SIZE.x * 2.0)
+        .show_separator_line(true)
+        .show(ctx, |ui| {
+            let spacing = ui.spacing().window_margin.top;
 
-        let width = (ui.available_size().x) / (SIZE.x + spacing);
-        let width = width.round();
-        ui.set_width(width as f32 * SIZE.x + spacing);
-        // dbg!(width);
+            let width = (ui.available_size().x) / (SIZE.x + spacing);
+            let width = width.round();
+            ui.set_width(width as f32 * SIZE.x + spacing);
+            // dbg!(width);
 
-        let mut iter = MODULES.iter().peekable();
+            let mut iter = MODULES.iter().peekable();
 
-        while let Some(_) = iter.peek() {
-            ui.add_space(spacing);
-            let mut i = 0;
-            let cursor = ui.cursor().min.to_vec2();
+            while let Some(_) = iter.peek() {
+                ui.add_space(spacing);
+                let mut i = 0;
+                let cursor = ui.cursor().min.to_vec2();
 
-            while i < i32::max(width as i32, 1)&& let Some(item) = iter.next() {
+                while i < i32::max(width as i32, 1)&& let Some(item) = iter.next() {
                 match item {
                     ModuleItem::Module {
                         module,
@@ -143,10 +147,10 @@ pub fn ui(
                     }
                 }
             }
-        }
+            }
 
-        ui.set_width(ui.min_size().x);
-    });
+            ui.set_width(ui.min_size().x);
+        });
 }
 
 fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstructions, scale: f32) {
@@ -156,28 +160,40 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
         let max: Vec2 = center + size / 2.0 + ui_min;
         Rect::from_min_max(min.to_pos2(), max.to_pos2())
     };
-    
+
     let angle = -std::f32::consts::PI / 4.0;
 
     macro put($center:expr, $image:expr) {
-        ui.put(make_rect($center, $image.size() * scale), $image.rotate(angle, Vec2::splat(0.5)));
+        ui.put(
+            make_rect($center, $image.size() * scale),
+            $image.rotate(angle, Vec2::splat(0.5)),
+        );
     }
     macro put_tf($transform:expr, $image:expr) {
         let mut transform = $transform;
         // rotate 45 deg
-        transform.rotate_around(Vec3::new(0.,0.,$transform.translation.z), Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, angle));
+        transform.rotate_around(
+            Vec3::new(0., 0., $transform.translation.z),
+            Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, angle),
+        );
 
         let center = transform.translation.truncate() * SCALING;
         let center = Vec2 {
             x: center.x,
-            y: center.y
+            y: center.y,
         } + SIZE / 2.0;
 
-        ui.put(make_rect(center, $image.size() * scale), $image.rotate(transform.rotation.to_euler(EulerRot::XYZ).2, Vec2::splat(0.5)));
+        ui.put(
+            make_rect(center, $image.size() * scale),
+            $image.rotate(
+                transform.rotation.to_euler(EulerRot::XYZ).2,
+                Vec2::splat(0.5),
+            ),
+        );
     }
 
     let center = SIZE / 2.0;
-    
+
     let extend_pos = |pos: &mut Vec3, mut units: f32| {
         units *= SCALING / 2.0;
         let len = pos.length();
@@ -192,14 +208,14 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
     for &transform in instructions.output_transforms.iter() {
         put_tf!(transform, images.output);
     }
-    
+
     // spawn body
     let atlas_image = match instructions.body {
         BodyType::Small => &images.body_small,
         BodyType::Large => todo!(),
     };
     put!(center, *atlas_image);
-    
+
     // spawn indicators
     for &transform in instructions.input_transforms.iter() {
         let mut tf = transform;

@@ -1,7 +1,9 @@
 use crate::{
-    *, query::{QueryQuerySimple, QueryQueryIter}, engine::modules::header::UpdateModule,
+    engine::modules::header::UpdateModule,
+    query::{QueryQueryIter, QueryQuerySimple},
+    *,
 };
-use atlas::{ AtlasDictionary, basic };
+use atlas::{basic, AtlasDictionary};
 use marble::Marble;
 use rand::Rng;
 use spawn::CommandsSpawn;
@@ -41,15 +43,14 @@ pub fn fire_marbles(
 ) {
     for event in spawn_events.iter() {
         let parent = q_parent.entity(event.from).get();
-        let mut transform = *q_transform
-            .entity(
-                q_children
-                    .entity(event.from)
-                    .iter()
-                    .with(&w_sprite)
-                    .next()
-                    .unwrap(),
-            );
+        let mut transform = *q_transform.entity(
+            q_children
+                .entity(event.from)
+                .iter()
+                .with(&w_sprite)
+                .next()
+                .unwrap(),
+        );
         transform.translation.z = 0.0;
         transform.rotate_around(Vec3::ZERO, q_transform.entity(event.from).rotation);
         let p_transform = q_transform.entity(parent);
@@ -62,7 +63,7 @@ pub fn fire_marbles(
             .spawn_atlas_sprite(
                 basic::marble_small,
                 Color::GREEN,
-                Transform::from_translation(pos + - pos.z + ZOrder::Marble),
+                Transform::from_translation(pos + -pos.z + ZOrder::Marble),
             )
             .insert((
                 Collider::ball(basic::marble_small.width() * 0.5),
@@ -73,7 +74,7 @@ pub fn fire_marbles(
                 },
                 ColliderMassProperties::Mass(1.0),
                 Restitution::coefficient(0.9),
-                Lifetime(600)
+                Lifetime(600),
             ))
             .insert(event.marble)
             .name("bit.marble");

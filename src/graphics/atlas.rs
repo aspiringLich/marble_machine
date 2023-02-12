@@ -1,4 +1,4 @@
-use bevy::{prelude::*, log::info};
+use bevy::{log::info, prelude::*};
 use strum::IntoEnumIterator;
 use strum_macros::EnumIter;
 

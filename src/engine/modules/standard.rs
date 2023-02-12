@@ -34,9 +34,11 @@ impl Module for Basic {
     fn update(&mut self, res: &mut ModuleResources, module: Entity) {
         res.update_input_indicators(module);
         let input_state = res.q_input_state.entity(module);
-        
+
         if input_state[0].is_some() {
-            res.commands.entity(module).insert(ModuleCallbackTimer::new(10));
+            res.commands
+                .entity(module)
+                .insert(ModuleCallbackTimer::new(10));
         }
     }
 
@@ -45,10 +47,15 @@ impl Module for Basic {
 
         // if theres a marble in there (there should be)
         if let Some(marble) = input_state[0] {
-            let outputs = res.q_children.entity(module).iter().with_collect(&res.w_output);
+            let outputs = res
+                .q_children
+                .entity(module)
+                .iter()
+                .with_collect(&res.w_output);
 
             // fire it outta the input and mark that the input is empty
-            res.fire_marble.send(FireMarble::new(marble, outputs[0], 1.0));
+            res.fire_marble
+                .send(FireMarble::new(marble, outputs[0], 1.0));
             input_state[0] = None;
         } else {
             self.log_warn("expected marble in input state", module);

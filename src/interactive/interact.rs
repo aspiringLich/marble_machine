@@ -1,14 +1,16 @@
 use atlas::{basic, AtlasDictionary};
-use trait_enum::DerefMut;
 use std::{
     collections::hash_map::DefaultHasher,
     f32::consts::PI,
     hash::{Hash, Hasher},
 };
+use trait_enum::DerefMut;
 
 use crate::{
+    engine::modules::{header::Module, ModuleType},
+    query::{QueryQueryIter, QueryQuerySimple},
     select::CursorCoords,
-    *, query::{QueryQuerySimple, QueryQueryIter}, engine::modules::{ModuleType, header::Module},
+    *,
 };
 
 #[derive(Component, Debug)]
@@ -60,7 +62,7 @@ pub fn spawn_despawn_interactive_components(
     if !selected.is_changed() || selected.is_added() || selected.place {
         return;
     }
-    
+
     // make sure its not the exact same value
     let mut hasher = DefaultHasher::new();
     selected.hash(&mut hasher);
@@ -69,7 +71,6 @@ pub fn spawn_despawn_interactive_components(
         return;
     }
     *prev_selected = hash;
-
 
     // spawn all the interactive components
     if let Some(module) = selected.selected {
@@ -95,7 +96,7 @@ pub fn spawn_despawn_interactive_components(
             .entity_mut(module)
             .deref_mut()
             .spawn_instructions()
-            .body;  
+            .body;
 
         macro spawn_widget($translation:expr, $color:expr, $name:literal, $factor:literal, ($($tail:tt)*)) {
             commands
@@ -220,7 +221,6 @@ pub fn use_widgets(
         return; 
     };
     *active = true;
-    
 
     let rel_angle = |t: &Transform| {
         let relative_pos = t.translation.truncate() - **mouse_pos;
@@ -229,15 +229,15 @@ pub fn use_widgets(
         }
         Some(-relative_pos.angle_between(Vec2::X) + PI)
     };
-    
+
     let step = PI / 12.0;
-    
+
     use Interactive::*;
     match q_interactive.entity(entity) {
         Rotation => {
             let io_port = q_parent.entity(entity).get();
             let module = q_parent.entity(io_port).get();
-            
+
             let mut i_rot = q_interactive_rot.entity_mut(module);
             let rot = i_rot.rot;
             // dbg!(&i_rot);
@@ -249,14 +249,14 @@ pub fn use_widgets(
                 error!("Expected Input or Output component on module entity; Did not find either.");
                 return;
             };
-            
+
             let root = q_transform.entity(module);
             let Some(angle) = rel_angle(root) else { return; };
             let Some(diff) = *diff else {
                 *diff = Some(angle - *io_rot - rot);
                 return;
             };
-            
+
             if keyboard.pressed(KeyCode::LShift) {
                 let rounded = ((angle - diff) / step).round() * step;
                 *io_rot = rounded - rot;
@@ -267,30 +267,30 @@ pub fn use_widgets(
         IORotation => {
             let module = q_parent.entity(entity).get();
             let mut i_rot = q_interactive_rot.entity_mut(module);
-            
+
             let root = q_transform.entity(module);
             let Some(angle) = rel_angle(root) else { return; };
             let Some(diff) = *diff else {
                 *diff = Some(angle - i_rot.rot);
                 return;
             };
-            
+
             if keyboard.pressed(KeyCode::LShift) {
                 i_rot.rot = ((angle - diff) / step).round() * step;
             } else {
                 i_rot.rot = angle - diff;
             }
-        },
+        }
         Delete => {
             let parent = q_parent.entity(entity).get();
             commands.entity(parent).despawn_recursive();
             *active = false;
             selected.clear_selected();
-            
+
             for tracer in **tracers {
                 *q_visibility.entity_mut(tracer) = Visibility::INVISIBLE;
             }
-        },
+        }
     }
 }
 
@@ -303,11 +303,13 @@ pub fn do_interactive_rotation(
     w_o: Query<Entity, With<marker::Output>>,
     q_children: Query<&Children>,
 ) {
-    let Ok(entity) = w_interactive_rot.get_single() else { return; }; 
+    let Ok(entity) = w_interactive_rot.get_single() else { return; };
     let Ok(i_rot) = q_interactive_rot.get(entity) else { return; };
     let children = q_children.entity(entity);
-    
-    let interactive = children.iter().filter_map(|e| q_interactive.get(*e).ok().map(|i| (e, i)));
+
+    let interactive = children
+        .iter()
+        .filter_map(|e| q_interactive.get(*e).ok().map(|i| (e, i)));
     for (e, i) in interactive {
         use Interactive::*;
         match i {
@@ -315,20 +317,25 @@ pub fn do_interactive_rotation(
                 let mut transform = q_transform.entity_mut(*e);
                 let z = transform.translation.z;
                 let rot = transform.rotation.to_euler(EulerRot::XYZ).2;
-                
-                transform.rotate_around(Vec2::ZERO.extend(z), Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.rot - rot));
+
+                transform.rotate_around(
+                    Vec2::ZERO.extend(z),
+                    Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.rot - rot),
+                );
                 break;
-            },
+            }
             _ => continue,
         }
     }
 
     for (i, input) in children.iter().with(&w_i).enumerate() {
         let mut transform = q_transform.entity_mut(input);
-        transform.rotation = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.input_rot[i] + i_rot.rot);
+        transform.rotation =
+            Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.input_rot[i] + i_rot.rot);
     }
     for (i, output) in children.iter().with(&w_o).enumerate() {
         let mut transform = q_transform.entity_mut(output);
-        transform.rotation = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.output_rot[i] + i_rot.rot);
+        transform.rotation =
+            Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.output_rot[i] + i_rot.rot);
     }
 }

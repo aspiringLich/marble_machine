@@ -21,18 +21,17 @@ impl Default for GridInfo {
     }
 }
 
-
 pub fn spawn_background(mut commands: Commands, grid_info: Res<GridInfo>) {
     if !grid_info.is_changed() {
         return;
     }
-    
+
     let GridInfo {
         size,
         ext: _,
         grid_size,
     } = *grid_info;
-    
+
     // the grid of the background
     let mut grid_builder = PathBuilder::new();
     let base = Vec2::new(-size, -size);
@@ -77,7 +76,7 @@ pub fn spawn_background(mut commands: Commands, grid_info: Res<GridInfo>) {
         .enumerate();
 
     let extend = 0.1;
-        
+
     while let Some((i, [(a, b), (next_a, next_b)])) = iter.next() {
         // get point and next point
         let n = size - 0.5;

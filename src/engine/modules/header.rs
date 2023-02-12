@@ -135,7 +135,7 @@ pub fn update_modules(
     }
 }
 
-// static mut 
+// static mut
 
 pub trait Module {
     /// return instructions on spawning this module
@@ -147,7 +147,7 @@ pub trait Module {
     fn get_name(&self) -> &'static str;
     /// the identifier of the module
     fn get_identifier(&self) -> &'static str;
-    
+
     fn log_warn(&self, msg: &'static str, module: Entity) {
         warn!(
             "callback_update on {} ({:#?}): {}",
@@ -156,7 +156,7 @@ pub trait Module {
             msg
         )
     }
-    
+
     fn debug_ui(&mut self, ui: &mut Ui, res: &mut ModuleResources, module: Entity) {}
 }
 

@@ -1,9 +1,8 @@
 use std::f32::consts::TAU;
 
 use crate::{misc::RapierContextMethods, query::QueryQuerySimple, *};
-use iyes_loopless::prelude::{ConditionHelpers, IntoConditionalSystem};
 
-use super::interact::InteractiveRotation;
+use super::{hover::HoveredEntities, interact::InteractiveRotation};
 
 /// update SelectedModule whenever the left cursor is clicked
 #[allow(clippy::too_many_arguments)]
@@ -92,7 +91,9 @@ pub fn place_selected(
     };
 
     // if we click then place the module
-    if mouse_buttons.just_pressed(MouseButton::Left) && f32::max(mouse_pos.x.abs(), mouse_pos.y.abs()) < grid_info.size {
+    if mouse_buttons.just_pressed(MouseButton::Left)
+        && f32::max(mouse_pos.x.abs(), mouse_pos.y.abs()) < grid_info.size
+    {
         // check if any of the colliders are colliding with a rigidbody, ignoring the colliders of the module itself
         let s_entity = selected.selected.unwrap();
         let colliders = q_children
@@ -190,19 +191,4 @@ pub fn get_cursor_pos(
 
         coords.0 = world_pos;
     }
-}
-
-#[derive(Default, Deref, DerefMut, Resource)]
-pub struct HoveredEntities(Vec<Entity>);
-
-pub fn get_hovered_entities(
-    mouse_pos: Res<CursorCoords>,
-    rapier_context: Res<RapierContext>,
-    mut hovered_entities: ResMut<HoveredEntities>,
-) {
-    hovered_entities.clear();
-    rapier_context.intersections_with_point(**mouse_pos, default(), |entity| {
-        hovered_entities.push(entity);
-        true
-    });
 }
