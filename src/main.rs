@@ -23,7 +23,7 @@ use bevy_prototype_debug_lines::DebugLinesPlugin;
 use engine::modules::header::UpdateModule;
 use interactive::*;
 
-use bevy::utils::{ HashSet, HashMap };
+use bevy::utils::{HashMap, HashSet};
 
 /// anything to do with graphics
 mod graphics;
@@ -40,10 +40,9 @@ use game::*;
 /// take a wild guess
 mod ui;
 
-use bevy::{ diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, sprite::Anchor };
+use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, sprite::Anchor};
 // use bevy_editor_pls::prelude::*;
 use bevy_egui::EguiPlugin;
-use bevy_inspector_egui::prelude::*;
 use bevy_pancam::PanCam;
 use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
@@ -78,75 +77,81 @@ fn main() {
 
     // bevy plugins
     app.add_plugins(
-        DefaultPlugins.set(ImagePlugin::default_nearest())
+        DefaultPlugins
+            .set(ImagePlugin::default_nearest())
             .set(WindowPlugin {
                 window: WindowDescriptor {
                     title: "Marble Machine".to_string(),
                     ..default()
                 },
                 ..default()
-            })
-            // .disable::<bevy::log::LogPlugin>()
+            }), // .disable::<bevy::log::LogPlugin>()
     )
-        // resources
-        .init_resource::<SelectedModules>()
-        .insert_resource(RapierConfiguration {
-            physics_pipeline_active: true,
-            query_pipeline_active: true,
-            timestep_mode: TimestepMode::Fixed {
-                dt: 1.0 / 60.0,
-                substeps: 1,
-            },
-            ..default()
-        })
-        // plugins
-        .add_plugin(ShapePlugin)
-        .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        .add_plugin(fps::FpsText)
-        .add_plugin(bevy_pancam::PanCamPlugin)
-        .add_plugin(EguiPlugin)
-        .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
-        .add_plugin(DebugLinesPlugin::default())
-        // .add_plugin(bevy_editor_pls::EditorPlugin)
-        // .add_plugin(WorldInspectorPlugin {})
-        // .add_plugin(RapierDebugRenderPlugin::default())
-        // events
-        .add_event::<marble_io::FireMarble>()
-        .add_event::<UpdateModule>()
-        .add_event::<spawn::SpawnModule>()
-        // startup systems
-        .add_startup_stage(
-            Label::StartupStageInit,
-            SystemStage::parallel().with_system(
-                atlas::init_texture_atlas.label("atlas::init_texture_atlas")
-            )
-        )
-        .add_startup_stage_after(
-            Label::StartupStageInit,
-            Label::StartupStageStart,
-            SystemStage::parallel().with_system(setup)
-        )
-        // systems
-        .add_stage(Label::StageStart, SystemStage::parallel().with_system(select::get_cursor_pos))
-        .add_stage_after(
-            Label::StageStart,
-            Label::StageSpawn,
-            SystemStage::parallel()
-                .with_system(spawn::spawn_modules.label("spawn::spawn_modules"))
-                .with_system(marble_io::fire_marbles)
-        )
-        .add_stage_after(Label::StageSpawn, Label::StageUi, SystemStage::parallel())
-        .add_stage_after(
-            Label::StageUi,
-            Label::StageMain,
-            SystemStage::parallel()
-                .with_system(pan_camera.label(bevy_pancam::PanCamSystemLabel))
-                .with_system(marble::despawn_marbles)
-                .with_system(marble_io::update_inputs)
-                .with_system(modules::update_modules)
-                .with_system(modules::update_module_callbacks)
-        )
-        .add_stage_before(CoreStage::PostUpdate, Label::StageInteract, SystemStage::parallel());
+    // resources
+    .init_resource::<SelectedModules>()
+    .insert_resource(RapierConfiguration {
+        physics_pipeline_active: true,
+        query_pipeline_active: true,
+        timestep_mode: TimestepMode::Fixed {
+            dt: 1.0 / 60.0,
+            substeps: 1,
+        },
+        ..default()
+    })
+    // plugins
+    .add_plugin(ShapePlugin)
+    .add_plugin(FrameTimeDiagnosticsPlugin::default())
+    .add_plugin(fps::FpsText)
+    .add_plugin(bevy_pancam::PanCamPlugin)
+    .add_plugin(EguiPlugin)
+    .add_plugin(RapierPhysicsPlugin::<NoUserData>::pixels_per_meter(100.0))
+    .add_plugin(DebugLinesPlugin::default())
+    // .add_plugin(bevy_editor_pls::EditorPlugin)
+    // .add_plugin(WorldInspectorPlugin {})
+    // .add_plugin(RapierDebugRenderPlugin::default())
+    // events
+    .add_event::<marble_io::FireMarble>()
+    .add_event::<UpdateModule>()
+    .add_event::<spawn::SpawnModule>()
+    // startup systems
+    .add_startup_stage(
+        Label::StartupStageInit,
+        SystemStage::parallel()
+            .with_system(atlas::init_texture_atlas.label("atlas::init_texture_atlas")),
+    )
+    .add_startup_stage_after(
+        Label::StartupStageInit,
+        Label::StartupStageStart,
+        SystemStage::parallel().with_system(setup),
+    )
+    // systems
+    .add_stage(
+        Label::StageStart,
+        SystemStage::parallel().with_system(select::get_cursor_pos),
+    )
+    .add_stage_after(
+        Label::StageStart,
+        Label::StageSpawn,
+        SystemStage::parallel()
+            .with_system(spawn::spawn_modules.label("spawn::spawn_modules"))
+            .with_system(marble_io::fire_marbles),
+    )
+    .add_stage_after(Label::StageSpawn, Label::StageUi, SystemStage::parallel())
+    .add_stage_after(
+        Label::StageUi,
+        Label::StageMain,
+        SystemStage::parallel()
+            .with_system(pan_camera.label(bevy_pancam::PanCamSystemLabel))
+            .with_system(marble::despawn_marbles)
+            .with_system(marble_io::update_inputs)
+            .with_system(modules::update_modules)
+            .with_system(modules::update_module_callbacks),
+    )
+    .add_stage_before(
+        CoreStage::PostUpdate,
+        Label::StageInteract,
+        SystemStage::parallel(),
+    );
 
     interactive::app(&mut app);
     graphics::app(&mut app);
@@ -154,7 +159,7 @@ fn main() {
     ui::app(&mut app);
 
     // bevy_mod_debugdump::print_schedule(&mut app);
-    
+
     app.run();
 }
 
@@ -199,7 +204,7 @@ fn pan_camera(
     windows: Res<Windows>,
     mut query: Query<(&PanCam, &mut Transform, &OrthographicProjection)>,
     // mut last_pos: Local<Option<Vec2>>,
-    keys: Res<Input<KeyCode>>
+    keys: Res<Input<KeyCode>>,
 ) {
     let Some(window) = windows.get_primary() else {
         error!("no window you dingus");
@@ -215,35 +220,34 @@ fn pan_camera(
     // let delta_device_pixels = current_pos - last_pos.unwrap_or(current_pos);
 
     for (cam, mut transform, projection) in &mut query {
-        let proj_size =
-            Vec2::new(projection.right - projection.left, projection.top - projection.bottom) *
-            projection.scale;
+        let proj_size = Vec2::new(
+            projection.right - projection.left,
+            projection.top - projection.bottom,
+        ) * projection.scale;
 
         // The proposed new camera position
-        let mut proposed_cam_transform = if
-            cam.enabled &&
-            keys.any_pressed([KeyCode::W, KeyCode::A, KeyCode::S, KeyCode::D])
-        {
-            let world_units_per_device_pixel = proj_size / window_size;
-            let mut delta_world = Vec2::ZERO;
+        let mut proposed_cam_transform =
+            if cam.enabled && keys.any_pressed([KeyCode::W, KeyCode::A, KeyCode::S, KeyCode::D]) {
+                let world_units_per_device_pixel = proj_size / window_size;
+                let mut delta_world = Vec2::ZERO;
 
-            let n = 12.0;
-            if keys.pressed(KeyCode::W) {
-                delta_world.y -= n;
-            }
-            if keys.pressed(KeyCode::A) {
-                delta_world.x += n;
-            }
-            if keys.pressed(KeyCode::S) {
-                delta_world.y += n;
-            }
-            if keys.pressed(KeyCode::D) {
-                delta_world.x -= n;
-            }
-            transform.translation - (delta_world * world_units_per_device_pixel).extend(0.0)
-        } else {
-            continue;
-        };
+                let n = 12.0;
+                if keys.pressed(KeyCode::W) {
+                    delta_world.y -= n;
+                }
+                if keys.pressed(KeyCode::A) {
+                    delta_world.x += n;
+                }
+                if keys.pressed(KeyCode::S) {
+                    delta_world.y += n;
+                }
+                if keys.pressed(KeyCode::D) {
+                    delta_world.x -= n;
+                }
+                transform.translation - (delta_world * world_units_per_device_pixel).extend(0.0)
+            } else {
+                continue;
+            };
 
         // Check whether the proposed camera movement would be within the provided boundaries, override it if we
         // need to do so to stay within bounds.

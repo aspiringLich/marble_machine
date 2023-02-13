@@ -50,7 +50,7 @@ impl FromWorld for Images {
 pub enum ModuleItem {
     Module {
         module: ModuleType,
-        instructions: &'static SpawnInstructions,
+        instructions: SpawnInstructions,
     },
     SectionHeader(&'static str),
 }
@@ -78,7 +78,7 @@ static MODULES: Vec<ModuleItem> = {
     ]
 };
 
-const SIZE: Vec2 = Vec2::new(80., 80.);
+const SIZE: Vec2 = Vec2::new(80.0, 80.0);
 
 pub fn ui(
     mut egui_context: ResMut<EguiContext>,
@@ -104,9 +104,9 @@ pub fn ui(
         .show(ctx, |ui| {
             let spacing = ui.spacing().window_margin.top;
 
-            let width = (ui.available_size().x) / (SIZE.x + spacing);
+            let width = ui.available_size().x / (SIZE.x + spacing);
             let width = width.round();
-            ui.set_width(width as f32 * SIZE.x + spacing);
+            ui.set_width((width as f32) * SIZE.x + spacing);
             // dbg!(width);
 
             let mut iter = MODULES.iter().peekable();
@@ -116,37 +116,35 @@ pub fn ui(
                 let mut i = 0;
                 let cursor = ui.cursor().min.to_vec2();
 
-                while i < i32::max(width as i32, 1)&& let Some(item) = iter.next() {
-                match item {
-                    ModuleItem::Module {
-                        module,
-                        instructions,
-                    } => {
-                        // dbg!(cursor);
-                        // allocate space
-                        let translate = cursor + Vec2::X * ((SIZE.x + spacing + 3.0) * i as f32);
-                        let allocated = size_rect.translate(translate);
-                        // dbg!(allocated.min);
-                        
-                        // put down the button
-                        let button = ui.put(allocated, Button::new(""));
-                        if button.clicked() {
-                            spawn_modules.send(spawn::SpawnModule::new(*module).place());
-                        }
-                        
-                        // allocate the area to draw the module and throw stuff there
-                        ui.allocate_rect(allocated, Sense::focusable_noninteractive());
-                        let mut new_ui = ui.child_ui(allocated, Layout::default());
-                        recreate_module(&mut new_ui, &images, instructions, 1.0);
+                while i < i32::max(width as i32, 1) && let Some(item) = iter.next() {
+                    match item {
+                        ModuleItem::Module { module, instructions } => {
+                            // dbg!(cursor);
+                            // allocate space
+                            let translate =
+                                cursor + Vec2::X * ((SIZE.x + spacing + 3.0) * (i as f32));
+                            let allocated = size_rect.translate(translate);
+                            // dbg!(allocated.min);
 
-                        i += 1;
-                    }
-                    ModuleItem::SectionHeader(str) => {
-                        ui.add(Label::new(*str).wrap(false));
-                        break;
+                            // put down the button
+                            let button = ui.put(allocated, Button::new(""));
+                            if button.clicked() {
+                                spawn_modules.send(spawn::SpawnModule::new(*module).place());
+                            }
+
+                            // allocate the area to draw the module and throw stuff there
+                            ui.allocate_rect(allocated, Sense::focusable_noninteractive());
+                            let mut new_ui = ui.child_ui(allocated, Layout::default());
+                            recreate_module(&mut new_ui, &images, instructions, 1.0);
+
+                            i += 1;
+                        }
+                        ModuleItem::SectionHeader(str) => {
+                            ui.add(Label::new(*str).wrap(false));
+                            break;
+                        }
                     }
                 }
-            }
             }
 
             ui.set_width(ui.min_size().x);

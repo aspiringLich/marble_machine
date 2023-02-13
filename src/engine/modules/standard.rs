@@ -20,15 +20,11 @@ impl Default for Basic {
     }
 }
 
-static BASIC_INSTRUCTIONS: Lazy<SpawnInstructions> = Lazy::new(|| {
-    SpawnInstructions::from_body(BodyType::Small)
-        .with_input_rotations([-180.].into_iter())
-        .with_output_rotations([0.].into_iter())
-});
-
 impl Module for Basic {
-    fn spawn_instructions(&self) -> &'static SpawnInstructions {
-        &BASIC_INSTRUCTIONS
+    fn spawn_instructions(&self) -> SpawnInstructions {
+        SpawnInstructions::from_body(BodyType::Small)
+            .with_input_rotations([-180.0].into_iter())
+            .with_output_rotations([0.0].into_iter())
     }
 
     fn update(&mut self, res: &mut ModuleResources, module: Entity) {
@@ -69,16 +65,5 @@ impl Module for Basic {
 
     fn get_identifier(&self) -> &'static str {
         "basic.module"
-    }
-
-    fn debug_ui(&mut self, ui: &mut Ui, res: &mut ModuleResources, module: Entity) {
-        let outputs: Vec<_> = res.outputs(module).collect();
-        if ui.button("Fire Marble!").clicked() {
-            res.fire_marble.send(FireMarble {
-                marble: Marble::Bit { value: true },
-                from: outputs[0],
-                power: 1.0,
-            })
-        }
     }
 }

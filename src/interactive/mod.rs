@@ -60,32 +60,35 @@ pub fn app(app: &mut App) {
                 select::get_selected
                     .run_if_not(place)
                     .run_if_not(egui)
-                    .label("select::get_selected")
+                    .label("select::get_selected"),
             )
             .with_system(
                 drag::drag_selected
                     .run_if_not(place)
                     .run_if_not(egui)
                     .before("intersect::do_requested_move")
-                    .label("select::drag_selected")
+                    .label("select::drag_selected"),
             )
             .with_system(
-                select::place_selected.run_if(place).run_if_not(egui).after(PanCamSystemLabel)
+                select::place_selected
+                    .run_if(place)
+                    .run_if_not(egui)
+                    .after(PanCamSystemLabel),
             )
             .with_system(
-                interact::spawn_despawn_interactive_components.before("interact::use_widgets")
+                interact::spawn_despawn_interactive_components.before("interact::use_widgets"),
             )
             .with_system(
                 interact::use_widgets
                     .after("select::selected")
                     .before("intersect::do_requested_move")
-                    .label("interact::use_widgets")
+                    .label("interact::use_widgets"),
             )
             .with_system(
                 interact::do_interactive_rotation
                     .after(interact::use_widgets)
                     .before("intersect::do_requested_move")
-                    .label("interact::do_interactive_rotation")
+                    .label("interact::do_interactive_rotation"),
             )
             .with_system(intersect::do_requested_move.label("intersect::do_requested_move"))
             .with_system(
@@ -93,8 +96,8 @@ pub fn app(app: &mut App) {
                     .run_if(select)
                     .run_if(|r: Res<SelectedModules>| !r.place)
                     .after("select::get_selected")
-                    .after("select::drag_selected")
+                    .after("select::drag_selected"),
             )
-            .with_system(hover::draw_selection_on_hovered)
+            .with_system(hover::draw_selection_on_hovered),
     );
 }

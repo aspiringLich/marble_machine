@@ -1,14 +1,10 @@
-use atlas::{basic, AtlasDictionary};
-use std::{
-    collections::hash_map::DefaultHasher,
-    f32::consts::PI,
-    hash::{Hash, Hasher},
-};
+use atlas::{ basic, AtlasDictionary };
+use std::{ collections::hash_map::DefaultHasher, f32::consts::PI, hash::{ Hash, Hasher } };
 use trait_enum::DerefMut;
 
 use crate::{
-    engine::modules::{header::Module, ModuleType},
-    query::{QueryQueryIter, QueryQuerySimple},
+    engine::modules::{ header::Module, ModuleType },
+    query::{ QueryQueryIter, QueryQuerySimple },
     select::CursorCoords,
     *,
 };
@@ -30,12 +26,8 @@ pub struct InteractiveRotation {
 impl InteractiveRotation {
     pub fn from<'a, T: Iterator<Item = &'a Transform>>(inputs: T, outputs: T) -> Self {
         Self {
-            input_rot: inputs
-                .map(|t| t.rotation.to_euler(EulerRot::XYZ).2)
-                .collect(),
-            output_rot: outputs
-                .map(|t| t.rotation.to_euler(EulerRot::XYZ).2)
-                .collect(),
+            input_rot: inputs.map(|t| t.rotation.to_euler(EulerRot::XYZ).2).collect(),
+            output_rot: outputs.map(|t| t.rotation.to_euler(EulerRot::XYZ).2).collect(),
             rot: 0.0,
         }
     }
@@ -56,7 +48,7 @@ pub fn spawn_despawn_interactive_components(
     has_interactive: Query<With<Interactive>>,
     w_input: Query<Entity, With<marker::Input>>,
     w_output: Query<Entity, With<marker::Output>>,
-    mut before: Local<Option<Entity>>,
+    mut before: Local<Option<Entity>>
 ) {
     // only run when SelectedModules is changed but not when its been added
     if !selected.is_changed() || selected.is_added() || selected.place {
@@ -82,9 +74,7 @@ pub fn spawn_despawn_interactive_components(
                 .collect();
             // remove all the interactive components
             to_be_removed.iter().for_each(|&e| {
-                commands
-                    .entity(q_parent.entity(e).get())
-                    .remove_children(&[e]);
+                commands.entity(q_parent.entity(e).get()).remove_children(&[e]);
                 commands.entity(e).despawn();
             });
             *before = None;
@@ -92,13 +82,15 @@ pub fn spawn_despawn_interactive_components(
 
         *before = Some(module);
 
-        let body = &q_module
-            .entity_mut(module)
-            .deref_mut()
-            .spawn_instructions()
-            .body;
+        let body = &q_module.entity_mut(module).deref_mut().spawn_instructions().body;
 
-        macro spawn_widget($translation:expr, $color:expr, $name:literal, $factor:literal, ($($tail:tt)*)) {
+        macro spawn_widget(
+            $translation:expr,
+            $color:expr,
+            $name:literal,
+            $factor:literal,
+            $($tail:tt)*
+        ) {
             commands
                 .spawn((
                     SpriteSheetBundle {
@@ -133,32 +125,34 @@ pub fn spawn_despawn_interactive_components(
                 color,
                 "rotation.widget",
                 2.0,
-                (Interactive::Rotation)
+                Interactive::Rotation
             );
             commands.entity(*entity).add_child(child);
         }
-        children.push(spawn_widget!(
-            Vec3::new(body.offset() - 3.0, 0.0, 0.0),
-            color,
-            "io_rotation.widget",
-            1.0,
-            (Interactive::IORotation)
-        ));
-        children.push(spawn_widget!(
-            Vec3::ZERO,
-            Color::RED,
-            "delete.widget",
-            1.0,
-            (Interactive::Delete)
-        ));
+        children.push(
+            spawn_widget!(
+                Vec3::new(body.offset() - 3.0, 0.0, 0.0),
+                color,
+                "io_rotation.widget",
+                1.0,
+                Interactive::IORotation
+            )
+        );
+        children.push(
+            spawn_widget!(Vec3::ZERO, Color::RED, "delete.widget", 1.0, Interactive::Delete)
+        );
 
         commands.entity(module).push_children(&children);
 
         let get_transform = |e: &Entity| q_transform.get(*e).ok();
-        commands.entity(module).insert(InteractiveRotation::from(
-            inputs.iter().filter_map(get_transform),
-            outputs.iter().filter_map(get_transform),
-        ));
+        commands
+            .entity(module)
+            .insert(
+                InteractiveRotation::from(
+                    inputs.iter().filter_map(get_transform),
+                    outputs.iter().filter_map(get_transform)
+                )
+            );
     } else {
         if let Some(b) = *before {
             if commands.get_entity(b).is_none() {
@@ -171,9 +165,7 @@ pub fn spawn_despawn_interactive_components(
                 .collect();
             // remove all the interactive components
             to_be_removed.iter().for_each(|&e| {
-                commands
-                    .entity(q_parent.entity(e).get())
-                    .remove_children(&[e]);
+                commands.entity(q_parent.entity(e).get()).remove_children(&[e]);
                 commands.entity(e).despawn();
             });
             commands.entity(b).remove::<InteractiveRotation>();
@@ -205,7 +197,7 @@ pub fn use_widgets(
     mut diff: Local<Option<f32>>,
     keyboard: Res<Input<KeyCode>>,
     tracers: Res<tracer::TracerEntities>,
-    mut q_visibility: Query<&mut Visibility>,
+    mut q_visibility: Query<&mut Visibility>
 ) {
     // uh just trust me this works
     // i kinda forgot the logic behind it like right after i wrote it
@@ -215,10 +207,10 @@ pub fn use_widgets(
         *diff = None;
         return;
     }
-    let Some(entity) = **interactive_selected else { 
-        *active = false; 
+    let Some(entity) = **interactive_selected else {
+        *active = false;
         *diff = None;
-        return; 
+        return;
     };
     *active = true;
 
@@ -251,7 +243,9 @@ pub fn use_widgets(
             };
 
             let root = q_transform.entity(module);
-            let Some(angle) = rel_angle(root) else { return; };
+            let Some(angle) = rel_angle(root) else {
+                return;
+            };
             let Some(diff) = *diff else {
                 *diff = Some(angle - *io_rot - rot);
                 return;
@@ -269,7 +263,9 @@ pub fn use_widgets(
             let mut i_rot = q_interactive_rot.entity_mut(module);
 
             let root = q_transform.entity(module);
-            let Some(angle) = rel_angle(root) else { return; };
+            let Some(angle) = rel_angle(root) else {
+                return;
+            };
             let Some(diff) = *diff else {
                 *diff = Some(angle - i_rot.rot);
                 return;
@@ -301,15 +297,22 @@ pub fn do_interactive_rotation(
     mut q_transform: Query<&mut Transform>,
     w_i: Query<Entity, With<marker::Input>>,
     w_o: Query<Entity, With<marker::Output>>,
-    q_children: Query<&Children>,
+    q_children: Query<&Children>
 ) {
-    let Ok(entity) = w_interactive_rot.get_single() else { return; };
-    let Ok(i_rot) = q_interactive_rot.get(entity) else { return; };
+    let Ok(entity) = w_interactive_rot.get_single() else {
+        return;
+    };
+    let Ok(i_rot) = q_interactive_rot.get(entity) else {
+        return;
+    };
     let children = q_children.entity(entity);
 
-    let interactive = children
-        .iter()
-        .filter_map(|e| q_interactive.get(*e).ok().map(|i| (e, i)));
+    let interactive = children.iter().filter_map(|e|
+        q_interactive
+            .get(*e)
+            .ok()
+            .map(|i| (e, i))
+    );
     for (e, i) in interactive {
         use Interactive::*;
         match i {
@@ -320,22 +323,32 @@ pub fn do_interactive_rotation(
 
                 transform.rotate_around(
                     Vec2::ZERO.extend(z),
-                    Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.rot - rot),
+                    Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.rot - rot)
                 );
                 break;
             }
-            _ => continue,
+            _ => {
+                continue;
+            }
         }
     }
 
     for (i, input) in children.iter().with(&w_i).enumerate() {
         let mut transform = q_transform.entity_mut(input);
-        transform.rotation =
-            Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.input_rot[i] + i_rot.rot);
+        transform.rotation = Quat::from_euler(
+            EulerRot::XYZ,
+            0.0,
+            0.0,
+            i_rot.input_rot[i] + i_rot.rot
+        );
     }
     for (i, output) in children.iter().with(&w_o).enumerate() {
         let mut transform = q_transform.entity_mut(output);
-        transform.rotation =
-            Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.output_rot[i] + i_rot.rot);
+        transform.rotation = Quat::from_euler(
+            EulerRot::XYZ,
+            0.0,
+            0.0,
+            i_rot.output_rot[i] + i_rot.rot
+        );
     }
 }

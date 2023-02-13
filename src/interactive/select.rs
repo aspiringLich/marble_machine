@@ -1,8 +1,8 @@
 use std::f32::consts::TAU;
 
-use crate::{ misc::RapierContextMethods, query::QueryQuerySimple, * };
+use crate::{misc::RapierContextMethods, query::QueryQuerySimple, *};
 
-use super::{ hover::HoveredEntities, interact::InteractiveRotation };
+use super::{hover::HoveredEntities, interact::InteractiveRotation};
 
 /// update SelectedModule whenever the left cursor is clicked
 #[allow(clippy::too_many_arguments)]
@@ -14,7 +14,7 @@ pub fn get_selected(
     q_parent: Query<&Parent>,
     has_body: Query<With<marker::ModuleBody>>,
     has_interactive: Query<With<interact::Interactive>>,
-    mut interactive_selected: ResMut<interact::InteractiveSelected>
+    mut interactive_selected: ResMut<interact::InteractiveSelected>,
 ) {
     // get that window
     let Some(window) = windows.get_primary_mut() else {
@@ -32,9 +32,8 @@ pub fn get_selected(
             **interactive_selected = Some(e);
         }
     } else if
-        // then check if weve selected a body
-        let Some(&e) = hovered.iter().find(|e| has_body.has(**e))
-    {
+    // then check if weve selected a body
+    let Some(&e) = hovered.iter().find(|e| has_body.has(**e)) {
         glow = e;
         // if clicky click, set selected modules
         if buttons.just_pressed(MouseButton::Left) {
@@ -88,14 +87,17 @@ pub fn place_selected(
     q_global_transform: Query<&GlobalTransform>,
     q_children: Query<&Children>,
     has_io: Query<Or<(With<marker::Input>, With<marker::Output>)>>,
-    grid_info: Res<grid::GridInfo>
+    grid_info: Res<grid::GridInfo>,
 ) {
-    let snapping = if keyboard.pressed(KeyCode::LShift) { 8.0 } else { 1.0 };
+    let snapping = if keyboard.pressed(KeyCode::LShift) {
+        8.0
+    } else {
+        1.0
+    };
 
     // if we click then place the module
-    if
-        mouse_buttons.just_pressed(MouseButton::Left) &&
-        f32::max(mouse_pos.x.abs(), mouse_pos.y.abs()) < grid_info.size
+    if mouse_buttons.just_pressed(MouseButton::Left)
+        && f32::max(mouse_pos.x.abs(), mouse_pos.y.abs()) < grid_info.size
     {
         // check if any of the colliders are colliding with a rigidbody, ignoring the colliders of the module itself
         let s_entity = selected.selected.unwrap();
@@ -103,29 +105,24 @@ pub fn place_selected(
             .iter_descendants(s_entity)
             .filter_map(|e| q_collider.get(e).ok())
             .collect::<Vec<_>>();
-        let ignore = colliders
-            .iter()
-            .map(|(e, _)| *e)
-            .collect::<Vec<_>>();
+        let ignore = colliders.iter().map(|(e, _)| *e).collect::<Vec<_>>();
         let predicate = |e| !ignore.contains(&e);
-        let filter = QueryFilter::only_fixed().exclude_sensors().predicate(&predicate);
+        let filter = QueryFilter::only_fixed()
+            .exclude_sensors()
+            .predicate(&predicate);
 
         // dbg!(&colliders);
 
         // if were clear
-        if
-            !colliders
-                .iter()
-                .any(|(e, c)| {
-                    rapier_ctx
-                        .intersection_with_shape_transform(
-                            q_global_transform.entity(*e).compute_transform(),
-                            c,
-                            filter
-                        )
-                        .is_some()
-                })
-        {
+        if !colliders.iter().any(|(e, c)| {
+            rapier_ctx
+                .intersection_with_shape_transform(
+                    q_global_transform.entity(*e).compute_transform(),
+                    c,
+                    filter,
+                )
+                .is_some()
+        }) {
             // dont be confused, set selected.place to false so that it now the place_selected fn no longer runs
             selected.place = false;
             return;
@@ -164,7 +161,10 @@ pub fn place_selected(
     let Vec2 { x, y } = **mouse_pos - Vec2::splat(0.5);
 
     // rounding x and y to the nearest snapping #
-    let (rx, ry) = ((x / snapping).round() * snapping, (y / snapping).round() * snapping);
+    let (rx, ry) = (
+        (x / snapping).round() * snapping,
+        (y / snapping).round() * snapping,
+    );
     if rx != x || ry != y {
         pos.x = rx + 0.5;
         pos.y = ry + 0.5;
@@ -183,7 +183,7 @@ impl Default for CursorCoords {
 pub fn get_cursor_pos(
     windows: Res<Windows>,
     q_camera: Query<(&Camera, &GlobalTransform), With<marker::Camera>>,
-    mut coords: ResMut<CursorCoords>
+    mut coords: ResMut<CursorCoords>,
 ) {
     let (camera, camera_transform) = q_camera.single();
 

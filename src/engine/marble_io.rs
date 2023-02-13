@@ -1,9 +1,9 @@
 use crate::{
     engine::modules::header::UpdateModule,
-    query::{QueryQueryIter, QueryQuerySimple},
+    query::{ QueryQueryIter, QueryQuerySimple },
     *,
 };
-use atlas::{basic, AtlasDictionary};
+use atlas::{ basic, AtlasDictionary };
 use marble::Marble;
 use rand::Rng;
 use spawn::CommandsSpawn;
@@ -12,7 +12,6 @@ use super::lifetime::Lifetime;
 
 /// an event that tells the program to fire a marble from this marble output.
 #[derive(Copy, Clone)]
-
 pub struct FireMarble {
     pub marble: Marble,
     pub from: Entity,
@@ -39,17 +38,12 @@ pub fn fire_marbles(
     q_transform: Query<&mut Transform>,
     q_children: Query<&Children>,
     w_sprite: Query<Entity, With<TextureAtlasSprite>>,
-    q_parent: Query<&Parent>,
+    q_parent: Query<&Parent>
 ) {
     for event in spawn_events.iter() {
         let parent = q_parent.entity(event.from).get();
         let mut transform = *q_transform.entity(
-            q_children
-                .entity(event.from)
-                .iter()
-                .with(&w_sprite)
-                .next()
-                .unwrap(),
+            q_children.entity(event.from).iter().with(&w_sprite).next().unwrap()
         );
         transform.translation.z = 0.0;
         transform.rotate_around(Vec3::ZERO, q_transform.entity(event.from).rotation);
@@ -63,7 +57,7 @@ pub fn fire_marbles(
             .spawn_atlas_sprite(
                 basic::marble_small,
                 Color::GREEN,
-                Transform::from_translation(pos + -pos.z + ZOrder::Marble),
+                Transform::from_translation(pos + -pos.z + ZOrder::Marble)
             )
             .insert((
                 Collider::ball(basic::marble_small.width() * 0.5),
@@ -118,14 +112,16 @@ pub fn update_inputs(
     q_marble: Query<&Marble>,
     q_input: Query<&marker::Input>,
     has_marble: Query<With<Marble>>,
-    mut update_event: EventWriter<UpdateModule>,
+    mut update_event: EventWriter<UpdateModule>
 ) {
     for event in collision_events.iter() {
         use CollisionEvent::*;
 
         let (e1, e2) = match event {
             Started(e1, e2, _) => (*e1, *e2),
-            _ => continue,
+            _ => {
+                continue;
+            }
         };
 
         let mut handle_event = |e1, e2| {
@@ -133,10 +129,10 @@ pub fn update_inputs(
             if let Ok(&marker::Input(index)) = q_input.get(e1) && has_marble.has(e2) {
                 let marble_e = e2;
                 let marble = *q_marble.entity(e2);
-                
+
                 let parent = q_parent.entity(q_parent.entity(e1).get()).get();
                 let mut input_state = q_input_state.entity_mut(parent);
-                
+
                 // if the input is not occupied, despawn the marble and update input_state
                 if input_state[index].is_none() {
                     input_state[index] = Some(marble);

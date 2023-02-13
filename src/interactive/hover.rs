@@ -2,9 +2,16 @@ use std::f32::consts::PI;
 
 use bevy_prototype_lyon::shapes::Circle;
 
-use crate::{ *, misc::marker::{ ModuleBody, Module }, query::QueryQuerySimple };
+use crate::{
+    misc::marker::{Module, ModuleBody},
+    query::QueryQuerySimple,
+    *,
+};
 
-use super::{ interact::{ Interactive, InteractiveSelected }, select::CursorCoords };
+use super::{
+    interact::{Interactive, InteractiveSelected},
+    select::CursorCoords,
+};
 
 #[derive(Default, Deref, DerefMut, Resource)]
 pub struct HoveredEntities(Vec<Entity>);
@@ -12,7 +19,7 @@ pub struct HoveredEntities(Vec<Entity>);
 pub fn get_hovered_entities(
     mouse_pos: Res<CursorCoords>,
     rapier_context: Res<RapierContext>,
-    mut hovered_entities: ResMut<HoveredEntities>
+    mut hovered_entities: ResMut<HoveredEntities>,
 ) {
     hovered_entities.clear();
     rapier_context.intersections_with_point(**mouse_pos, default(), |entity| {
@@ -35,10 +42,7 @@ pub fn draw_selection_on_hovered(
     selected: Res<SelectedModules>,
     interactive_selected: Res<InteractiveSelected>,
     hovered_entities: Res<HoveredEntities>,
-    q_sprite: Query<
-        (Entity, &TextureAtlasSprite, &Handle<TextureAtlas>),
-        With<Interactive>
-    >,
+    q_sprite: Query<(Entity, &TextureAtlasSprite, &Handle<TextureAtlas>), With<Interactive>>,
     time: Res<Time>,
     mut hover_entity: Local<Option<Entity>>,
     mut prev_entity: Local<Option<Entity>>,
@@ -113,9 +117,9 @@ pub fn draw_selection_on_hovered(
                                 center: Vec2::ZERO,
                                 radius: size / 2.0,
                                 ..Default::default()
-                            })
+                            }),
                         )
-                        .build(DrawMode::Stroke(stroke), transform)
+                        .build(DrawMode::Stroke(stroke), transform),
                 )
                 .name("hover.sprite")
                 .id();

@@ -10,7 +10,7 @@ use crate::{
     *,
 };
 
-use super::{BodyType, ModuleType};
+use super::{common_impl::default_debug_ui, BodyType, ModuleType};
 
 type QuerySimple<'w, 's, T> = Query<'w, 's, &'static mut T>;
 // type QueryWith<'w, 's, T, W> = Query<'w, 's, &'static mut T, bevy::prelude::With<W>>;
@@ -139,7 +139,7 @@ pub fn update_modules(
 
 pub trait Module {
     /// return instructions on spawning this module
-    fn spawn_instructions(&self) -> &'static SpawnInstructions;
+    fn spawn_instructions(&self) -> SpawnInstructions;
     /// function that runs to update this module
     fn update(&mut self, res: &mut ModuleResources, module: Entity);
     fn callback_update(&mut self, res: &mut ModuleResources, module: Entity);
@@ -157,7 +157,9 @@ pub trait Module {
         )
     }
 
-    fn debug_ui(&mut self, ui: &mut Ui, res: &mut ModuleResources, module: Entity) {}
+    fn debug_ui(&mut self, ui: &mut Ui, res: &mut ModuleResources, module: Entity) {
+        default_debug_ui(ui, res, module);
+    }
 }
 
 /// basically, imagine offsetting some object by `offset` in the x-axis, then rotating it around the origin `rotation` radians.

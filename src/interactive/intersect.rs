@@ -1,6 +1,6 @@
 use bevy_prototype_debug_lines::DebugLines;
 
-use crate::{misc::RapierContextMethods, query::QueryQuerySimple, *};
+use crate::{ misc::RapierContextMethods, query::QueryQuerySimple, * };
 
 pub enum MoveType {
     TranslateTo(Vec3),
@@ -50,7 +50,7 @@ pub fn do_requested_move(
     q_collider: Query<(Entity, &Collider)>,
     has_rigidbody: Query<With<RigidBody>>,
     q_global_transform: Query<&GlobalTransform>,
-    rapier_ctx: Res<RapierContext>,
+    rapier_ctx: Res<RapierContext>
     // mut lines: ResMut<DebugLines>,
 ) {
     use MoveType::*;
@@ -60,31 +60,38 @@ pub fn do_requested_move(
             .iter_descendants(requested_move.requesting)
             .filter_map(|e| q_collider.get(e).ok())
             .collect::<Vec<_>>();
-        let ignore = colliders.iter().map(|(e, _)| *e).collect::<Vec<_>>();
+        let ignore = colliders
+            .iter()
+            .map(|(e, _)| *e)
+            .collect::<Vec<_>>();
         colliders.retain(|(e, _)| has_rigidbody.get(*e).is_ok());
 
         let predicate = |e| !ignore.contains(&e) && has_rigidbody.get(e).is_ok();
-        let filter = QueryFilter::only_fixed()
-            .exclude_sensors()
-            .predicate(&predicate);
+        let filter = QueryFilter::only_fixed().exclude_sensors().predicate(&predicate);
 
         let requesting = q_transform.entity(requested_move.requesting).clone();
         let mut diff = requesting;
 
         match requested_move.move_type {
-            TranslateTo(to) => diff.translation -= to,
-            RotateTo(to) => diff.rotation = to * requesting.rotation.inverse(),
+            TranslateTo(to) => {
+                diff.translation -= to;
+            }
+            RotateTo(to) => {
+                diff.rotation = to * requesting.rotation.inverse();
+            }
         }
 
         // move this thingy
-        let transform = |factor: f32, transform: Transform| match requested_move.move_type {
-            TranslateTo(_) => {
-                Transform::from_translation(transform.translation - diff.translation * factor)
-            }
-            RotateTo(_) => {
-                let mut cpy = transform;
-                cpy.rotate_around(requesting.translation, diff.rotation * factor);
-                cpy
+        let transform = |factor: f32, transform: Transform| {
+            match requested_move.move_type {
+                TranslateTo(_) => {
+                    Transform::from_translation(transform.translation - diff.translation * factor)
+                }
+                RotateTo(_) => {
+                    let mut cpy = transform;
+                    cpy.rotate_around(requesting.translation, diff.rotation * factor);
+                    cpy
+                }
             }
         };
 
@@ -96,7 +103,7 @@ pub fn do_requested_move(
                     rapier_ctx.intersection_with_shape_transform(
                         transform(factor, q_global_transform.entity(*e).compute_transform()),
                         c,
-                        filter,
+                        filter
                     )
                 })
                 .any(|x| x.is_some())
@@ -106,18 +113,21 @@ pub fn do_requested_move(
         if test(1.0) {
             const N: f32 = 64.0;
             for i in 0..N as i32 {
-                let factor = 1.0 - (i as f32 / N);
-                if !test(factor) &&
-                let Ok(tf) = q_transform.get(requested_move.requesting){
-                    let mut out = unsafe { q_transform.get_unchecked(requested_move.requesting) }.unwrap();
-                    
+                let factor = 1.0 - (i as f32) / N;
+                if !test(factor) && let Ok(tf) = q_transform.get(requested_move.requesting) {
+                    let mut out = (
+                        unsafe {
+                            q_transform.get_unchecked(requested_move.requesting)
+                        }
+                    ).unwrap();
+
                     *out = transform(factor - 1.0 / N, *tf);
                     if requested_move.snap_flag {
                         let pos = &mut out.translation;
                         pos.x = (pos.x - 0.5).round() + 0.5;
                         pos.y = (pos.y - 0.5).round() + 0.5;
                     }
-                    
+
                     return;
                 }
             }
@@ -127,8 +137,12 @@ pub fn do_requested_move(
         if let Ok(mut transform) = q_transform.get_mut(requested_move.requesting) {
             // were good
             match requested_move.move_type {
-                TranslateTo(to) => transform.translation = to,
-                RotateTo(to) => transform.rotation = to,
+                TranslateTo(to) => {
+                    transform.translation = to;
+                }
+                RotateTo(to) => {
+                    transform.rotation = to;
+                }
             }
         } else {
             // error!("Could not find transform component on requested_move.requesting, also this shouldnt have hapenned")
