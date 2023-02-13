@@ -74,7 +74,6 @@ pub fn fire_marbles(
                 },
                 ColliderMassProperties::Mass(1.0),
                 Restitution::coefficient(0.9),
-                Lifetime(600),
             ))
             .insert(event.marble)
             .name("bit.marble");

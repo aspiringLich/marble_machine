@@ -1,8 +1,8 @@
 use std::f32::consts::TAU;
 
-use crate::{misc::RapierContextMethods, query::QueryQuerySimple, *};
+use crate::{ misc::RapierContextMethods, query::QueryQuerySimple, * };
 
-use super::{hover::HoveredEntities, interact::InteractiveRotation};
+use super::{ hover::HoveredEntities, interact::InteractiveRotation };
 
 /// update SelectedModule whenever the left cursor is clicked
 #[allow(clippy::too_many_arguments)]
@@ -14,10 +14,13 @@ pub fn get_selected(
     q_parent: Query<&Parent>,
     has_body: Query<With<marker::ModuleBody>>,
     has_interactive: Query<With<interact::Interactive>>,
-    mut interactive_selected: ResMut<interact::InteractiveSelected>,
+    mut interactive_selected: ResMut<interact::InteractiveSelected>
 ) {
     // get that window
-    let Some(window) = windows.get_primary_mut() else { error!("no window you dingus"); return; };
+    let Some(window) = windows.get_primary_mut() else {
+        error!("no window you dingus");
+        return;
+    };
 
     // the entity, if applicable, that we may want to apply glow to to show were hovering over it
     let mut glow: Entity;
@@ -28,13 +31,16 @@ pub fn get_selected(
         if buttons.just_pressed(MouseButton::Left) {
             **interactive_selected = Some(e);
         }
-    }
-    // then check if weve selected a body
-    else if let Some(&e) = hovered.iter().find(|e| has_body.has(**e)) {
+    } else if
+        // then check if weve selected a body
+        let Some(&e) = hovered.iter().find(|e| has_body.has(**e))
+    {
         glow = e;
         // if clicky click, set selected modules
         if buttons.just_pressed(MouseButton::Left) {
             *selected = SelectedModules::from_entity(q_parent.entity(e).get());
+        } else if !buttons.pressed(MouseButton::Left) {
+            **interactive_selected = None;
         }
     } else {
         // if clicky click, unselect stuff
@@ -82,17 +88,14 @@ pub fn place_selected(
     q_global_transform: Query<&GlobalTransform>,
     q_children: Query<&Children>,
     has_io: Query<Or<(With<marker::Input>, With<marker::Output>)>>,
-    grid_info: Res<grid::GridInfo>,
+    grid_info: Res<grid::GridInfo>
 ) {
-    let snapping = if keyboard.pressed(KeyCode::LShift) {
-        8.0
-    } else {
-        1.0
-    };
+    let snapping = if keyboard.pressed(KeyCode::LShift) { 8.0 } else { 1.0 };
 
     // if we click then place the module
-    if mouse_buttons.just_pressed(MouseButton::Left)
-        && f32::max(mouse_pos.x.abs(), mouse_pos.y.abs()) < grid_info.size
+    if
+        mouse_buttons.just_pressed(MouseButton::Left) &&
+        f32::max(mouse_pos.x.abs(), mouse_pos.y.abs()) < grid_info.size
     {
         // check if any of the colliders are colliding with a rigidbody, ignoring the colliders of the module itself
         let s_entity = selected.selected.unwrap();
@@ -100,31 +103,38 @@ pub fn place_selected(
             .iter_descendants(s_entity)
             .filter_map(|e| q_collider.get(e).ok())
             .collect::<Vec<_>>();
-        let ignore = colliders.iter().map(|(e, _)| *e).collect::<Vec<_>>();
+        let ignore = colliders
+            .iter()
+            .map(|(e, _)| *e)
+            .collect::<Vec<_>>();
         let predicate = |e| !ignore.contains(&e);
-        let filter = QueryFilter::only_fixed()
-            .exclude_sensors()
-            .predicate(&predicate);
+        let filter = QueryFilter::only_fixed().exclude_sensors().predicate(&predicate);
 
         // dbg!(&colliders);
 
         // if were clear
-        if !colliders.iter().any(|(e, c)| {
-            rapier_ctx
-                .intersection_with_shape_transform(
-                    q_global_transform.entity(*e).compute_transform(),
-                    c,
-                    filter,
-                )
-                .is_some()
-        }) {
+        if
+            !colliders
+                .iter()
+                .any(|(e, c)| {
+                    rapier_ctx
+                        .intersection_with_shape_transform(
+                            q_global_transform.entity(*e).compute_transform(),
+                            c,
+                            filter
+                        )
+                        .is_some()
+                })
+        {
             // dont be confused, set selected.place to false so that it now the place_selected fn no longer runs
             selected.place = false;
             return;
         }
     }
     // else the module follows the mouse
-    let Some(sel_entity) = selected.selected else { unreachable!() };
+    let Some(sel_entity) = selected.selected else {
+        unreachable!()
+    };
 
     // if escape is pressed, then clear and return
     if keyboard.pressed(KeyCode::Escape) {
@@ -141,12 +151,12 @@ pub fn place_selected(
     if keyboard.just_pressed(KeyCode::Q) {
         for &e in io {
             let mut tf = q_transform.entity_mut(e);
-            tf.rotate_z(TAU / 8.0)
+            tf.rotate_z(TAU / 8.0);
         }
     } else if keyboard.just_pressed(KeyCode::E) {
         for &e in io {
             let mut tf = q_transform.entity_mut(e);
-            tf.rotate_z(-TAU / 8.0)
+            tf.rotate_z(-TAU / 8.0);
         }
     }
 
@@ -154,10 +164,7 @@ pub fn place_selected(
     let Vec2 { x, y } = **mouse_pos - Vec2::splat(0.5);
 
     // rounding x and y to the nearest snapping #
-    let (rx, ry) = (
-        (x / snapping).round() * snapping,
-        (y / snapping).round() * snapping,
-    );
+    let (rx, ry) = ((x / snapping).round() * snapping, (y / snapping).round() * snapping);
     if rx != x || ry != y {
         pos.x = rx + 0.5;
         pos.y = ry + 0.5;
@@ -176,11 +183,14 @@ impl Default for CursorCoords {
 pub fn get_cursor_pos(
     windows: Res<Windows>,
     q_camera: Query<(&Camera, &GlobalTransform), With<marker::Camera>>,
-    mut coords: ResMut<CursorCoords>,
+    mut coords: ResMut<CursorCoords>
 ) {
     let (camera, camera_transform) = q_camera.single();
 
-    let Some(window) = windows.get_primary() else { error!("no window you dingus"); return; };
+    let Some(window) = windows.get_primary() else {
+        error!("no window you dingus");
+        return;
+    };
 
     if let Some(screen_pos) = window.cursor_position() {
         let window_size = Vec2::new(window.width(), window.height());

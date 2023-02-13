@@ -78,13 +78,15 @@ fn main() {
 
     // bevy plugins
     app.add_plugins(
-        DefaultPlugins.set(ImagePlugin::default_nearest()).set(WindowPlugin {
-            window: WindowDescriptor {
-                title: "Marble Machine".to_string(),
+        DefaultPlugins.set(ImagePlugin::default_nearest())
+            .set(WindowPlugin {
+                window: WindowDescriptor {
+                    title: "Marble Machine".to_string(),
+                    ..default()
+                },
                 ..default()
-            },
-            ..default()
-        })
+            })
+            // .disable::<bevy::log::LogPlugin>()
     )
         // resources
         .init_resource::<SelectedModules>()
@@ -144,14 +146,15 @@ fn main() {
                 .with_system(modules::update_modules)
                 .with_system(modules::update_module_callbacks)
         )
-        .add_stage_after(Label::StageMain, Label::StageInteract, SystemStage::parallel())
-        .add_stage_after(Label::StageInteract, Label::StagePostInteract, SystemStage::parallel());
+        .add_stage_before(CoreStage::PostUpdate, Label::StageInteract, SystemStage::parallel());
 
     interactive::app(&mut app);
     graphics::app(&mut app);
     engine::app(&mut app);
     ui::app(&mut app);
 
+    // bevy_mod_debugdump::print_schedule(&mut app);
+    
     app.run();
 }
 
@@ -237,7 +240,7 @@ fn pan_camera(
             if keys.pressed(KeyCode::D) {
                 delta_world.x -= n;
             }
-            transform.translation - (delta_world * world_units_per_device_pixel).extend(0.)
+            transform.translation - (delta_world * world_units_per_device_pixel).extend(0.0)
         } else {
             continue;
         };
@@ -245,19 +248,19 @@ fn pan_camera(
         // Check whether the proposed camera movement would be within the provided boundaries, override it if we
         // need to do so to stay within bounds.
         if let Some(min_x_boundary) = cam.min_x {
-            let min_safe_cam_x = min_x_boundary + proj_size.x / 2.;
+            let min_safe_cam_x = min_x_boundary + proj_size.x / 2.0;
             proposed_cam_transform.x = proposed_cam_transform.x.max(min_safe_cam_x);
         }
         if let Some(max_x_boundary) = cam.max_x {
-            let max_safe_cam_x = max_x_boundary - proj_size.x / 2.;
+            let max_safe_cam_x = max_x_boundary - proj_size.x / 2.0;
             proposed_cam_transform.x = proposed_cam_transform.x.min(max_safe_cam_x);
         }
         if let Some(min_y_boundary) = cam.min_y {
-            let min_safe_cam_y = min_y_boundary + proj_size.y / 2.;
+            let min_safe_cam_y = min_y_boundary + proj_size.y / 2.0;
             proposed_cam_transform.y = proposed_cam_transform.y.max(min_safe_cam_y);
         }
         if let Some(max_y_boundary) = cam.max_y {
-            let max_safe_cam_y = max_y_boundary - proj_size.y / 2.;
+            let max_safe_cam_y = max_y_boundary - proj_size.y / 2.0;
             proposed_cam_transform.y = proposed_cam_transform.y.min(max_safe_cam_y);
         }
 
