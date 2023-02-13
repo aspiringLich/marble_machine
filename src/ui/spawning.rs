@@ -1,23 +1,32 @@
 use crate::{
-    engine::modules::{body::BodyType, ModuleType, SpawnInstructions},
-    graphics::atlas::{basic, AtlasDictionary},
+    engine::modules::{ body::BodyType, ModuleType, SpawnInstructions },
+    graphics::atlas::{ basic, AtlasDictionary },
     *,
 };
 use bevy_egui::*;
-use egui::{Button, Image, Label, Rect, Vec2, *};
+use egui::{ Button, Image, Label, Rect, Vec2, * };
 use trait_enum::Deref;
 
 use super::atlas_image::AtlasImage;
 
-#[derive(Resource)]
-pub struct Images {
-    body_small: Image,
-    input: Image,
-    output: Image,
-    indicator: Image,
+pub struct ImageItem {
+    pub small: Image,
+    pub large: Image,
 }
 
 const SCALING: f32 = 3.5;
+
+impl ImageItem {
+    const LARGE_SCALING: f32 = super::info::WIDTH / SIZE.x / 1.3;
+}
+
+#[derive(Resource)]
+pub struct Images {
+    pub body_small: ImageItem,
+    pub input: ImageItem,
+    pub output: ImageItem,
+    pub indicator: ImageItem,
+}
 
 impl FromWorld for Images {
     fn from_world(world: &mut World) -> Self {
@@ -25,24 +34,34 @@ impl FromWorld for Images {
         let mut ctx;
 
         unsafe {
-            assets = world
-                .get_resource::<Assets<TextureAtlas>>()
-                .expect("resource exists");
-            ctx = world
-                .get_resource_unchecked_mut::<EguiContext>()
-                .expect("resource exists");
+            assets = world.get_resource::<Assets<TextureAtlas>>().expect("resource exists");
+            ctx = world.get_resource_unchecked_mut::<EguiContext>().expect("resource exists");
         }
 
-        macro new_atlas($sprite:expr) {{
+        macro new_atlas(
+            $sprite:expr;
+            $($tail:tt)*
+        ) {
+        {
             let texture = assets.get(&$sprite.info().0).unwrap().texture.clone();
-            AtlasImage::new_scaled($sprite, ctx.add_image(texture), SCALING)
-        }}
+            ImageItem {
+                small: (*AtlasImage::new_scaled($sprite, ctx.add_image(texture.clone()), SCALING)) $($tail)*,
+                large: (*AtlasImage::new_scaled($sprite, ctx.add_image(texture), SCALING * ImageItem::LARGE_SCALING)) $($tail)*,
+            }
+        }
+        }
 
         Self {
-            body_small: new_atlas!(basic::body_small).tint(BodyType::Small.color32()),
-            input: *new_atlas!(basic::marble_input),
-            output: *new_atlas!(basic::marble_output),
-            indicator: *new_atlas!(basic::indicator),
+            body_small: new_atlas!(basic::body_small; .tint(BodyType::Small.color32())),
+            input: new_atlas! {
+                basic::marble_input;
+            },
+            output: new_atlas! {
+                basic::marble_output;
+            },
+            indicator: new_atlas! {
+                basic::indicator;
+            },
         }
     }
 }
@@ -71,20 +90,20 @@ static MODULES: Vec<ModuleItem> = {
     }
 
     vec![
-        header!("Standard Modules"),
+        header!("Basic"),
         item!(ModuleType::Basic(Basic)),
         item!(ModuleType::Basic(Basic)),
-        item!(ModuleType::Basic(Basic)),
+        item!(ModuleType::Basic(Basic))
     ]
 };
 
-const SIZE: Vec2 = Vec2::new(80.0, 80.0);
+pub const SIZE: Vec2 = Vec2::new(80.0, 80.0);
 
 pub fn ui(
     mut egui_context: ResMut<EguiContext>,
     images: Res<Images>,
     // mut windows: ResMut<Windows>,
-    mut spawn_modules: EventWriter<spawn::SpawnModule>,
+    mut spawn_modules: EventWriter<spawn::SpawnModule>
 ) {
     // let Some(window) = windows.get_primary_mut() else { error!("take a guess what the error is"); return };
 
@@ -135,12 +154,12 @@ pub fn ui(
                             // allocate the area to draw the module and throw stuff there
                             ui.allocate_rect(allocated, Sense::focusable_noninteractive());
                             let mut new_ui = ui.child_ui(allocated, Layout::default());
-                            recreate_module(&mut new_ui, &images, instructions, 1.0);
+                            recreate_module(&mut new_ui, &images, instructions, false);
 
                             i += 1;
                         }
                         ModuleItem::SectionHeader(str) => {
-                            ui.add(Label::new(*str).wrap(false));
+                            ui.add(Label::new(*str));
                             break;
                         }
                     }
@@ -151,8 +170,20 @@ pub fn ui(
         });
 }
 
-fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstructions, scale: f32) {
+pub fn recreate_module(
+    ui: &mut Ui,
+    images: &Images,
+    instructions: &SpawnInstructions,
+    large: bool
+) {
+    let scaling = if large {
+        ImageItem::LARGE_SCALING
+    } else {
+        1.0
+    };
+    
     let ui_min = ui.max_rect().min.to_vec2();
+    let ui_center = (ui.max_rect().max - ui.max_rect().min) / 2.0;
     let make_rect = |center: Vec2, size: Vec2| {
         let min: Vec2 = center - size / 2.0 + ui_min;
         let max: Vec2 = center + size / 2.0 + ui_min;
@@ -162,9 +193,14 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
     let angle = -std::f32::consts::PI / 4.0;
 
     macro put($center:expr, $image:expr) {
+        let image = if large {
+            $image.large     
+        } else {
+            $image.small
+        };
         ui.put(
-            make_rect($center, $image.size() * scale),
-            $image.rotate(angle, Vec2::splat(0.5)),
+            make_rect($center, image.size()),
+            image.rotate(angle, Vec2::splat(0.5)),
         );
     }
     macro put_tf($transform:expr, $image:expr) {
@@ -175,25 +211,29 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
             Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, angle),
         );
 
-        let center = transform.translation.truncate() * SCALING;
+        let center = transform.translation.truncate() * SCALING * scaling;
         let center = Vec2 {
             x: center.x,
             y: center.y,
-        } + SIZE / 2.0;
+        } + ui_center;
+        
+        let image = if large {
+            $image.large     
+        } else {
+            $image.small
+        };
 
         ui.put(
-            make_rect(center, $image.size() * scale),
-            $image.rotate(
+            make_rect(center, image.size()),
+            image.rotate(
                 transform.rotation.to_euler(EulerRot::XYZ).2,
                 Vec2::splat(0.5),
             ),
         );
     }
 
-    let center = SIZE / 2.0;
-
     let extend_pos = |pos: &mut Vec3, mut units: f32| {
-        units *= SCALING / 2.0;
+        units *= (SCALING / 2.0) * scaling;
         let len = pos.length();
         *pos = pos.normalize() * (len + units);
     };
@@ -212,7 +252,7 @@ fn recreate_module(ui: &mut Ui, images: &Images, instructions: &SpawnInstruction
         BodyType::Small => &images.body_small,
         BodyType::Large => todo!(),
     };
-    put!(center, *atlas_image);
+    put!(ui_center, *atlas_image);
 
     // spawn indicators
     for &transform in instructions.input_transforms.iter() {

@@ -5,7 +5,7 @@ use bevy_prototype_lyon::shapes::Circle;
 use crate::{
     misc::marker::{Module, ModuleBody},
     query::QueryQuerySimple,
-    *,
+    *, ui::spawning::recreate_module,
 };
 
 use super::{
@@ -62,11 +62,13 @@ pub fn draw_selection_on_hovered(
     macro despawn() {
         if let Some(entity) = *hover_sprite {
             *hover_sprite = None;
-            if let Some(e) = *hover_entity {
+            if let Some(e) = *hover_entity && let Some(mut commands) = commands.get_entity(e) {
                 // dbg!(q_name.get(entity));
-                commands.entity(e).remove_children(&[entity]);
+                commands.remove_children(&[entity]);
             }
-            commands.entity(entity).despawn();
+            if let Some(mut commands) = commands.get_entity(entity) {
+                commands.despawn();
+            }
             // info!("despawned");
         }
     }

@@ -15,6 +15,7 @@ pub fn app(app: &mut App) {
     app.add_system_set_to_stage(
         Label::StageUi,
         SystemSet::new()
+            .with_system(info::ui)
             .with_system(ui::inspector_ui)
             // .with_system(ui::spawning_ui)
             .with_system(spawning::ui)
@@ -38,35 +39,32 @@ fn set_style(mut context: ResMut<EguiContext>, mut commands: Commands) {
         // ref mut debug,
         ..
     } = style;
+    
+    use egui::FontFamily::*;
+    
+    let factor = 1.1;
+    
+    style.text_styles = [
+        (TextStyle::Small, FontId::new(9.0 * factor, Proportional)),
+        (TextStyle::Body, FontId::new(12.5 * factor, Proportional)),
+        (TextStyle::Button, FontId::new(12.5 * factor, Proportional)),
+        (TextStyle::Heading, FontId::new(18.0 * factor, Proportional)),
+        (TextStyle::Monospace, FontId::new(12.0 * factor, Monospace)),
+    ].into();
 
     *visuals = Visuals {
-        // dark_mode: false,
+        dark_mode: true,
         override_text_color: Some(Color32::from_gray(220)),
-        // widgets: Widgets::default(),
-        // selection: Selection::default(),
-        // hyperlink_color: Color32::default(),
-        // faint_bg_color: Color32::default(),
-        // extreme_bg_color: Color32::default(),
-        // code_bg_color: Color32::default(),
-        // warn_fg_color: Color32::default(),
-        // error_fg_color: Color32::default(),
-        // window_rounding: Rounding::default(),
         window_shadow: Shadow::small_light(),
         window_fill: Color32::rgba_u32(0x000000d0),
         panel_fill: Color32::rgba_u32(0x000000d0),
-        // popup_shadow: Shadow::default(),
-        // resize_corner_size: 0.0,
-        // text_cursor_width: 0.0,
-        // text_cursor_preview: false,
-        // clip_rect_margin: 0.0,
-        // button_frame: false,
-        // collapsing_header_frame: false,
+        window_rounding: Rounding::none(),
         ..default()
     };
-
+    
     spacing.button_padding = Vec2::ZERO;
-    // debug.debug_on_hover = true;
-    // debug.show_resize = true;
+    style.debug.debug_on_hover = true;
+    style.debug.show_resize = true;
 
     visuals.widgets.active.bg_fill = Color32::rgba_u32(0xffffff10);
     visuals.widgets.hovered.bg_fill = Color32::rgba_u32(0xffffff02);

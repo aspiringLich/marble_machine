@@ -52,7 +52,7 @@ pub fn inspector_ui(
     let binding = binding.q_module_type.get_mut(selected).unwrap();
     let mut module = *binding.deref();
 
-    egui::Window::new(module.get_name())
+    egui::Window::new(format!("{}{}", "debug ", module.get_name()))
         .resizable(true)
         .collapsible(false)
         .show(egui_context.ctx_mut(), |ui| {

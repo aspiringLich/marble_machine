@@ -20,6 +20,7 @@ Currently I don't have a game, but I can almost start on that!
    - [x] Drag stuff around
    - [x] Interactive components
    - [x] Can't move / place stuff into other stuff
+   - [x] Hover effect
  - [ ] Ui
    - [x] Spawning UI
    - [ ] Description / Information screen (right)

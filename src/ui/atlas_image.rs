@@ -36,3 +36,7 @@ impl Widget for &AtlasImage {
         ui.add(&*self)
     }
 }
+
+pub trait GuiImages: FromWorld {
+    
+}

@@ -1,6 +1,6 @@
 use bevy_prototype_debug_lines::DebugLines;
 
-use crate::{ misc::RapierContextMethods, query::QueryQuerySimple, * };
+use crate::{misc::RapierContextMethods, query::QueryQuerySimple, *};
 
 pub enum MoveType {
     TranslateTo(Vec3),
@@ -50,8 +50,7 @@ pub fn do_requested_move(
     q_collider: Query<(Entity, &Collider)>,
     has_rigidbody: Query<With<RigidBody>>,
     q_global_transform: Query<&GlobalTransform>,
-    rapier_ctx: Res<RapierContext>
-    // mut lines: ResMut<DebugLines>,
+    rapier_ctx: Res<RapierContext>, // mut lines: ResMut<DebugLines>,
 ) {
     use MoveType::*;
 
@@ -60,14 +59,13 @@ pub fn do_requested_move(
             .iter_descendants(requested_move.requesting)
             .filter_map(|e| q_collider.get(e).ok())
             .collect::<Vec<_>>();
-        let ignore = colliders
-            .iter()
-            .map(|(e, _)| *e)
-            .collect::<Vec<_>>();
+        let ignore = colliders.iter().map(|(e, _)| *e).collect::<Vec<_>>();
         colliders.retain(|(e, _)| has_rigidbody.get(*e).is_ok());
 
         let predicate = |e| !ignore.contains(&e) && has_rigidbody.get(e).is_ok();
-        let filter = QueryFilter::only_fixed().exclude_sensors().predicate(&predicate);
+        let filter = QueryFilter::only_fixed()
+            .exclude_sensors()
+            .predicate(&predicate);
 
         let requesting = q_transform.entity(requested_move.requesting).clone();
         let mut diff = requesting;
@@ -82,16 +80,14 @@ pub fn do_requested_move(
         }
 
         // move this thingy
-        let transform = |factor: f32, transform: Transform| {
-            match requested_move.move_type {
-                TranslateTo(_) => {
-                    Transform::from_translation(transform.translation - diff.translation * factor)
-                }
-                RotateTo(_) => {
-                    let mut cpy = transform;
-                    cpy.rotate_around(requesting.translation, diff.rotation * factor);
-                    cpy
-                }
+        let transform = |factor: f32, transform: Transform| match requested_move.move_type {
+            TranslateTo(_) => {
+                Transform::from_translation(transform.translation - diff.translation * factor)
+            }
+            RotateTo(_) => {
+                let mut cpy = transform;
+                cpy.rotate_around(requesting.translation, diff.rotation * factor);
+                cpy
             }
         };
 
@@ -103,7 +99,7 @@ pub fn do_requested_move(
                     rapier_ctx.intersection_with_shape_transform(
                         transform(factor, q_global_transform.entity(*e).compute_transform()),
                         c,
-                        filter
+                        filter,
                     )
                 })
                 .any(|x| x.is_some())
