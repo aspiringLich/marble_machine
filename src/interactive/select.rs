@@ -2,7 +2,7 @@ use std::f32::consts::TAU;
 
 use crate::{misc::RapierContextMethods, query::QueryQuerySimple, *};
 
-use super::{hover::HoveredEntities, interact::InteractiveRotation};
+use super::{hover::HoveredEntities, interact::InteractiveRotation, intersect::{RequestedMove, MoveType}};
 
 /// update SelectedModule whenever the left cursor is clicked
 #[allow(clippy::too_many_arguments)]
@@ -88,6 +88,9 @@ pub fn place_selected(
     q_children: Query<&Children>,
     has_io: Query<Or<(With<marker::Input>, With<marker::Output>)>>,
     grid_info: Res<grid::GridInfo>,
+    mut q_visibility: Query<&mut Visibility>, 
+    has_rigidbody: Query<With<RigidBody>>,
+    mut requested_move: EventWriter<RequestedMove>,
 ) {
     let snapping = if keyboard.pressed(KeyCode::LShift) {
         8.0
@@ -106,12 +109,10 @@ pub fn place_selected(
             .filter_map(|e| q_collider.get(e).ok())
             .collect::<Vec<_>>();
         let ignore = colliders.iter().map(|(e, _)| *e).collect::<Vec<_>>();
-        let predicate = |e| !ignore.contains(&e);
+        let predicate = |e| !ignore.contains(&e) && has_rigidbody.get(e).is_ok();
         let filter = QueryFilter::only_fixed()
             .exclude_sensors()
             .predicate(&predicate);
-
-        // dbg!(&colliders);
 
         // if were clear
         if !colliders.iter().any(|(e, c)| {
@@ -132,6 +133,9 @@ pub fn place_selected(
     let Some(sel_entity) = selected.selected else {
         unreachable!()
     };
+    
+    // set it to visibile cuz reasons
+    *q_visibility.get_mut(sel_entity).expect("sel_entity is a sprite") = Visibility::VISIBLE;
 
     // if escape is pressed, then clear and return
     if keyboard.pressed(KeyCode::Escape) {
@@ -157,18 +161,16 @@ pub fn place_selected(
         }
     }
 
-    let pos = &mut q_transform.entity_mut(sel_entity).translation;
-    let Vec2 { x, y } = **mouse_pos - Vec2::splat(0.5);
+    let Vec2 { x, y } = **mouse_pos - 0.5;
 
     // rounding x and y to the nearest snapping #
-    let (rx, ry) = (
-        (x / snapping).round() * snapping,
-        (y / snapping).round() * snapping,
+    let round = Vec2::new(
+        (x / snapping).round() * snapping + 0.5,
+        (y / snapping).round() * snapping + 0.5,
     );
-    if rx != x || ry != y {
-        pos.x = rx + 0.5;
-        pos.y = ry + 0.5;
-    }
+    requested_move.send(
+        RequestedMove::new(selected.selected.unwrap(), MoveType::TranslateTo(round.extend( ZOrder::BodyComponent.f32()))).snapping(),
+    )
 }
 
 #[derive(Resource, Debug, Deref)]

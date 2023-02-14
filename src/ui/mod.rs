@@ -1,8 +1,6 @@
 use crate::*;
 use bevy_egui::{ egui, EguiContext };
 
-use egui::{ Color32, Style, Vec2 };
-
 use self::info::HoveredModule;
 
 pub mod atlas_image;

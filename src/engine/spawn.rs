@@ -1,21 +1,14 @@
-use crate::{
-    modules::SpawnInstructions,
-    marble_io::InputState,
-    *,
-};
-use atlas::{basic, AtlasDictionary};
+use crate::{ modules::SpawnInstructions, marble_io::InputState, * };
+use atlas::{ basic, AtlasDictionary };
 
 use bevy::ecs::system::EntityCommands;
 use components::SpawnComponents;
 use trait_enum::Deref;
 
-use super::modules::{body::BodyType, ModuleType};
+use super::modules::{ body::BodyType, ModuleType };
 // use bevy_rapier2d::{prelude::*, rapier::prelude::ColliderMaterial};
 /// methods for spawning random things to make my code more reasonable
-pub trait CommandsSpawn<'a, 'b>
-where
-    Self: Sized,
-{
+pub trait CommandsSpawn<'a, 'b> where Self: Sized {
     fn get(&mut self) -> &mut Commands<'a, 'b>;
 
     /// spawn a sprite that inherits stuff from its atlas
@@ -23,7 +16,7 @@ where
         &mut self,
         item: T,
         color: Color,
-        transform: Transform,
+        transform: Transform
     ) -> EntityCommands<'a, 'b, '_> {
         let cmd = self.get();
         let (texture_atlas, index) = item.info();
@@ -47,7 +40,7 @@ where
         item: T,
         color: Color,
         transform: Transform,
-        anchor: Anchor,
+        anchor: Anchor
     ) -> EntityCommands<'a, 'b, '_> {
         let cmd = self.get();
         let (texture_atlas, index) = item.info();
@@ -98,20 +91,33 @@ impl SpawnModule {
 pub fn spawn_modules(
     mut commands: Commands,
     mut spawn_events: EventReader<SpawnModule>,
-    mut selected: ResMut<SelectedModules>,
+    mut selected: ResMut<SelectedModules>
 ) {
     for event in spawn_events.iter() {
         let SpawnModule { module, place } = event;
 
+        let sprite = if *place {
+            SpriteBundle {
+                visibility: Visibility::INVISIBLE,
+                ..default()
+            }
+        } else {
+            SpriteBundle::default()
+        };
         let parent = commands
-            .spawn(SpriteBundle { ..default() })
+            .spawn(sprite)
             .name(module.deref().get_identifier())
             .insert((*module, marker::Module))
             .id();
         let mut children: Vec<Entity> = vec![];
 
         // spawn a small circular body and return the id
-        macro spawn_body_circular($body_type:expr, $atlasdict:expr, $name:literal $($tail:tt)*) {
+        macro spawn_body_circular(
+            $body_type:expr,
+            $atlasdict:expr,
+            $name:literal
+            $($tail:tt)*
+        ) {
             children.push(
                 commands
                     .spawn_atlas_sprite($atlasdict, $body_type.color(), Transform::from_xyz(0.0, 0.0, ZOrder::BodyComponent.f32()))
@@ -128,11 +134,9 @@ pub fn spawn_modules(
         }
 
         // run through all the instructions laid out in the module
-        let SpawnInstructions {
-            body,
-            input_transforms,
-            output_transforms,
-        } = module.deref().spawn_instructions();
+        let SpawnInstructions { body, input_transforms, output_transforms } = module
+            .deref()
+            .spawn_instructions();
 
         // spawn the body
         match body {
@@ -142,23 +146,21 @@ pub fn spawn_modules(
             _ => todo!(),
         }
         // spawn the input state
-        commands
-            .entity(parent)
-            .insert(InputState::new(input_transforms.len()));
+        commands.entity(parent).insert(InputState::new(input_transforms.len()));
 
         // inputs
         children.extend(
             input_transforms
                 .iter()
                 .enumerate()
-                .map(|(i, &x)| commands.spawn_input(x, i).id()),
+                .map(|(i, &x)| commands.spawn_input(x, i).id())
         );
         // outputs
         children.extend(
             output_transforms
                 .iter()
                 .enumerate()
-                .map(|(i, &x)| commands.spawn_output(x, i).id()),
+                .map(|(i, &x)| commands.spawn_output(x, i).id())
         );
         commands.entity(parent).push_children(&children);
 
