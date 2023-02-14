@@ -1,7 +1,9 @@
 use crate::*;
-use bevy_egui::{egui, EguiContext};
+use bevy_egui::{ egui, EguiContext };
 
-use egui::{Color32, Style, Vec2};
+use egui::{ Color32, Style, Vec2 };
+
+use self::info::HoveredModule;
 
 pub mod atlas_image;
 
@@ -12,16 +14,17 @@ pub mod info;
 pub mod ui;
 
 pub fn app(app: &mut App) {
-    app.add_system_set_to_stage(
-        Label::StageUi,
-        SystemSet::new()
-            .with_system(info::ui)
-            .with_system(ui::inspector_ui)
-            // .with_system(ui::spawning_ui)
-            .with_system(spawning::ui)
-            .with_system(ui::debug_ui),
-    )
-    .add_startup_system_to_stage(Label::StartupStageStart, set_style);
+    app.init_resource::<HoveredModule>()
+        .add_system_set_to_stage(
+            Label::StageUi,
+            SystemSet::new()
+                .with_system(info::ui)
+                .with_system(ui::inspector_ui)
+                // .with_system(ui::spawning_ui)
+                .with_system(spawning::ui)
+                .with_system(ui::debug_ui)
+        )
+        .add_startup_system_to_stage(Label::StartupStageStart, set_style);
 }
 
 fn set_style(mut context: ResMut<EguiContext>, mut commands: Commands) {
@@ -39,11 +42,11 @@ fn set_style(mut context: ResMut<EguiContext>, mut commands: Commands) {
         // ref mut debug,
         ..
     } = style;
-    
+
     use egui::FontFamily::*;
-    
+
     let factor = 1.1;
-    
+
     style.text_styles = [
         (TextStyle::Small, FontId::new(9.0 * factor, Proportional)),
         (TextStyle::Body, FontId::new(12.5 * factor, Proportional)),
@@ -58,17 +61,19 @@ fn set_style(mut context: ResMut<EguiContext>, mut commands: Commands) {
         window_shadow: Shadow::small_light(),
         window_fill: Color32::rgba_u32(0x000000d0),
         panel_fill: Color32::rgba_u32(0x000000d0),
-        window_rounding: Rounding::none(),
+        window_rounding: Rounding { nw: 4.0, ne: 4.0, sw: 0.0, se: 0.0 },
+        window_stroke: Stroke::new(1.0, Color32::from_gray(180)),
         ..default()
     };
-    
+
     spacing.button_padding = Vec2::ZERO;
-    style.debug.debug_on_hover = true;
-    style.debug.show_resize = true;
+    // style.debug.debug_on_hover = true;
+    // style.debug.show_resize = true;
 
     visuals.widgets.active.bg_fill = Color32::rgba_u32(0xffffff10);
     visuals.widgets.hovered.bg_fill = Color32::rgba_u32(0xffffff02);
     visuals.widgets.inactive.bg_fill = Color32::rgba_u32(0x00000000);
+    visuals.widgets.noninteractive.bg_stroke = Stroke::new(1.0, Color32::from_gray(180));
 
     context.ctx_mut().set_style(style);
 }

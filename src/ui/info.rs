@@ -1,5 +1,6 @@
 use crate::*;
 use crate::engine::modules::ModuleType;
+use crate::engine::modules::SpawnInstructions;
 use crate::interactive::hover::HoveredEntities;
 use crate::misc::marker::ModuleBody;
 use crate::ui::spawning;
@@ -13,26 +14,30 @@ use super::spawning::Images;
 
 pub const WIDTH: f32 = 150.0;
 
+#[derive(Deref, DerefMut, Resource, Default)]
+pub struct HoveredModule(Option<(&'static SpawnInstructions, &'static str)>);
+
 pub fn ui(
     mut egui_ctx: ResMut<EguiContext>,
     selected: Res<SelectedModules>,
     q_module: Query<&ModuleType>,
-    q_parent: Query<&Parent>,
-    q_body: Query<With<ModuleBody>>,
-    hovered: Res<HoveredEntities>,
-    images: Res<Images>
+    // q_parent: Query<&Parent>,
+    // q_body: Query<With<ModuleBody>>,
+    images: Res<Images>,
+    hovered: Res<HoveredModule>
 ) {
     let ctx = egui_ctx.ctx_mut();
-
-    let Some(selected) = selected.selected.or_else(||
-        hovered
-            .iter()
-            .find(|e| q_body.get(**e).is_ok())
-            .map(|e| q_parent.iter_ancestors(*e).next().unwrap())
+    
+    let mut instruction: SpawnInstructions = SpawnInstructions::default();
+    let Some((instructions, name)) = hovered.or_else(||
+        selected.selected.map(|e| {
+            let module = q_module.get(e).unwrap();
+            instruction = module.spawn_instructions();
+            (&instruction, module.get_name())
+        })
     ) else {
         return;
     };
-    let module = q_module.get(selected).unwrap();
 
     let height = 300.0;
     let margin = 10.0;
@@ -40,24 +45,25 @@ pub fn ui(
     // dbg!(&screen);
 
     egui::Window
-        ::new(module.get_name())
+        ::new(name)
         .resizable(false)
         .collapsible(false)
         .anchor(Align2::RIGHT_CENTER, [-margin, 0.0])
         .min_width(WIDTH)
         .show(ctx, |ui| {
-            use egui::{ Rect, Vec2};
+            use egui::{ Vec2 };
 
             ui.set_width(WIDTH);
             ui.set_height(height);
-            
-            let cursor = ui.cursor().min.to_vec2();
-            
+
             // let rect = Rect::from_x_y_ranges(cursor.x..=cursor.WIDTH, 0.0..=WIDTH);
-            let (rect, _) = ui.allocate_at_least(Vec2::new(WIDTH, WIDTH), Sense::focusable_noninteractive());
+            let (rect, _) = ui.allocate_at_least(
+                Vec2::new(WIDTH, WIDTH),
+                Sense::focusable_noninteractive()
+            );
             let mut child = ui.child_ui(rect, Layout::default());
-            spawning::recreate_module(&mut child, &images, &module.spawn_instructions(), true);
-            
+            spawning::recreate_module(&mut child, &images, &instructions, true);
+
             ui.label("uyes");
         });
 }

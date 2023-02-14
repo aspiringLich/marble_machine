@@ -7,7 +7,7 @@ use bevy_egui::*;
 use egui::{ Button, Image, Label, Rect, Vec2, * };
 use trait_enum::Deref;
 
-use super::atlas_image::AtlasImage;
+use super::{atlas_image::AtlasImage, info::HoveredModule};
 
 pub struct ImageItem {
     pub small: Image,
@@ -103,7 +103,8 @@ pub fn ui(
     mut egui_context: ResMut<EguiContext>,
     images: Res<Images>,
     // mut windows: ResMut<Windows>,
-    mut spawn_modules: EventWriter<spawn::SpawnModule>
+    mut spawn_modules: EventWriter<spawn::SpawnModule>,
+    mut hovered: ResMut<HoveredModule>,
 ) {
     // let Some(window) = windows.get_primary_mut() else { error!("take a guess what the error is"); return };
 
@@ -129,6 +130,8 @@ pub fn ui(
             // dbg!(width);
 
             let mut iter = MODULES.iter().peekable();
+            
+            let mut set = None;
 
             while let Some(_) = iter.peek() {
                 ui.add_space(spacing);
@@ -141,18 +144,23 @@ pub fn ui(
                             // dbg!(cursor);
                             // allocate space
                             let translate =
-                                cursor + Vec2::X * ((SIZE.x + spacing + 3.0) * (i as f32));
+                                cursor + Vec2::X * ((SIZE.x + spacing + 5.0) * (i as f32));
                             let allocated = size_rect.translate(translate);
                             // dbg!(allocated.min);
 
                             // put down the button
                             let button = ui.put(allocated, Button::new(""));
+                            
+                            if button.hovered() {
+                                set = Some((instructions, module.get_name()))
+                            }
                             if button.clicked() {
                                 spawn_modules.send(spawn::SpawnModule::new(*module).place());
                             }
 
                             // allocate the area to draw the module and throw stuff there
-                            ui.allocate_rect(allocated, Sense::focusable_noninteractive());
+                            ui.allocate_rect(allocated, Sense::hover()).hovered();
+                                
                             let mut new_ui = ui.child_ui(allocated, Layout::default());
                             recreate_module(&mut new_ui, &images, instructions, false);
 
@@ -165,7 +173,9 @@ pub fn ui(
                     }
                 }
             }
-
+            
+            **hovered = set;
+            
             ui.set_width(ui.min_size().x);
         });
 }
@@ -257,7 +267,7 @@ pub fn recreate_module(
     // spawn indicators
     for &transform in instructions.input_transforms.iter() {
         let mut tf = transform;
-        extend_pos(&mut tf.translation, -1.0);
+        extend_pos(&mut tf.translation, -0.75);
         put_tf!(tf, images.indicator);
     }
 }

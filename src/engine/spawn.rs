@@ -116,7 +116,7 @@ pub fn spawn_modules(
                 commands
                     .spawn_atlas_sprite($atlasdict, $body_type.color(), Transform::from_xyz(0.0, 0.0, ZOrder::BodyComponent.f32()))
                     .insert((
-                        Collider::ball($atlasdict.width() * 0.5),
+                        Collider::ball($atlasdict.width() * 0.5 - 0.5),
                         RigidBody::Fixed,
                         Restitution::coefficient(0.8),
                         marker::ModuleBody,
