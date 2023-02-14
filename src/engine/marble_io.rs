@@ -1,9 +1,10 @@
 use crate::{
-    engine::modules::header::UpdateModule,
-    query::{QueryQueryIter, QueryQuerySimple},
+    modules::header::UpdateModule,
+    query::{ QueryQueryIter, QueryQuerySimple },
     *,
+    graphics::grid::GridInfo,
 };
-use atlas::{basic, AtlasDictionary};
+use atlas::{ basic, AtlasDictionary };
 use marble::Marble;
 use rand::Rng;
 use spawn::CommandsSpawn;
@@ -35,40 +36,33 @@ pub const VELOCITY_FACTOR: f32 = 120.0;
 pub fn fire_marbles(
     mut commands: Commands,
     mut spawn_events: EventReader<FireMarble>,
-    q_transform: Query<&mut Transform>,
+    q_global_transform: Query<&GlobalTransform>,
     q_children: Query<&Children>,
     w_sprite: Query<Entity, With<TextureAtlasSprite>>,
-    q_parent: Query<&Parent>,
+    grid_info: Res<GridInfo>
 ) {
     for event in spawn_events.iter() {
-        let parent = q_parent.entity(event.from).get();
-        let mut transform = *q_transform.entity(
-            q_children
-                .entity(event.from)
-                .iter()
-                .with(&w_sprite)
-                .next()
-                .unwrap(),
-        );
+        let mut transform = q_global_transform
+            .entity(q_children.entity(event.from).iter().with(&w_sprite).next().unwrap())
+            .compute_transform();
         transform.translation.z = 0.0;
-        transform.rotate_around(Vec3::ZERO, q_transform.entity(event.from).rotation);
-        let p_transform = q_transform.entity(parent);
+        let pos = transform.translation;
+        if !grid_info.in_bounds(pos.truncate()) {
+            continue;
+        }
 
-        // get the rotation and position of the parent entity + the output
-        let rotation = transform.rotation.mul_quat(p_transform.rotation);
-        let pos = transform.translation + p_transform.translation;
         // dbg!(rotation.mul_vec3(Vec3::X).truncate() * 120.0);
         commands
             .spawn_atlas_sprite(
                 basic::marble_small,
                 Color::GREEN,
-                Transform::from_translation(pos + -pos.z + ZOrder::Marble),
+                Transform::from_translation(pos + -pos.z + ZOrder::Marble)
             )
             .insert((
                 Collider::ball(basic::marble_small.width() * 0.5),
                 RigidBody::Dynamic,
                 Velocity {
-                    linvel: rotation.mul_vec3(Vec3::X).truncate() * VELOCITY_FACTOR,
+                    linvel: transform.rotation.mul_vec3(Vec3::X).truncate() * VELOCITY_FACTOR,
                     angvel: rand::thread_rng().gen_range(-10.0..10.0),
                 },
                 ColliderMassProperties::Mass(1.0),
@@ -118,7 +112,7 @@ pub fn update_inputs(
     q_marble: Query<&Marble>,
     q_input: Query<&marker::Input>,
     has_marble: Query<With<Marble>>,
-    mut update_event: EventWriter<UpdateModule>,
+    mut update_event: EventWriter<UpdateModule>
 ) {
     for event in collision_events.iter() {
         use CollisionEvent::*;

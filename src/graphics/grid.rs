@@ -6,15 +6,22 @@ use super::atlas::{basic, AtlasDictionary};
 
 #[derive(Resource)]
 pub struct GridInfo {
-    pub size: f32,
+    pub half_size: f32,
     pub ext: f32,
     pub grid_size: f32,
+}
+
+impl GridInfo {
+    pub fn in_bounds(&self, mut pos: Vec2) -> bool {
+        pos = pos.abs();
+        return pos.x <= self.half_size && pos.y <= self.half_size;
+    }
 }
 
 impl Default for GridInfo {
     fn default() -> Self {
         Self {
-            size: 96.0,
+            half_size: 96.0,
             ext: 3.0,
             grid_size: 8.0,
         }
@@ -27,7 +34,7 @@ pub fn spawn_background(mut commands: Commands, grid_info: Res<GridInfo>) {
     }
 
     let GridInfo {
-        size,
+        half_size: size,
         ext: _,
         grid_size,
     } = *grid_info;
