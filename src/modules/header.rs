@@ -10,7 +10,8 @@ use crate::{
     *,
 };
 
-use super::{common_impl::default_debug_ui, BodyType, ModuleType};
+use super::{common_impl::default_debug_ui, ModuleType};
+use super::body::BodyType;
 
 type QuerySimple<'w, 's, T> = Query<'w, 's, &'static mut T>;
 // type QueryWith<'w, 's, T, W> = Query<'w, 's, &'static mut T, bevy::prelude::With<W>>;

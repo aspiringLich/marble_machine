@@ -7,7 +7,7 @@ use std::{
 use trait_enum::DerefMut;
 
 use crate::{
-    engine::modules::{header::Module, ModuleType},
+    modules::{header::Module, ModuleType},
     query::{QueryQueryIter, QueryQuerySimple},
     select::CursorCoords,
     *,

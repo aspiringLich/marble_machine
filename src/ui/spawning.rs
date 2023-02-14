@@ -1,5 +1,5 @@
 use crate::{
-    engine::modules::{ body::BodyType, ModuleType, SpawnInstructions },
+    modules::{ body::BodyType, ModuleType, SpawnInstructions },
     graphics::atlas::{ basic, AtlasDictionary },
     *,
 };
@@ -76,7 +76,7 @@ pub enum ModuleItem {
 
 #[ctor]
 static MODULES: Vec<ModuleItem> = {
-    use crate::engine::modules::*;
+    use crate::modules::*;
 
     macro item($arg:expr) {
         ModuleItem::Module {

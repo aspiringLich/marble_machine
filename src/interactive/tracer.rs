@@ -1,7 +1,7 @@
 use crate::{
     query::{QueryQueryIter, QueryQuerySimple},
     spawn::CommandsSpawn,
-    *,
+    *, graphics::grid::GridInfo,
 };
 use atlas::{basic, AtlasDictionary};
 const TRACER_N: usize = 20;
@@ -83,6 +83,7 @@ pub fn tracer(
     has_body: Query<With<marker::ModuleBody>>,
     // q_name: Query<&Name>,
     tracers: Res<TracerEntities>,
+    grid_info: Res<GridInfo>,
 ) {
     // get the timestep factor
     let factor;
@@ -134,6 +135,10 @@ pub fn tracer(
         // step through until either we rapier scene query turn up bad or we do <x> steps
         let mut tracer_iter = tracers.iter();
         'tracer: while let Some(&tracer) = tracer_iter.next() {
+            if !grid_info.in_bounds(shape_pos) {
+                return
+            }
+            
             // update the tracers
             *q_visibility.entity_mut(tracer) = Visibility::VISIBLE;
             let mut shape_transform = q_transform.entity_mut(tracer);

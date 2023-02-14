@@ -3,7 +3,7 @@ use bevy_egui::egui::Ui;
 
 use crate::engine::{marble::Marble, marble_io::FireMarble};
 
-use super::ModuleResources;
+use super::header::ModuleResources;
 
 pub fn default_debug_ui(ui: &mut Ui, res: &mut ModuleResources, module: Entity) {
     let outputs: Vec<_> = res.outputs(module).collect();

@@ -4,7 +4,6 @@ pub mod components;
 pub mod lifetime;
 pub mod marble;
 pub mod marble_io;
-pub mod modules;
 pub mod spawn;
 
 pub fn app(app: &mut App) {

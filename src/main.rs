@@ -21,7 +21,7 @@ extern crate strum;
 mod interactive;
 use bevy_inspector_egui::quick::WorldInspectorPlugin;
 use bevy_prototype_debug_lines::DebugLinesPlugin;
-use engine::modules::header::UpdateModule;
+use modules::header::UpdateModule;
 use interactive::*;
 
 use bevy::utils::{HashMap, HashSet};
@@ -34,11 +34,14 @@ use graphics::*;
 mod engine;
 use engine::*;
 
+/// stuff relating to the construction and definition of modules
+mod modules;
+
 /// game stuff
 mod game;
 use game::*;
 
-/// take a wild guess
+/// ui stuff
 mod ui;
 
 use bevy::{diagnostic::FrameTimeDiagnosticsPlugin, prelude::*, sprite::Anchor};
@@ -167,7 +170,7 @@ fn main() {
 fn setup(mut commands: Commands, grid_info: Res<grid::GridInfo>, window: Res<Windows>) {
     let window = window.get_primary().unwrap();
     let screen_size = Vec2::new(window.width(), window.height());
-    let grid::GridInfo { size, ext, .. } = *grid_info;
+    let grid::GridInfo { half_size: size, ext, .. } = *grid_info;
 
     let factor = 12.0;
 

@@ -97,7 +97,7 @@ pub fn place_selected(
 
     // if we click then place the module
     if mouse_buttons.just_pressed(MouseButton::Left)
-        && f32::max(mouse_pos.x.abs(), mouse_pos.y.abs()) < grid_info.size
+        && f32::max(mouse_pos.x.abs(), mouse_pos.y.abs()) < grid_info.half_size
     {
         // check if any of the colliders are colliding with a rigidbody, ignoring the colliders of the module itself
         let s_entity = selected.selected.unwrap();

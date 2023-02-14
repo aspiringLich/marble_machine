@@ -1,10 +1,7 @@
 use crate::*;
-use crate::engine::modules::ModuleType;
-use crate::engine::modules::SpawnInstructions;
-use crate::interactive::hover::HoveredEntities;
-use crate::misc::marker::ModuleBody;
+use crate::modules::ModuleType;
+use crate::modules::header::SpawnInstructions;
 use crate::ui::spawning;
-use crate::ui::spawning::recreate_module;
 use bevy_egui::*;
 use egui::Sense;
 use egui::Align2;
@@ -62,7 +59,7 @@ pub fn ui(
                 Sense::focusable_noninteractive()
             );
             let mut child = ui.child_ui(rect, Layout::default());
-            spawning::recreate_module(&mut child, &images, &instructions, true);
+            spawning::recreate_module(&mut child, &images, instructions, true);
 
             ui.label("uyes");
         });

@@ -1,4 +1,4 @@
-use crate::{engine::modules::BodyType, *};
+use crate::{*};
 use bevy_egui::egui::Ui;
 
 use crate::{
@@ -7,8 +7,8 @@ use crate::{
 };
 
 use super::{
-    header::{Module, ModuleCallbackTimer, ModuleResources},
-    SpawnInstructions,
+    body::BodyType,
+    header::{Module, ModuleCallbackTimer, ModuleResources, SpawnInstructions},
 };
 
 #[derive(Copy, Clone)]
