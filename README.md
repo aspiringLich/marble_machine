@@ -23,7 +23,7 @@ Currently I don't have a game, but I can almost start on that!
    - [x] Hover effect
  - [ ] Ui
    - [x] Spawning UI
-   - [ ] Description / Information screen (right)
+   - [x] Description / Information screen (right)
    - [ ] Proper module config screen
    - [ ] Level info screen
    - [ ] Top bar for top bar stuff
