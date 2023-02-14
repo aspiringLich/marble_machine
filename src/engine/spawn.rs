@@ -65,7 +65,7 @@ impl<'a, 'b> CommandsSpawn<'a, 'b> for Commands<'a, 'b> {
     }
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct SpawnModule {
     module: ModuleType,
     // whether this module is going to be dragged around
@@ -106,7 +106,7 @@ pub fn spawn_modules(
         };
         let parent = commands
             .spawn(sprite)
-            .name(module.deref().get_identifier())
+            .name(module.get_identifier())
             .insert((*module, marker::Module))
             .id();
         let mut children: Vec<Entity> = vec![];
@@ -135,7 +135,6 @@ pub fn spawn_modules(
 
         // run through all the instructions laid out in the module
         let SpawnInstructions { body, input_transforms, output_transforms } = module
-            .deref()
             .spawn_instructions();
 
         // spawn the body

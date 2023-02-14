@@ -69,11 +69,8 @@ pub fn drag_selected(
     // let round = Vec2::new(x, y);
 
     if round != *prev && f32::max(round.x.abs(), round.y.abs()) < grid_info.half_size {
-        transform.translation.x = round.x;
-        transform.translation.y = round.y;
-
         requested_move.send(
-            RequestedMove::new(selected, MoveType::TranslateTo(transform.translation)).snapping(),
+            RequestedMove::new(selected, MoveType::TranslateTo(round.extend(0.0))).snapping(),
         );
 
         *prev = round;

@@ -1,6 +1,6 @@
 use std::f32::consts;
 
-use crate::{modules::header::ModuleResources, *};
+use crate::{modules::ModuleResources, *};
 use bevy_egui::*;
 use egui::*;
 use trait_enum::Deref;

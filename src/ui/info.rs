@@ -1,6 +1,6 @@
 use crate::*;
 use crate::modules::ModuleType;
-use crate::modules::header::SpawnInstructions;
+use crate::modules::SpawnInstructions;
 use crate::ui::spawning;
 use bevy_egui::*;
 use egui::Sense;
@@ -12,7 +12,7 @@ use super::spawning::Images;
 pub const WIDTH: f32 = 150.0;
 
 #[derive(Deref, DerefMut, Resource, Default)]
-pub struct HoveredModule(Option<(&'static SpawnInstructions, &'static str)>);
+pub struct HoveredModule(Option<ModuleType>);
 
 pub fn ui(
     mut egui_ctx: ResMut<EguiContext>,
@@ -25,12 +25,9 @@ pub fn ui(
 ) {
     let ctx = egui_ctx.ctx_mut();
     
-    let mut instruction: SpawnInstructions = SpawnInstructions::default();
-    let Some((instructions, name)) = hovered.or_else(||
+    let Some(module) = hovered.or_else(||
         selected.selected.map(|e| {
-            let module = q_module.get(e).unwrap();
-            instruction = module.spawn_instructions();
-            (&instruction, module.get_name())
+            *q_module.get(e).unwrap()
         })
     ) else {
         return;
@@ -42,7 +39,7 @@ pub fn ui(
     // dbg!(&screen);
 
     egui::Window
-        ::new(name)
+        ::new(module.get_name())
         .resizable(false)
         .collapsible(false)
         .anchor(Align2::RIGHT_CENTER, [-margin, 0.0])
@@ -59,8 +56,8 @@ pub fn ui(
                 Sense::focusable_noninteractive()
             );
             let mut child = ui.child_ui(rect, Layout::default());
-            spawning::recreate_module(&mut child, &images, instructions, true);
+            spawning::recreate_module(&mut child, &images, module.spawn_instructions(), true);
 
-            ui.label("uyes");
+            ui.label("floppa poppa");
         });
 }

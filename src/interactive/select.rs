@@ -169,7 +169,7 @@ pub fn place_selected(
         (y / snapping).round() * snapping + 0.5,
     );
     requested_move.send(
-        RequestedMove::new(selected.selected.unwrap(), MoveType::TranslateTo(round.extend( ZOrder::BodyComponent.f32()))).snapping(),
+        RequestedMove::new(selected.selected.unwrap(), MoveType::TranslateTo(round.extend(0.0))).snapping(),
     )
 }
 

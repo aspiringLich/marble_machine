@@ -1,8 +1,6 @@
 use std::collections::VecDeque;
 
 use crate::*;
-use bevy::transform::TransformSystem;
-use bevy_pancam::PanCamSystemLabel;
 use iyes_loopless::prelude::*;
 
 pub mod drag;
@@ -55,7 +53,7 @@ pub fn app(app: &mut App) {
     app.add_system_set_to_stage(
         Label::StageInteract,
         SystemSet::new()
-            .with_system(hover::get_hovered_entities.after("spawn::spawn_modules"))
+            .with_system(hover::get_hovered_entities)
             .with_system(
                 select::get_selected
                     .run_if_not(place)
@@ -73,7 +71,6 @@ pub fn app(app: &mut App) {
                 select::place_selected
                     .run_if(place)
                     .run_if_not(egui)
-                    .after(PanCamSystemLabel)
                     .after("select::drag_selected")
                     .before("intersect::do_requested_move")
             )
@@ -82,7 +79,7 @@ pub fn app(app: &mut App) {
             )
             .with_system(
                 interact::use_widgets
-                    .after("select::selected")
+                    .after("select::get_selected")
                     .before("intersect::do_requested_move")
                     .label("interact::use_widgets")
             )

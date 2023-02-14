@@ -7,7 +7,7 @@ use bevy_egui::*;
 use egui::{ Button, Image, Label, Rect, Vec2, * };
 use trait_enum::Deref;
 
-use super::{atlas_image::AtlasImage, info::HoveredModule};
+use super::{ atlas_image::AtlasImage, info::HoveredModule };
 
 pub struct ImageItem {
     pub small: Image,
@@ -69,32 +69,21 @@ impl FromWorld for Images {
 pub enum ModuleItem {
     Module {
         module: ModuleType,
-        instructions: SpawnInstructions,
     },
     SectionHeader(&'static str),
 }
 
 #[ctor]
 static MODULES: Vec<ModuleItem> = {
-    use crate::modules::*;
-
-    macro item($arg:expr) {
+    use crate::modules::ModuleType::*;
+    let item = |module| {
         ModuleItem::Module {
-            module: $arg,
-            instructions: $arg.deref().spawn_instructions(),
+            module: module,
         }
-    }
+    };
+    let header = |name| { ModuleItem::SectionHeader(name) };
 
-    macro header($arg:literal) {
-        ModuleItem::SectionHeader($arg)
-    }
-
-    vec![
-        header!("Basic"),
-        item!(ModuleType::Basic(Basic)),
-        item!(ModuleType::Basic(Basic)),
-        item!(ModuleType::Basic(Basic))
-    ]
+    vec![header("Basic"), item(Basic), item(Basic), item(Basic)]
 };
 
 pub const SIZE: Vec2 = Vec2::new(80.0, 80.0);
@@ -104,7 +93,7 @@ pub fn ui(
     images: Res<Images>,
     // mut windows: ResMut<Windows>,
     mut spawn_modules: EventWriter<spawn::SpawnModule>,
-    mut hovered: ResMut<HoveredModule>,
+    mut hovered: ResMut<HoveredModule>
 ) {
     // let Some(window) = windows.get_primary_mut() else { error!("take a guess what the error is"); return };
 
@@ -130,7 +119,7 @@ pub fn ui(
             // dbg!(width);
 
             let mut iter = MODULES.iter().peekable();
-            
+
             let mut set = None;
 
             while let Some(_) = iter.peek() {
@@ -140,7 +129,7 @@ pub fn ui(
 
                 while i < i32::max(width as i32, 1) && let Some(item) = iter.next() {
                     match item {
-                        ModuleItem::Module { module, instructions } => {
+                        ModuleItem::Module { module } => {
                             // dbg!(cursor);
                             // allocate space
                             let translate =
@@ -150,9 +139,9 @@ pub fn ui(
 
                             // put down the button
                             let button = ui.put(allocated, Button::new(""));
-                            
+
                             if button.hovered() {
-                                set = Some((instructions, module.get_name()))
+                                set = Some(module);
                             }
                             if button.clicked() {
                                 spawn_modules.send(spawn::SpawnModule::new(*module).place());
@@ -160,9 +149,9 @@ pub fn ui(
 
                             // allocate the area to draw the module and throw stuff there
                             ui.allocate_rect(allocated, Sense::hover()).hovered();
-                                
+
                             let mut new_ui = ui.child_ui(allocated, Layout::default());
-                            recreate_module(&mut new_ui, &images, instructions, false);
+                            recreate_module(&mut new_ui, &images, module.spawn_instructions(), false);
 
                             i += 1;
                         }
@@ -173,9 +162,9 @@ pub fn ui(
                     }
                 }
             }
-            
-            **hovered = set;
-            
+
+            **hovered = set.copied();
+
             ui.set_width(ui.min_size().x);
         });
 }
@@ -186,12 +175,8 @@ pub fn recreate_module(
     instructions: &SpawnInstructions,
     large: bool
 ) {
-    let scaling = if large {
-        ImageItem::LARGE_SCALING
-    } else {
-        1.0
-    };
-    
+    let scaling = if large { ImageItem::LARGE_SCALING } else { 1.0 };
+
     let ui_min = ui.max_rect().min.to_vec2();
     let ui_center = (ui.max_rect().max - ui.max_rect().min) / 2.0;
     let make_rect = |center: Vec2, size: Vec2| {

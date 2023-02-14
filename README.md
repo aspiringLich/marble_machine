@@ -30,8 +30,9 @@ Currently I don't have a game, but I can almost start on that!
    - [ ] Level selection
    - [ ] Title screen
  - [ ] Game
-   - [x] Background
+   - [x] Backgrounds
    - [ ] Good Backgrounds
+   - [ ] Finalize module implementation
    - [ ] Saving / Loading
    - [ ] Level creation / storage
    - [ ] Test cases
