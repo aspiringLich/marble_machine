@@ -1,4 +1,8 @@
-use crate::{ modules::SpawnInstructions, marble_io::InputState, * };
+use crate::{
+    modules::SpawnInstructions,
+    *,
+    engine::module_state::ModuleState,
+};
 use atlas::{ basic, AtlasDictionary };
 
 use bevy::ecs::system::EntityCommands;
@@ -111,57 +115,66 @@ pub fn spawn_modules(
             .id();
         let mut children: Vec<Entity> = vec![];
 
+        let mut state = ModuleState::default();
+
         // spawn a small circular body and return the id
-        macro spawn_body_circular(
+        macro spawn_body(
             $body_type:expr,
-            $atlasdict:expr,
             $name:literal
             $($tail:tt)*
         ) {
-            children.push(
-                commands
-                    .spawn_atlas_sprite($atlasdict, $body_type.color(), Transform::from_xyz(0.0, 0.0, ZOrder::BodyComponent.f32()))
+            let body = commands
+                    .spawn_atlas_sprite($body_type.sprite(), $body_type.color(), Transform::from_xyz(0.0, 0.0, ZOrder::BodyComponent.f32()))
                     .insert((
-                        Collider::ball($atlasdict.width() * 0.5 - 0.5),
+                        $body_type.collider(),
                         RigidBody::Fixed,
                         Restitution::coefficient(0.8),
                         marker::ModuleBody,
                         $($tail)*
                     ))
                     .name($name)
-                    .id()
-            )
+                    .id();
+            children.push(body);
+            state.body = body;
         }
 
         // run through all the instructions laid out in the module
-        let SpawnInstructions { body, input_transforms, output_transforms } = module
-            .spawn_instructions();
+        let SpawnInstructions { body, input_transforms, output_transforms } =
+            module.spawn_instructions();
 
         // spawn the body
         match body {
             body @ BodyType::Small => {
-                spawn_body_circular!(body, basic::body_small, "body_small.component");
+                spawn_body!(body, "body_small.component");
             }
             _ => todo!(),
         }
-        // spawn the input state
-        commands.entity(parent).insert(InputState::new(input_transforms.len()));
 
         // inputs
-        children.extend(
-            input_transforms
-                .iter()
-                .enumerate()
-                .map(|(i, &x)| commands.spawn_input(x, i).id())
-        );
+        let (inputs, indicators): (Vec<_>, Vec<_>) = input_transforms
+            .iter()
+            .enumerate()
+            .map(|(i, &x)| {
+                let (a, b) = commands.spawn_input(x, i);
+                (a.id(), b)
+            })
+            .unzip();
+        children.extend(&inputs);
+
         // outputs
-        children.extend(
-            output_transforms
-                .iter()
-                .enumerate()
-                .map(|(i, &x)| commands.spawn_output(x, i).id())
-        );
-        commands.entity(parent).push_children(&children);
+        let outputs = output_transforms
+            .iter()
+            .enumerate()
+            .map(|(i, &x)| commands.spawn_output(x, i).id())
+            .collect::<Vec<_>>();
+        children.extend(&outputs);
+
+        state.inputs = inputs;
+        state.outputs = outputs;
+        state.indicators = indicators;
+        state.input_state = vec![None; state.inputs.len()];
+
+        commands.entity(parent).push_children(&children).insert(state);
 
         if *place {
             *selected = SelectedModules::place_entity(parent);

@@ -1,6 +1,6 @@
 use std::f32::consts;
 
-use crate::{modules::ModuleResources, *};
+use crate::{ *, modules::{ ModuleType, ModuleEventSender }, engine::module_state::ModuleState };
 use bevy_egui::*;
 use egui::*;
 use trait_enum::Deref;
@@ -36,27 +36,32 @@ impl SelectedModules {
 
 pub fn inspector_ui(
     mut egui_context: ResMut<EguiContext>,
-    mut res: ModuleResources,
     selected: Res<SelectedModules>,
+    mut q_module_type: Query<&mut ModuleType>,
+    mut events: EventWriter<modules::ModuleEvent>,
+    q_module_state: Query<&ModuleState>
 ) {
     if selected.place {
         return;
+    }
+    let Some(selected) = selected.selected else {
+        return;
     };
-    let Some(selected) = selected.selected else { return };
-    // im not sure how else to make the borrow checker shut up so
-    // im pretty sure this isnt actually unsafe buuuuut
-    // youre welcome future me if i just shot myself in the foot
-    let res = &mut res as *mut ModuleResources;
 
-    let binding = unsafe { &mut *res };
-    let binding = binding.q_module_type.get_mut(selected).unwrap();
-    let mut module = *binding.deref();
+    let mut module = q_module_type.get_mut(selected).unwrap();
 
-    egui::Window::new(format!("{}{}", "debug ", module.get_name()))
+    egui::Window
+        ::new(format!("{}{}", "debug ", module.get_name()))
         .resizable(true)
         .collapsible(false)
         .show(egui_context.ctx_mut(), |ui| {
-            module.debug_ui(ui, unsafe { &mut *res }, selected)
+            let mut events = ModuleEventSender::new(events);
+            events.entity(selected);
+            module.debug_ui(
+                ui,
+                &mut events,
+                q_module_state.get(selected).unwrap()
+            )
         });
 
     // println!("{}", window.unwrap().response.rect.width());
@@ -128,9 +133,9 @@ pub trait UiElements {
         &mut self,
         label: &str,
         transform: &mut Transform,
-        transform_fn: &T,
-    ) where
-        T: Fn(f32) -> Transform + 'static,
+        transform_fn: &T
+    )
+        where T: Fn(f32) -> Transform + 'static
     {
         let rot: Vec3 = transform.rotation.to_euler(EulerRot::XYZ).into();
         let mut angle = rot.z;
@@ -150,7 +155,11 @@ pub trait UiElements {
     fn angle_slider(&mut self, label: &str, angle: &mut f32) {
         let ui = self.get();
 
-        macro create_button($text:expr, $hover_text:expr, $($tail:tt)*) {
+        macro create_button(
+            $text:expr,
+            $hover_text:expr,
+            $($tail:tt)*
+        ) {
             if ui.small_button($text).on_hover_text($hover_text).clicked() {
                 $($tail)*
             }
@@ -160,26 +169,22 @@ pub trait UiElements {
 
         ui.label(label);
 
-        create_button!(
-            "<",
-            "Rotate counter-clockwise 2.5°",
-            *angle += step_amt / 2.0
-        );
+        create_button!("<", "Rotate counter-clockwise 2.5°", *angle += step_amt / 2.0);
         let drag = DragValue::new(&mut deg_angle)
             .speed(1.0)
             .custom_formatter(|n, _| format!("{:>5.1}°", n.rem_euclid(360.0)));
         create_button!(
             "<~",
             "Rotate counter-clockwise with a 45° step",
-            *angle = ((*angle + 0.01) * 8.0 / consts::TAU).ceil() * consts::TAU / 8.0
+            *angle = ((((*angle + 0.01) * 8.0) / consts::TAU).ceil() * consts::TAU) / 8.0
         );
         if ui.add(drag).changed() {
-            *angle = deg_angle.to_radians()
+            *angle = deg_angle.to_radians();
         }
         create_button!(
             "~>",
             "Rotate clockwise with a 45° step",
-            *angle = ((*angle - 0.01) * 8.0 / consts::TAU).floor() * consts::TAU / 8.0
+            *angle = ((((*angle - 0.01) * 8.0) / consts::TAU).floor() * consts::TAU) / 8.0
         );
         create_button!(">", "Rotate clockwise 2.5°", *angle -= step_amt / 2.0);
         ui.end_row();
@@ -240,7 +245,7 @@ pub fn debug_ui(
     mut q_pancam: Query<&mut PanCam>,
     mut step: Local<bool>,
     mut prev_pancam: Local<Option<PanCam>>,
-    windows: Res<bevy::prelude::Windows>,
+    windows: Res<bevy::prelude::Windows>
 ) {
     let active = &mut rapier_config.physics_pipeline_active;
     if *step {
@@ -248,19 +253,24 @@ pub fn debug_ui(
         *step = false;
     }
 
-    let Some(window) = windows.get_primary() else { error!("no window on god fr"); return };
+    let Some(window) = windows.get_primary() else {
+        error!("no window on god fr");
+        return;
+    };
 
-    egui::Window::new("debug ui thing")
+    egui::Window
+        ::new("debug ui thing")
         .resizable(true)
         .collapsible(false)
         .default_pos([window.width(), window.height()])
         .show(egui_context.ctx_mut(), |ui| {
             ui.horizontal(|ui| {
                 ui.label("Physics Pipeline");
-                if ui
-                    .button([" ⏵ ", " ⏸ "][*active as usize])
-                    .on_hover_text("Start / Stop physics")
-                    .clicked()
+                if
+                    ui
+                        .button([" ⏵ ", " ⏸ "][*active as usize])
+                        .on_hover_text("Start / Stop physics")
+                        .clicked()
                 {
                     *active = !*active;
                 }
@@ -276,11 +286,16 @@ pub fn debug_ui(
                     $a.$field = $b.$field;
                     $b.$field = default();
                 },
-                ($a:ident, $b:ident, $field:ident, $($tail:tt)*) => {
+                (
+                    $a:ident,
+                    $b:ident,
+                    $field:ident,
+                    $($tail:tt)*
+                ) => {
                     $a.$field = $b.$field;
                     $b.$field = default();
                     transfer!($a, $b, $($tail)*)
-                }
+                },
             }
 
             if prev_pancam.is_some() {

@@ -10,7 +10,7 @@ where
     fn get(&mut self) -> &mut Commands<'a, 'b>;
 
     /// Spawn the normal input component
-    fn spawn_input(&mut self, transform: Transform, n: usize) -> EntityCommands<'a, 'b, '_> {
+    fn spawn_input(&mut self, transform: Transform, n: usize) -> (EntityCommands<'a, 'b, '_>, Entity) {
         self.spawn_input_inner::<true>(transform, n)
     }
 
@@ -19,7 +19,7 @@ where
         &mut self,
         transform: Transform,
         n: usize,
-    ) -> EntityCommands<'a, 'b, '_> {
+    ) -> (EntityCommands<'a, 'b, '_>, Entity) {
         self.spawn_input_inner::<false>(transform, n)
     }
 
@@ -28,7 +28,7 @@ where
         &mut self,
         transform: Transform,
         n: usize,
-    ) -> EntityCommands<'a, 'b, '_> {
+    ) -> (EntityCommands<'a, 'b, '_>, Entity) {
         // transform.translation.z = 0.375;
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_input.info();
@@ -90,7 +90,7 @@ where
                 marker::Input(n),
             ));
         }
-        commands.entity(out)
+        (commands.entity(out), indicator)
     }
 
     /// spawn the normal output component

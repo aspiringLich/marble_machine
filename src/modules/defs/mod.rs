@@ -1,22 +1,9 @@
-use crate::{ * };
-use bevy_egui::egui::Ui;
+use crate::*;
 use strum::IntoEnumIterator;
 
-use crate::{
-    engine::{ marble::Marble, marble_io::FireMarble },
-    query::{ QueryQueryIter, QueryQuerySimple },
-};
-
-use crate::modules::{
-    body::BodyType,
-    ModuleCallbackTimer,
-    ModuleResources,
-    SpawnInstructions,
-    Module,
-};
+use crate::modules::*;
+use crate::modules::event::ModuleUpdate::*;
 use strum_macros::EnumIter;
-
-use super::ModuleInfo;
 
 /// basic: asic modules that do standard stuff
 pub mod basic;

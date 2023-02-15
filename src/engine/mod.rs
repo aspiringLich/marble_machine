@@ -5,6 +5,7 @@ pub mod lifetime;
 pub mod marble;
 pub mod marble_io;
 pub mod spawn;
+pub mod module_state;
 
 pub fn app(app: &mut App) {
     app.add_system_to_stage(Label::StageStart, select::get_cursor_pos)
@@ -20,7 +21,5 @@ pub fn app(app: &mut App) {
             SystemSet::new()
                 .with_system(marble::despawn_marbles)
                 .with_system(marble_io::update_inputs)
-                .with_system(modules::update_modules)
-                .with_system(modules::update_module_callbacks)
         );
 }

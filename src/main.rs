@@ -114,7 +114,7 @@ fn main() {
         // .add_plugin(WorldInspectorPlugin {})
         // .add_plugin(RapierDebugRenderPlugin::default())
         // events
-        .add_event::<marble_io::FireMarble>()
+        .add_event::<marble_io::FireMarbleEvent>()
         .add_event::<UpdateModule>()
         .add_event::<spawn::SpawnModule>()
         // startup stages
@@ -148,6 +148,7 @@ fn main() {
     graphics::app(&mut app);
     engine::app(&mut app);
     ui::app(&mut app);
+    modules::app(&mut app);
 
     // bevy_mod_debugdump::print_schedule(&mut app);
 

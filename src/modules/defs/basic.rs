@@ -20,28 +20,24 @@ impl Module for Basic {
         }
     }
 
-    fn update(&mut self, res: &mut ModuleResources, module: Entity) {
-        res.update_input_indicators(module);
-        let input_state = res.q_input_state.entity(module);
+    fn update(&mut self, events: &mut ModuleEventSender, state: &mut ModuleState) {
+        events.send(UpdateIndicatorColors);
 
-        if input_state[0].is_some() {
-            res.commands.entity(module).insert(ModuleCallbackTimer::new(10));
+        if state.input_state[0].is_some() {
+            events.send(Callback(0.12));
         }
     }
 
-    fn callback_update(&mut self, res: &mut ModuleResources, module: Entity) {
-        let mut input_state = res.q_input_state.entity_mut(module);
-
+    fn callback_update(&mut self, events: &mut ModuleEventSender, state: &mut ModuleState) {
         // if theres a marble in there (there should be)
+        let input_state = &mut state.input_state;
         if let Some(marble) = input_state[0] {
-            let outputs = res.q_children.entity(module).iter().with_collect(&res.w_output);
-
             // fire it outta the input and mark that the input is empty
-            res.fire_marble.send(FireMarble::new(marble, outputs[0], 1.0));
+            events.send(FireMarble(marble));
             input_state[0] = None;
+            events.send(UpdateIndicatorColors);
         } else {
             warn!("expected marble in input state");
         }
-        res.update_input_indicators(module);
     }
 }

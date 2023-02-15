@@ -9,19 +9,19 @@ use marble::Marble;
 use rand::Rng;
 use spawn::CommandsSpawn;
 
-use super::lifetime::Lifetime;
+use super::{lifetime::Lifetime, module_state::ModuleState};
 
 /// an event that tells the program to fire a marble from this marble output.
 #[derive(Copy, Clone)]
-pub struct FireMarble {
+pub struct FireMarbleEvent {
     pub marble: Marble,
     pub from: Entity,
     pub power: f32,
 }
 
-impl FireMarble {
+impl FireMarbleEvent {
     pub fn new(marble: Marble, from: Entity, power: f32) -> Self {
-        FireMarble {
+        FireMarbleEvent {
             marble,
             from,
             power,
@@ -35,7 +35,7 @@ pub const VELOCITY_FACTOR: f32 = 120.0;
 /// right power and such and such.
 pub fn fire_marbles(
     mut commands: Commands,
-    mut spawn_events: EventReader<FireMarble>,
+    mut spawn_events: EventReader<FireMarbleEvent>,
     q_global_transform: Query<&GlobalTransform>,
     q_children: Query<&Children>,
     w_sprite: Query<Entity, With<TextureAtlasSprite>>,
@@ -74,40 +74,11 @@ pub fn fire_marbles(
     }
 }
 
-/// a structure that holds the state of a module's inputs
-#[derive(Component, Debug, Default, Deref, DerefMut)]
-pub struct InputState {
-    inner: Vec<Option<Marble>>,
-}
-
-impl InputState {
-    /// create a new InputState from a length
-    pub fn new(len: usize) -> Self {
-        Self {
-            inner: vec![None; len],
-        }
-    }
-}
-
-impl std::ops::Index<usize> for InputState {
-    type Output = Option<Marble>;
-
-    fn index(&self, index: usize) -> &Self::Output {
-        &self.inner[index]
-    }
-}
-
-impl std::ops::IndexMut<usize> for InputState {
-    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.inner[index]
-    }
-}
-
 #[allow(clippy::too_many_arguments)]
 pub fn update_inputs(
     mut commands: Commands,
     mut collision_events: EventReader<CollisionEvent>,
-    mut q_input_state: Query<&mut InputState>,
+    mut q_state: Query<&mut ModuleState>,
     q_parent: Query<&Parent>,
     q_marble: Query<&Marble>,
     q_input: Query<&marker::Input>,
@@ -131,7 +102,7 @@ pub fn update_inputs(
                 let marble = *q_marble.entity(e2);
 
                 let parent = q_parent.entity(q_parent.entity(e1).get()).get();
-                let mut input_state = q_input_state.entity_mut(parent);
+                let input_state = &mut q_state.entity_mut(parent).input_state;
 
                 // if the input is not occupied, despawn the marble and update input_state
                 if input_state[index].is_none() {
