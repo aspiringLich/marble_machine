@@ -5,6 +5,7 @@ use crate::{
 };
 use bevy_egui::*;
 use egui::{ Button, Image, Label, Rect, Vec2, * };
+use once_cell::sync::Lazy;
 
 use super::{ atlas_image::AtlasImage, info::HoveredModule };
 
@@ -65,6 +66,7 @@ impl FromWorld for Images {
     }
 }
 
+#[derive(Debug)]
 pub enum ModuleItem {
     Module {
         module: ModuleType,
@@ -72,8 +74,8 @@ pub enum ModuleItem {
     SectionHeader(&'static str),
 }
 
-#[ctor]
-static MODULES: Vec<ModuleItem> = {
+#[ctor::ctor]
+static MODULES: Vec<ModuleItem> =  {
     use crate::modules::ModuleType::*;
     let item = |module| {
         ModuleItem::Module {
@@ -116,17 +118,18 @@ pub fn ui(
             let width = width.round();
             ui.set_width(width * SIZE.x + spacing);
             // dbg!(width);
-
+            
             let mut iter = MODULES.iter().peekable();
 
             let mut set = None;
 
-            if iter.peek().is_some() {
+            while iter.peek().is_some() {
                 ui.add_space(spacing);
                 let mut i = 0;
                 let cursor = ui.cursor().min.to_vec2();
 
                 while i < i32::max(width as i32, 1) && let Some(item) = iter.next() {
+                    // dbg!(item);
                     match item {
                         ModuleItem::Module { module } => {
                             // dbg!(cursor);

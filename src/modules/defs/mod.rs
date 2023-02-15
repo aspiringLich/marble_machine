@@ -8,7 +8,7 @@ use strum_macros::EnumIter;
 /// basic: asic modules that do standard stuff
 pub mod basic;
 
-#[derive(EnumIter, Clone, Copy, Component)]
+#[derive(EnumIter, Clone, Copy, Component, Debug)]
 pub enum ModuleType {
     Basic,
 }
