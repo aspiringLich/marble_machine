@@ -2,11 +2,7 @@ use std::f32::consts::PI;
 
 use bevy_prototype_lyon::shapes::Circle;
 
-use crate::{
-    misc::marker::{Module, ModuleBody},
-    query::QueryQuerySimple,
-    *, ui::spawning::recreate_module,
-};
+use crate::*;
 
 use super::{
     interact::{Interactive, InteractiveSelected},
@@ -37,9 +33,10 @@ impl Default for HoverEntity {
     }
 }
 
+#[allow(clippy::too_many_arguments)]
 pub fn draw_selection_on_hovered(
     mut commands: Commands,
-    selected: Res<SelectedModules>,
+    // selected: Res<SelectedModules>,
     interactive_selected: Res<InteractiveSelected>,
     hovered_entities: Res<HoveredEntities>,
     q_sprite: Query<(Entity, &TextureAtlasSprite, &Handle<TextureAtlas>), With<Interactive>>,
@@ -107,8 +104,7 @@ pub fn draw_selection_on_hovered(
             let mut stroke = StrokeMode::new(Color::rgba(1.0, 1.0, 1.0, 0.6), 0.5);
             stroke.options.tolerance = 0.01;
 
-            let mut transform = Transform::default();
-            transform.rotation = quat;
+            let mut transform = Transform::from_rotation(quat);
             transform.translation.z = ZOrder::HoverIndicator.f32();
 
             let e = commands
@@ -118,7 +114,6 @@ pub fn draw_selection_on_hovered(
                             &(Circle {
                                 center: Vec2::ZERO,
                                 radius: size / 2.0,
-                                ..Default::default()
                             }),
                         )
                         .build(DrawMode::Stroke(stroke), transform),

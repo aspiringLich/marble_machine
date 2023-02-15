@@ -5,6 +5,7 @@ use crate::{query::QueryQuerySimple, *};
 pub struct Lifetime(pub usize);
 
 /// update the lifetimes of entities that have it, and despawn them when the counter reaches 0
+#[allow(clippy::type_complexity)]
 pub fn update_lifetime(
     mut commands: Commands,
     mut lifetime: ParamSet<(Query<Entity, Added<Lifetime>>, Query<&mut Lifetime>)>,

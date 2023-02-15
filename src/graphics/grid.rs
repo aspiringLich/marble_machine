@@ -14,7 +14,7 @@ pub struct GridInfo {
 impl GridInfo {
     pub fn in_bounds(&self, mut pos: Vec2) -> bool {
         pos = pos.abs();
-        return pos.x <= self.half_size && pos.y <= self.half_size;
+        pos.x <= self.half_size && pos.y <= self.half_size
     }
 }
 

@@ -1,6 +1,5 @@
 use crate::*;
 use crate::modules::ModuleType;
-use crate::modules::SpawnInstructions;
 use crate::ui::spawning;
 use bevy_egui::*;
 use egui::Sense;

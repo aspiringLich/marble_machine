@@ -1,7 +1,7 @@
-use crate::{graphics::atlas::AtlasDictionary, misc::builder_fn, *};
+use crate::{graphics::atlas::AtlasDictionary, *};
 
 use bevy_egui::*;
-use egui::{Image, Vec2, *};
+use egui::{Image, *};
 
 /// image button but its from an atlas texture
 #[derive(Deref, DerefMut)]
@@ -33,7 +33,7 @@ impl AtlasImage {
 
 impl Widget for &AtlasImage {
     fn ui(self, ui: &mut Ui) -> Response {
-        ui.add(&*self)
+        ui.add(self)
     }
 }
 

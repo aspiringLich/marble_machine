@@ -1,4 +1,4 @@
-use bevy_prototype_debug_lines::DebugLines;
+// use bevy_prototype_debug_lines::DebugLines;
 
 use crate::{misc::RapierContextMethods, query::QueryQuerySimple, *};
 
@@ -29,18 +29,18 @@ impl RequestedMove {
         self
     }
 
-    pub fn ignore(mut self, ignore: HashSet<Entity>) -> Self {
-        self.ignore = ignore;
-        self
-    }
+    // pub fn ignore(mut self, ignore: HashSet<Entity>) -> Self {
+    //     self.ignore = ignore;
+    //     self
+    // }
 
-    pub fn to_transform(&self) -> Transform {
-        use MoveType::*;
-        match self.move_type {
-            TranslateTo(to) => Transform::from_translation(to),
-            RotateTo(to) => Transform::from_rotation(to),
-        }
-    }
+    // pub fn to_transform(&self) -> Transform {
+    //     use MoveType::*;
+    //     match self.move_type {
+    //         TranslateTo(to) => Transform::from_translation(to),
+    //         RotateTo(to) => Transform::from_rotation(to),
+    //     }
+    // }
 }
 
 pub fn do_requested_move(
@@ -67,8 +67,8 @@ pub fn do_requested_move(
             .exclude_sensors()
             .predicate(&predicate);
 
-        let requesting = q_transform.entity(requested_move.requesting).clone();
-        let mut diff = requesting;
+        let requesting = q_transform.entity(requested_move.requesting);
+        let mut diff = *requesting;
 
         match requested_move.move_type {
             TranslateTo(to) => {

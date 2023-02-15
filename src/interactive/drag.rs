@@ -16,7 +16,7 @@ pub fn drag_selected(
     mouse_buttons: Res<Input<MouseButton>>,
     selected: Res<SelectedModules>,
     keyboard: Res<Input<KeyCode>>,
-    q_children: Query<&Children>,
+    // q_children: Query<&Children>,
     q_transform: Query<&Transform>,
     mut active: Local<bool>,
     mut starting_pos: Local<Vec2>,
@@ -58,7 +58,6 @@ pub fn drag_selected(
         }
     }
 
-    let mut transform = *q_transform.entity(selected);
     let Vec2 { x, y } = **mouse_pos - *starting_pos - 0.5;
 
     // rounding x and y to the nearest snapping #

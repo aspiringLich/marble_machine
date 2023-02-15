@@ -3,7 +3,6 @@ use std::f32::consts;
 use crate::{ *, modules::{ ModuleType, ModuleEventSender }, engine::module_state::ModuleState };
 use bevy_egui::*;
 use egui::*;
-use trait_enum::Deref;
 
 /// stores the selected entities
 #[derive(Resource, Debug, Default, Hash)]
@@ -38,7 +37,7 @@ pub fn inspector_ui(
     mut egui_context: ResMut<EguiContext>,
     selected: Res<SelectedModules>,
     mut q_module_type: Query<&mut ModuleType>,
-    mut events: EventWriter<modules::ModuleEvent>,
+    events: EventWriter<modules::ModuleEvent>,
     q_module_state: Query<&ModuleState>
 ) {
     if selected.place {
@@ -57,11 +56,7 @@ pub fn inspector_ui(
         .show(egui_context.ctx_mut(), |ui| {
             let mut events = ModuleEventSender::new(events);
             events.entity(selected);
-            module.debug_ui(
-                ui,
-                &mut events,
-                q_module_state.get(selected).unwrap()
-            )
+            module.debug_ui(ui, &mut events, q_module_state.get(selected).unwrap())
         });
 
     // println!("{}", window.unwrap().response.rect.width());
@@ -281,6 +276,7 @@ pub fn debug_ui(
             });
 
             // transfer the field from b to a and set b.field to default()
+            #[rustfmt::skip]
             macro transfer {
                 ($a:ident, $b:ident, $field:ident) => {
                     $a.$field = $b.$field;
@@ -306,15 +302,13 @@ pub fn debug_ui(
                     transfer!(pancam, prev, min_x, min_y, max_x, max_y, max_scale);
                     *prev_pancam = None;
                 }
-            } else {
-                if ui.button("Unlock Pancam").clicked() {
-                    *prev_pancam = Some(PanCam::default());
+            } else if ui.button("Unlock Pancam").clicked() {
+                *prev_pancam = Some(PanCam::default());
 
-                    let prev = prev_pancam.as_mut().unwrap();
-                    let mut pancam = q_pancam.single_mut();
+                let prev = prev_pancam.as_mut().unwrap();
+                let mut pancam = q_pancam.single_mut();
 
-                    transfer!(prev, pancam, min_x, min_y, max_x, max_y, max_scale);
-                }
+                transfer!(prev, pancam, min_x, min_y, max_x, max_y, max_scale);
             }
         });
 }

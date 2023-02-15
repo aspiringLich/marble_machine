@@ -3,11 +3,9 @@ use crate::{
     *,
     engine::module_state::ModuleState,
 };
-use atlas::{ basic, AtlasDictionary };
-
+use atlas::AtlasDictionary;
 use bevy::ecs::system::EntityCommands;
 use components::SpawnComponents;
-use trait_enum::Deref;
 
 use super::modules::{ body::BodyType, ModuleType };
 // use bevy_rapier2d::{prelude::*, rapier::prelude::ColliderMaterial};

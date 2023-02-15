@@ -5,6 +5,7 @@ use bevy_trait_query::imports::{ReadOnlyWorldQuery, WorldQuery};
 
 use crate::*;
 
+#[allow(unused)]
 type QuerySimple<'w, 's, T> = Query<'w, 's, &'static mut T>;
 // type QueryWith<'w, 's, T, W> = Query<'w, 's, &'static mut T, bevy::prelude::With<W>>;
 type QueryEntity<'w, 's, W> = Query<'w, 's, bevy::prelude::Entity, bevy::prelude::With<W>>;
@@ -91,7 +92,7 @@ where
         self,
         q: &'w QuerySimple<'_, '_, T>,
     ) -> QueryOutput<impl Iterator<Item = &'w T>> {
-        QueryOutput::new(self.get_self().into_iter().filter_map(|x| q.get(x).ok()))
+        QueryOutput::new(self.get_self().filter_map(|x| q.get(x).ok()))
     }
 
     /// queries this objects query for queries that match the other query. But *mutably*
@@ -102,7 +103,6 @@ where
     ) -> QueryOutput<impl Iterator<Item = Mut<'w, T>>> {
         QueryOutput::new(
             self.get_self()
-                .into_iter()
                 .filter_map(|x| unsafe { q.get_unchecked(x) }.ok()),
         )
     }
@@ -111,7 +111,6 @@ where
     #[must_use]
     fn query_collect<T: Component>(self, q: &'w QuerySimple<'_, '_, T>) -> Vec<&'w T> {
         self.get_self()
-            .into_iter()
             .filter_map(|x| q.get(x).ok())
             .collect()
     }
@@ -120,7 +119,6 @@ where
     #[must_use]
     fn query_collect_mut<T: Component>(self, q: &'w QuerySimple<'_, '_, T>) -> Vec<Mut<'w, T>> {
         self.get_self()
-            .into_iter()
             .filter_map(|x| unsafe { q.get_unchecked(x) }.ok())
             .collect()
     }
@@ -136,7 +134,6 @@ where
     {
         QueryOutput::new(
             self.get_self()
-                .into_iter()
                 .filter_map(move |x| w.get(x).ok()),
         )
     }
@@ -148,7 +145,6 @@ where
         Self: 'w,
     {
         self.get_self()
-            .into_iter()
             .filter_map(move |x| w.get(x).ok())
             .collect()
     }

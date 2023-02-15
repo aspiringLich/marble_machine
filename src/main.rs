@@ -52,7 +52,6 @@ use bevy_prototype_lyon::prelude::*;
 use bevy_rapier2d::prelude::*;
 use ctor::ctor;
 use misc::ColorHex;
-use once_cell::sync::Lazy;
 use res::*;
 
 mod fps;

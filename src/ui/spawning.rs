@@ -5,7 +5,6 @@ use crate::{
 };
 use bevy_egui::*;
 use egui::{ Button, Image, Label, Rect, Vec2, * };
-use trait_enum::Deref;
 
 use super::{ atlas_image::AtlasImage, info::HoveredModule };
 
@@ -78,7 +77,7 @@ static MODULES: Vec<ModuleItem> = {
     use crate::modules::ModuleType::*;
     let item = |module| {
         ModuleItem::Module {
-            module: module,
+            module,
         }
     };
     let header = |name| { ModuleItem::SectionHeader(name) };
@@ -115,14 +114,14 @@ pub fn ui(
 
             let width = ui.available_size().x / (SIZE.x + spacing);
             let width = width.round();
-            ui.set_width((width as f32) * SIZE.x + spacing);
+            ui.set_width(width * SIZE.x + spacing);
             // dbg!(width);
 
             let mut iter = MODULES.iter().peekable();
 
             let mut set = None;
 
-            while let Some(_) = iter.peek() {
+            if iter.peek().is_some() {
                 ui.add_space(spacing);
                 let mut i = 0;
                 let cursor = ui.cursor().min.to_vec2();

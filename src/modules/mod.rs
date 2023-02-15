@@ -11,10 +11,10 @@ pub use defs::*;
 mod event;
 
 use std::time::Duration;
-use bevy::{prelude::*, core::FrameCount};
+use bevy::prelude::*;
 use derive_more::{ Deref, DerefMut };
 
-use crate::{ engine::{ marble_io, module_state::ModuleState, marble::Marble }, Label };
+use crate::{ engine::{ module_state::ModuleState, marble::Marble }, Label };
 
 pub use self::event::{ ModuleEventSender, ModuleEvent };
 
@@ -39,7 +39,8 @@ pub trait Module {
     /// function that runs to update this module
     fn update(&mut self, events: &mut ModuleEventSender, state: &mut ModuleState);
     fn callback_update(&mut self, events: &mut ModuleEventSender, state: &mut ModuleState);
-
+    
+    #[allow(unused_variables)]
     fn debug_ui(&mut self, ui: &mut Ui, events: &mut ModuleEventSender, state: &ModuleState) {
         if ui.button("Fire Marble!").clicked() {
             events.send(event::ModuleUpdate::FireMarble(Marble::Bit { value: true }));

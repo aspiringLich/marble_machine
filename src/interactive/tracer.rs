@@ -1,6 +1,5 @@
 use crate::{
     query::{QueryQueryIter, QueryQuerySimple},
-    spawn::CommandsSpawn,
     *, graphics::grid::GridInfo,
 };
 use atlas::{basic, AtlasDictionary};
@@ -62,7 +61,7 @@ impl FromWorld for TracerEntities {
             ))
             .name("tracer.parent")
             .push_children(&*e);
-        return e;
+        e
     }
 }
 
@@ -70,6 +69,7 @@ impl FromWorld for TracerEntities {
 #[derive(Component)]
 pub struct Tracer;
 
+#[allow(clippy::too_many_arguments)]
 pub fn tracer(
     // mut commands: Commands,
     rapier_config: Res<RapierConfiguration>,
@@ -80,18 +80,16 @@ pub fn tracer(
     w_out: Query<Entity, With<marker::Output>>,
     w_sprite: Query<Entity, With<TextureAtlasSprite>>,
     mut q_visibility: Query<&mut Visibility>,
-    has_body: Query<With<marker::ModuleBody>>,
     // q_name: Query<&Name>,
     tracers: Res<TracerEntities>,
     grid_info: Res<GridInfo>,
 ) {
     // get the timestep factor
-    let factor;
-    match rapier_config.timestep_mode {
-        TimestepMode::Fixed { dt, .. } => factor = dt,
-        TimestepMode::Variable { max_dt, .. } => factor = max_dt,
-        TimestepMode::Interpolated { dt, .. } => factor = dt,
-    }
+    let factor = match rapier_config.timestep_mode {
+        TimestepMode::Fixed { dt, .. } => dt,
+        TimestepMode::Variable { max_dt, .. } => max_dt,
+        TimestepMode::Interpolated { dt, .. } => dt,
+    };
 
     let per_step = 4;
 
@@ -104,7 +102,7 @@ pub fn tracer(
 
     for entity in q_children.entity(selected).iter().with(&w_out) {
         // gotta love vector math
-        if !q_transform.p1().get(entity).is_ok() {
+        if q_transform.p1().get(entity).is_err() {
             return;
         }
         let mut q_transform = q_transform.p0();
@@ -133,8 +131,7 @@ pub fn tracer(
         }
 
         // step through until either we rapier scene query turn up bad or we do <x> steps
-        let mut tracer_iter = tracers.iter();
-        'tracer: while let Some(&tracer) = tracer_iter.next() {
+        'tracer: for &tracer in tracers.iter() {
             if !grid_info.in_bounds(shape_pos) {
                 return
             }

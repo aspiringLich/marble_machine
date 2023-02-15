@@ -24,20 +24,16 @@ impl Module for Basic {
         events.send(UpdateIndicatorColors);
 
         if state.input_state[0].is_some() {
-            events.send(Callback(0.12));
+            events.send(Callback(0.15));
         }
     }
 
     fn callback_update(&mut self, events: &mut ModuleEventSender, state: &mut ModuleState) {
-        // if theres a marble in there (there should be)
         let input_state = &mut state.input_state;
-        if let Some(marble) = input_state[0] {
-            // fire it outta the input and mark that the input is empty
-            events.send(FireMarble(marble));
-            input_state[0] = None;
-            events.send(UpdateIndicatorColors);
-        } else {
-            warn!("expected marble in input state");
-        }
+
+        let marble = input_state[0].expect("if theres a callback, theres a marble");
+        events.send(FireMarble(marble));
+        input_state[0] = None;
+        events.send(UpdateIndicatorColors);
     }
 }

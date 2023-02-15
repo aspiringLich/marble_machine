@@ -2,7 +2,7 @@ use std::f32::consts::TAU;
 
 use crate::{misc::RapierContextMethods, query::QueryQuerySimple, *};
 
-use super::{hover::HoveredEntities, interact::InteractiveRotation, intersect::{RequestedMove, MoveType}};
+use super::{hover::HoveredEntities, intersect::{RequestedMove, MoveType}};
 
 /// update SelectedModule whenever the left cursor is clicked
 #[allow(clippy::too_many_arguments)]
@@ -23,7 +23,7 @@ pub fn get_selected(
     };
 
     // the entity, if applicable, that we may want to apply glow to to show were hovering over it
-    let mut glow: Entity;
+    let glow: Entity;
     // prioritize interactive elements
     if let Some(&e) = hovered.iter().find(|e| has_interactive.has(**e)) {
         glow = e;
@@ -75,6 +75,7 @@ pub fn get_selected(
 
 /// runs if SelectedModules's place flag is true
 /// place the selected module somewhere
+#[allow(clippy::too_many_arguments)]
 pub fn place_selected(
     rapier_ctx: Res<RapierContext>,
     q_collider: Query<(Entity, &Collider), Without<Sensor>>,
