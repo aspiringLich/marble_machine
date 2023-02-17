@@ -1,12 +1,11 @@
 use atlas::{ basic, AtlasDictionary };
 use std::{ collections::hash_map::DefaultHasher, f32::consts::PI, hash::{ Hash, Hasher } };
-use trait_enum::DerefMut;
 
 use crate::{
     modules::ModuleType,
     query::{ QueryQueryIter, QueryQuerySimple },
     select::CursorCoords,
-    *,
+    *, engine::module_state::ModuleState,
 };
 
 #[derive(Component, Debug)]
@@ -24,11 +23,11 @@ pub struct InteractiveRotation {
 }
 
 impl InteractiveRotation {
-    pub fn from<'a, T: Iterator<Item = &'a Transform>>(inputs: T, outputs: T) -> Self {
+    pub fn from<'a, T: Iterator<Item = &'a Transform>>(inputs: T, outputs: T, rot: &'a Transform) -> Self {
         Self {
             input_rot: inputs.map(|t| t.rotation.to_euler(EulerRot::XYZ).2).collect(),
             output_rot: outputs.map(|t| t.rotation.to_euler(EulerRot::XYZ).2).collect(),
-            rot: 0.0,
+            rot: rot.rotation.to_euler(EulerRot::XYZ).2,
         }
     }
 }
@@ -46,8 +45,7 @@ pub fn spawn_despawn_interactive_components(
     q_transform: Query<&Transform>,
     mut q_module: Query<&mut ModuleType>,
     has_interactive: Query<With<Interactive>>,
-    w_input: Query<Entity, With<marker::Input>>,
-    w_output: Query<Entity, With<marker::Output>>,
+    q_module_state: Query<&ModuleState>,
     mut before: Local<Option<Entity>>
 ) {
     // only run when SelectedModules is changed but not when its been added
@@ -81,7 +79,7 @@ pub fn spawn_despawn_interactive_components(
 
         *before = Some(module);
 
-        let body = &q_module.entity_mut(module).deref_mut().spawn_instructions().body;
+        let body = &q_module.entity_mut(module).spawn_instructions().body;
 
         macro spawn_widget(
             $translation:expr,
@@ -111,14 +109,12 @@ pub fn spawn_despawn_interactive_components(
         }
 
         // rotation widgets
-        let children = q_children.entity(module);
-        let inputs = children.iter().with_collect(&w_input);
-        let outputs = children.iter().with_collect(&w_output);
+        let state = q_module_state.get(module).unwrap();
         let color = Color::ORANGE;
 
         let mut children = vec![];
 
-        for entity in inputs.iter().chain(outputs.iter()) {
+        for entity in state.inputs.iter().chain(state.outputs.iter()) {
             let child = spawn_widget!(
                 Vec3::X * (ROTATION_WIDGET_OFFSET + body.offset()),
                 color,
@@ -148,8 +144,9 @@ pub fn spawn_despawn_interactive_components(
             .entity(module)
             .insert(
                 InteractiveRotation::from(
-                    inputs.iter().filter_map(get_transform),
-                    outputs.iter().filter_map(get_transform)
+                    state.inputs.iter().filter_map(get_transform),
+                    state.outputs.iter().filter_map(get_transform),
+                    q_transform.get(state.body).unwrap(),
                 )
             );
     } else if let Some(b) = *before {
@@ -291,9 +288,8 @@ pub fn do_interactive_rotation(
     q_interactive_rot: Query<&InteractiveRotation>,
     q_interactive: Query<&Interactive>,
     mut q_transform: Query<&mut Transform>,
-    w_i: Query<Entity, With<marker::Input>>,
-    w_o: Query<Entity, With<marker::Output>>,
-    q_children: Query<&Children>
+    q_module_state: Query<&ModuleState>,
+    q_children: Query<&Children>,
 ) {
     let Ok(entity) = w_interactive_rot.get_single() else {
         return;
@@ -328,9 +324,11 @@ pub fn do_interactive_rotation(
             }
         }
     }
+    
+    let state = q_module_state.entity(entity);
 
-    for (i, input) in children.iter().with(&w_i).enumerate() {
-        let mut transform = q_transform.entity_mut(input);
+    for (i, input) in state.inputs.iter().enumerate() {
+        let mut transform = q_transform.entity_mut(*input);
         transform.rotation = Quat::from_euler(
             EulerRot::XYZ,
             0.0,
@@ -338,8 +336,8 @@ pub fn do_interactive_rotation(
             i_rot.input_rot[i] + i_rot.rot
         );
     }
-    for (i, output) in children.iter().with(&w_o).enumerate() {
-        let mut transform = q_transform.entity_mut(output);
+    for (i, output) in state.outputs.iter().enumerate() {
+        let mut transform = q_transform.entity_mut(*output);
         transform.rotation = Quat::from_euler(
             EulerRot::XYZ,
             0.0,
@@ -347,4 +345,6 @@ pub fn do_interactive_rotation(
             i_rot.output_rot[i] + i_rot.rot
         );
     }
+    let mut transform = q_transform.entity_mut(state.body);
+    transform.rotation = Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, i_rot.rot);
 }

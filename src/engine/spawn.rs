@@ -137,7 +137,7 @@ pub fn spawn_modules(
         }
 
         // run through all the instructions laid out in the module
-        let SpawnInstructions { body, input_transforms, output_transforms } =
+        let SpawnInstructions { body, inputs: input_transforms, outputs: output_transforms } =
             module.spawn_instructions();
 
         // spawn the body
@@ -152,7 +152,7 @@ pub fn spawn_modules(
         let (inputs, indicators): (Vec<_>, Vec<_>) = input_transforms
             .iter()
             .enumerate()
-            .map(|(i, &x)| {
+            .map(|(i, x)| {
                 let (a, b) = commands.spawn_input(x, i);
                 (a.id(), b)
             })
@@ -163,7 +163,7 @@ pub fn spawn_modules(
         let outputs = output_transforms
             .iter()
             .enumerate()
-            .map(|(i, &x)| commands.spawn_output(x, i).id())
+            .map(|(i, x)| commands.spawn_output(x, i).id())
             .collect::<Vec<_>>();
         children.extend(&outputs);
 

@@ -1,4 +1,4 @@
-use crate::{misc::vec2, *};
+use crate::{misc::vec2, *, modules::Instruction};
 use atlas::{basic, AtlasDictionary};
 use bevy::ecs::system::EntityCommands;
 
@@ -10,31 +10,30 @@ where
     fn get(&mut self) -> &mut Commands<'a, 'b>;
 
     /// Spawn the normal input component
-    fn spawn_input(&mut self, transform: Transform, n: usize) -> (EntityCommands<'a, 'b, '_>, Entity) {
-        self.spawn_input_inner::<true>(transform, n)
+    fn spawn_input(&mut self, instruction: &Instruction, n: usize) -> (EntityCommands<'a, 'b, '_>, Entity) {
+        self.spawn_input_inner::<true>(instruction, n)
     }
 
     /// Spawn the input component but nonfunctional (no collider)
     fn spawn_input_nonfunctional(
         &mut self,
-        transform: Transform,
+        instruction: &Instruction,
         n: usize,
     ) -> (EntityCommands<'a, 'b, '_>, Entity) {
-        self.spawn_input_inner::<false>(transform, n)
+        self.spawn_input_inner::<false>(instruction, n)
     }
 
     /// Spawn the normal input component but you can choose whether its functional or nonfunctional i guess
     fn spawn_input_inner<const B: bool>(
         &mut self,
-        transform: Transform,
+        instruction: &Instruction,
         n: usize,
     ) -> (EntityCommands<'a, 'b, '_>, Entity) {
         // transform.translation.z = 0.375;
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_input.info();
-
-        let len = transform.translation.length();
-        let indicator = commands.spawn_indicator(Vec3::X * (len - 2.0)).id();
+        
+        let indicator = commands.spawn_indicator(Vec3::X * (instruction.ext - 2.0)).id();
 
         if B {}
 
@@ -42,8 +41,7 @@ where
         let out = commands
             .spawn((
                 SpriteBundle {
-                    transform: Transform::from_rotation(transform.rotation)
-                        .with_translation(Vec3::Z * (ZOrder::InputComponent.f32())),
+                    transform: instruction.root(ZOrder::InputComponent.f32()),
                     ..default()
                 },
                 marker::Input(n),
@@ -60,7 +58,7 @@ where
                             anchor: Anchor::Center,
                             ..default()
                         },
-                        transform: Transform::from_translation(Vec3::X * len),
+                        transform: instruction.child(),
                         ..default()
                     },))
                     .name("in.sprite")
@@ -73,9 +71,7 @@ where
                                 vec![vec2!(3, 5), vec2!(-3, 3), vec2!(-3, -3), vec2!(3, -5)],
                                 Some(vec![[0, 1], [2, 3]]),
                             ),
-                            TransformBundle::from_transform(Transform::from_translation(
-                                Vec3::X * len,
-                            )),
+                            TransformBundle::from_transform(instruction.child()),
                             // RigidBody::Fixed,
                         ))
                         .name("in.collider");
@@ -94,12 +90,9 @@ where
     }
 
     /// spawn the normal output component
-    fn spawn_output(&mut self, mut transform: Transform, n: usize) -> EntityCommands<'a, 'b, '_> {
-        transform.translation.z = 0.25;
+    fn spawn_output(&mut self, mut instruction: &Instruction, n: usize) -> EntityCommands<'a, 'b, '_> {
         let commands = self.get();
         let (texture_atlas, index) = basic::marble_output.info();
-
-        let len = transform.translation.length();
 
         let children = vec![
             commands
@@ -108,9 +101,7 @@ where
                         vec![vec2!(3, 5), vec2!(-3, 3), vec2!(-3, -3), vec2!(3, -5)],
                         Some(vec![[0, 1], [2, 3]]),
                     ),
-                    TransformBundle::from_transform(Transform::from_translation(
-                        Vec3::X * (len - 1.0),
-                    )),
+                    TransformBundle::from_transform(instruction.child()),
                     // RigidBody::Fixed,
                 ))
                 .name("out.collider")
@@ -123,7 +114,7 @@ where
                         anchor: Anchor::Center,
                         ..default()
                     },
-                    transform: Transform::from_translation(Vec3::X * len),
+                    transform: instruction.child(),
                     ..default()
                 },))
                 .name("out.sprite")
@@ -132,8 +123,7 @@ where
 
         let mut out = commands.spawn((
             SpriteBundle {
-                transform: Transform::from_rotation(transform.rotation)
-                    .with_translation(Vec3::Z * (ZOrder::OutputComponent.f32())),
+                transform: instruction.root(ZOrder::OutputComponent.f32()),
                 ..default()
             },
             marker::Output(n),

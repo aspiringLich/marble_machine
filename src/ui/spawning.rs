@@ -5,7 +5,7 @@ use crate::{
 };
 use bevy_egui::*;
 use egui::{ Button, Image, Label, Rect, Vec2, * };
-use once_cell::sync::Lazy;
+// use once_cell::sync::Lazy;
 
 use super::{ atlas_image::AtlasImage, info::HoveredModule };
 
@@ -200,11 +200,11 @@ pub fn recreate_module(
             image.rotate(angle, Vec2::splat(0.5)),
         );
     }
-    macro put_tf($transform:expr, $image:expr) {
-        let mut transform = $transform;
+    macro put_tf($instruction:expr, $image:expr) {
+        let mut transform = $instruction.overall();
         // rotate 45 deg
         transform.rotate_around(
-            Vec3::new(0., 0., $transform.translation.z),
+            Vec3::ZERO,
             Quat::from_euler(EulerRot::XYZ, 0.0, 0.0, angle),
         );
 
@@ -236,12 +236,12 @@ pub fn recreate_module(
     };
 
     // spawn inputs
-    for &transform in instructions.input_transforms.iter() {
-        put_tf!(transform, images.input);
+    for instruction in instructions.inputs.iter() {
+        put_tf!(instruction, images.input);
     }
     // spawn outputs
-    for &transform in instructions.output_transforms.iter() {
-        put_tf!(transform, images.output);
+    for instruction in instructions.outputs.iter() {
+        put_tf!(instruction, images.output);
     }
 
     // spawn body
@@ -252,9 +252,9 @@ pub fn recreate_module(
     put!(ui_center, *atlas_image);
 
     // spawn indicators
-    for &transform in instructions.input_transforms.iter() {
-        let mut tf = transform;
-        extend_pos(&mut tf.translation, -0.75);
-        put_tf!(tf, images.indicator);
+    for instruction in instructions.inputs.iter() {
+        let mut i = instruction.clone();
+        i.ext -= 2.0;
+        put_tf!(i, images.indicator);
     }
 }

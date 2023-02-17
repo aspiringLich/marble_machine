@@ -1,7 +1,7 @@
 use std::any::type_name;
 
-use bevy::ecs::query::{QueryIter, ROQueryItem};
-use bevy_trait_query::imports::{ReadOnlyWorldQuery, WorldQuery};
+use bevy::ecs::query::{QueryIter, ROQueryItem, ReadOnlyWorldQuery, WorldQuery};
+// use bevy_trait_query::imports::{ReadOnlyWorldQuery, WorldQuery};
 
 use crate::*;
 

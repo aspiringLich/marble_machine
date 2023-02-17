@@ -13,8 +13,8 @@ impl Module for Basic {
     fn info(&self) -> ModuleInfo {
         ModuleInfo {
             instructions: SpawnInstructions::from_body(BodyType::Small)
-                .with_input_rotations([-180.0].into_iter())
-                .with_output_rotations([0.0].into_iter()),
+                .with_input_rotations([-180.0].into_iter(), 0.0)
+                .with_output_rotations([0.0].into_iter(), 0.0),
             name: "Basic Module",
             identifier: "basic.module",
         }
@@ -31,9 +31,10 @@ impl Module for Basic {
     fn callback_update(&mut self, events: &mut ModuleEventSender, state: &mut ModuleState) {
         let input_state = &mut state.input_state;
 
-        let marble = input_state[0].expect("if theres a callback, theres a marble");
-        events.send(FireMarble(marble));
-        input_state[0] = None;
-        events.send(UpdateIndicatorColors);
+        if let Some(marble) = input_state[0] {
+            events.send(FireMarble(marble));
+            input_state[0] = None;
+            events.send(UpdateIndicatorColors);
+        }
     }
 }

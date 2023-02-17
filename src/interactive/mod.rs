@@ -32,11 +32,18 @@ impl Default for BoolBuf {
 }
 
 // this is a hack idk why it doesnt work like i want
-fn egui(mut ctx: ResMut<bevy_egui::EguiContext>, mut before: Local<BoolBuf>) -> bool {
+fn egui(
+    mut ctx: ResMut<bevy_egui::EguiContext>,
+    mut before: Local<BoolBuf>,
+    mut q_pancam: Query<&mut PanCam>
+) -> bool {
     let out = ctx.ctx_mut().wants_pointer_input();
     before.pop_front();
     before.push_back(out);
-    before.iter().any(|b| *b)
+    let out = before.iter().any(|b| *b);
+    
+    q_pancam.single_mut().enabled = !out;
+    out
 }
 
 fn init_res(mut commands: Commands) {

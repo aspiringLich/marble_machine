@@ -2,8 +2,9 @@ use crate::{
     graphics::atlas::{basic, AtlasDictionary},
     *,
 };
+use serde::{Serialize, Deserialize};
 
-#[derive(Default, Copy, Clone)]
+#[derive(Default, Copy, Clone, Debug, Serialize, Deserialize)]
 pub enum BodyType {
     #[default]
     Small,
