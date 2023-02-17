@@ -1,6 +1,6 @@
 use std::f32::consts::TAU;
 
-use crate::{misc::RapierContextMethods, query::QueryQuerySimple, *};
+use crate::{misc::RapierContextMethods, query::QueryQuerySimple, *, modules::BodyType};
 
 use super::{hover::HoveredEntities, intersect::{RequestedMove, MoveType}};
 
@@ -12,7 +12,7 @@ pub fn get_selected(
     buttons: Res<Input<MouseButton>>,
     hovered: Res<HoveredEntities>,
     q_parent: Query<&Parent>,
-    has_body: Query<With<marker::ModuleBody>>,
+    has_body: Query<With<BodyType>>,
     has_interactive: Query<With<interact::Interactive>>,
     mut interactive_selected: ResMut<interact::InteractiveSelected>,
 ) {

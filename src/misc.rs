@@ -8,10 +8,6 @@ pub mod marker {
     #[derive(Component)]
     pub struct Module;
 
-    /// marks module bodies
-    #[derive(Component)]
-    pub struct ModuleBody;
-
     /// marks marble inputs
     #[derive(Component, Deref, DerefMut)]
     pub struct Input(pub usize);

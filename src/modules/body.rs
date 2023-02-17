@@ -4,7 +4,7 @@ use crate::{
 };
 use serde::{Serialize, Deserialize};
 
-#[derive(Default, Copy, Clone, Debug, Serialize, Deserialize)]
+#[derive(Default, Copy, Clone, Debug, Serialize, Deserialize, Component)]
 pub enum BodyType {
     #[default]
     Small,

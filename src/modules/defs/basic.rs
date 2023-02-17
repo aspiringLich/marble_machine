@@ -1,6 +1,6 @@
 use super::*;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Component, Serialize, Deserialize, Debug)]
 pub struct Basic;
 
 impl Default for Basic {
@@ -9,6 +9,7 @@ impl Default for Basic {
     }
 }
 
+#[typetag::serde]
 impl Module for Basic {
     fn info(&self) -> ModuleInfo {
         ModuleInfo {

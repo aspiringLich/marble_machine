@@ -1,5 +1,5 @@
 use crate::{
-    modules::SpawnInstructions,
+    modules::{SpawnInstructions, ModuleComponent},
     *,
     engine::module_state::ModuleState,
 };
@@ -109,7 +109,7 @@ pub fn spawn_modules(
         let parent = commands
             .spawn(sprite)
             .name(module.get_identifier())
-            .insert((*module, marker::Module))
+            .insert((ModuleComponent::new(*module), marker::Module))
             .id();
         let mut children: Vec<Entity> = vec![];
 
@@ -127,7 +127,7 @@ pub fn spawn_modules(
                         $body_type.collider(),
                         RigidBody::Fixed,
                         Restitution::coefficient(0.8),
-                        marker::ModuleBody,
+                        *$body_type,
                         $($tail)*
                     ))
                     .name($name)

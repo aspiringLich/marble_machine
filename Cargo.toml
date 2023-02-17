@@ -23,11 +23,12 @@ ctor = "0.1.26"
 derive_more = "0.99.17"
 # once_cell = "1.16.0"
 rand = "0.8.5"
+ron = "0.8.0"
 strum = "0.24"
 strum_macros = "0.24"
 # trait_enum = "0.5.0"
 serde = { version = "1.0.152", features = ["derive"] }
-ron = "0.8.0"
+typetag = "0.2.5"
 # quote = "1.0.23"
 
 [workspace]

@@ -11,7 +11,7 @@ pub use defs::*;
 mod event;
 
 use std::time::Duration;
-use bevy::prelude::*;
+use bevy::{prelude::*, ecs::component::TableStorage };
 use derive_more::{ Deref, DerefMut };
 
 use crate::{ engine::{ module_state::ModuleState, marble::Marble }, Label };
@@ -34,7 +34,8 @@ pub struct ModuleInfo {
     identifier: &'static str,
 }
 
-pub trait Module {
+#[typetag::serde(tag = "type")]
+pub trait Module : Component<Storage = TableStorage> + std::fmt::Debug {
     fn info(&self) -> ModuleInfo;
     /// function that runs to update this module
     fn update(&mut self, events: &mut ModuleEventSender, state: &mut ModuleState);
@@ -64,7 +65,7 @@ impl ModuleCallbackTimer {
 
 pub fn update_module_callbacks(
     mut commands: Commands,
-    mut timers: Query<(&mut ModuleType, Entity, &mut ModuleCallbackTimer, &mut ModuleState)>,
+    mut timers: Query<(&mut ModuleComponent, Entity, &mut ModuleCallbackTimer, &mut ModuleState)>,
     events: EventWriter<ModuleEvent>,
     time: Res<Time>,
 ) {
@@ -74,7 +75,7 @@ pub fn update_module_callbacks(
         timer.tick(time.delta());
         
         if timer.finished() {
-            module.callback_update(&mut events, &mut state);
+            module.module.callback_update(&mut events, &mut state);
             commands.entity(entity).remove::<ModuleCallbackTimer>();
         }
     }
@@ -86,12 +87,12 @@ pub struct UpdateModule(pub Entity);
 
 /// run the update functions for the modules!!
 pub fn update_modules(
-    mut modules: Query<(&mut ModuleType, Entity, &mut ModuleState), Changed<ModuleState>>,
+    mut modules: Query<(&mut ModuleComponent, Entity, &mut ModuleState), Changed<ModuleState>>,
     events: EventWriter<ModuleEvent>
 ) {
     let mut events = ModuleEventSender::new(events);
     for (mut module, entity, mut state) in modules.iter_mut() {
         events.entity(entity);
-        module.update(&mut events, &mut state);
+        module.module.update(&mut events, &mut state);
     }
 }

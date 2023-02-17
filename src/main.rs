@@ -148,6 +148,7 @@ fn main() {
     engine::app(&mut app);
     ui::app(&mut app);
     modules::app(&mut app);
+    game::app(&mut app);
 
     // bevy_mod_debugdump::print_schedule(&mut app);
 

@@ -2,7 +2,7 @@ use atlas::{ basic, AtlasDictionary };
 use std::{ collections::hash_map::DefaultHasher, f32::consts::PI, hash::{ Hash, Hasher } };
 
 use crate::{
-    modules::ModuleType,
+    modules::{ModuleType, ModuleComponent},
     query::{ QueryQueryIter, QueryQuerySimple },
     select::CursorCoords,
     *, engine::module_state::ModuleState,
@@ -43,7 +43,7 @@ pub fn spawn_despawn_interactive_components(
     q_children: Query<&Children>,
     q_parent: Query<&Parent>,
     q_transform: Query<&Transform>,
-    mut q_module: Query<&mut ModuleType>,
+    mut q_module: Query<&mut ModuleComponent>,
     has_interactive: Query<With<Interactive>>,
     q_module_state: Query<&ModuleState>,
     mut before: Local<Option<Entity>>
@@ -79,7 +79,7 @@ pub fn spawn_despawn_interactive_components(
 
         *before = Some(module);
 
-        let body = &q_module.entity_mut(module).spawn_instructions().body;
+        let body = &q_module.entity_mut(module).ty.spawn_instructions().body;
 
         macro spawn_widget(
             $translation:expr,

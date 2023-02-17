@@ -40,7 +40,7 @@ impl Instruction {
     }
 }
 
-#[derive(Default, Debug, Serialize, Deserialize)]
+#[derive(Default, Debug, Serialize, Deserialize, Clone)]
 pub struct SpawnInstructions {
     pub body: BodyType,
     pub inputs: Vec<Instruction>,

@@ -1,4 +1,5 @@
 use crate::*;
+use crate::modules::ModuleComponent;
 use crate::modules::ModuleType;
 use crate::ui::spawning;
 use bevy_egui::*;
@@ -16,7 +17,7 @@ pub struct HoveredModule(Option<ModuleType>);
 pub fn ui(
     mut egui_ctx: ResMut<EguiContext>,
     selected: Res<SelectedModules>,
-    q_module: Query<&ModuleType>,
+    q_module: Query<&ModuleComponent>,
     // q_parent: Query<&Parent>,
     // q_body: Query<With<ModuleBody>>,
     images: Res<Images>,
@@ -26,7 +27,7 @@ pub fn ui(
     
     let Some(module) = hovered.or_else(||
         selected.selected.map(|e| {
-            *q_module.get(e).unwrap()
+            q_module.get(e).unwrap().ty
         })
     ) else {
         return;
