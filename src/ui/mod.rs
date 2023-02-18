@@ -14,7 +14,7 @@ pub mod ui;
 pub fn app(app: &mut App) {
     app.init_resource::<HoveredModule>()
         .add_system_set_to_stage(
-            Label::StageUi,
+            CoreStage::Update,
             SystemSet::new()
                 .with_system(info::ui)
                 .with_system(ui::inspector_ui)
@@ -22,7 +22,7 @@ pub fn app(app: &mut App) {
                 .with_system(spawning::ui)
                 .with_system(ui::debug_ui)
         )
-        .add_startup_system_to_stage(Label::StartupStageStart, set_style);
+        .add_startup_system_to_stage(StartupStage::Startup, set_style);
 }
 
 fn set_style(mut context: ResMut<EguiContext>, mut commands: Commands) {

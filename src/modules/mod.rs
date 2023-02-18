@@ -14,13 +14,13 @@ use std::time::Duration;
 use bevy::{prelude::*, ecs::component::TableStorage };
 use derive_more::{ Deref, DerefMut };
 
-use crate::{ engine::{ module_state::ModuleState, marble::Marble }, Label };
+use crate::{ engine::{ module_state::ModuleState, marble::Marble } };
 
 pub use self::event::{ ModuleEventSender, ModuleEvent };
 
 pub fn app(app: &mut App) {
     app.add_event::<ModuleEvent>().add_system_set_to_stage(
-        Label::StageMain,
+        CoreStage::Update,
         SystemSet::new()
             .with_system(update_modules.label("modules::update_modules"))
             .with_system(update_module_callbacks.label("modules::update_modules"))

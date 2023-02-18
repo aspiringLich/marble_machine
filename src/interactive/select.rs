@@ -188,7 +188,7 @@ pub fn get_cursor_pos(
     q_camera: Query<(&Camera, &GlobalTransform), With<marker::Camera>>,
     mut coords: ResMut<CursorCoords>,
 ) {
-    let (camera, camera_transform) = q_camera.single();
+    let Ok((camera, camera_transform)) = q_camera.get_single() else { return };
 
     let Some(window) = windows.get_primary() else {
         error!("no window you dingus");

@@ -8,16 +8,15 @@ pub mod spawn;
 pub mod module_state;
 
 pub fn app(app: &mut App) {
-    app.add_system_to_stage(Label::StageStart, select::get_cursor_pos)
-        .add_system(lifetime::update_lifetime)
+    app.add_system(lifetime::update_lifetime)
         .add_system_set_to_stage(
-            Label::StageSpawn,
+            CoreStage::PreUpdate,
             SystemSet::new()
                 .with_system(spawn::spawn_modules.label("spawn::spawn_modules"))
                 .with_system(marble_io::fire_marbles)
         )
         .add_system_set_to_stage(
-            Label::StageMain,
+            CoreStage::Update,
             SystemSet::new()
                 .with_system(marble::despawn_marbles)
                 .with_system(marble_io::update_inputs)

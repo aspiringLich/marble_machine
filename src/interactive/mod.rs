@@ -9,6 +9,7 @@ pub mod interact;
 pub mod intersect;
 pub mod select;
 pub mod tracer;
+pub mod pan;
 
 /// if:
 ///     SelectedModules is in place mode,
@@ -41,7 +42,7 @@ fn egui(
     before.pop_front();
     before.push_back(out);
     let out = before.iter().any(|b| *b);
-    
+
     q_pancam.single_mut().enabled = !out;
     out
 }
@@ -55,10 +56,15 @@ pub fn app(app: &mut App) {
         .init_resource::<select::CursorCoords>()
         .init_resource::<hover::HoveredEntities>()
         .init_resource::<interact::InteractiveSelected>()
-        .add_startup_system_to_stage(Label::StartupStageStart, init_res);
+        .add_startup_system_to_stage(StartupStage::Startup, init_res);
 
     app.add_system_set_to_stage(
-        Label::StageInteract,
+        CoreStage::First,
+        SystemSet::new()
+            .with_system(select::get_cursor_pos.label("select::get_cursor_pos"))
+            .with_system(pan::pan_camera.before("select::get_cursor_pos"))
+    ).add_system_set_to_stage(
+        CoreStage::Update,
         SystemSet::new()
             .with_system(hover::get_hovered_entities)
             .with_system(
