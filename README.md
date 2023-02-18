@@ -33,6 +33,6 @@ Currently I don't have a game, but I can almost start on that!
    - [x] Backgrounds
    - [ ] Good Backgrounds
    - [x] Finalize module implementation
-   - [ ] Saving / Loading
+   - [x] Saving / Loading
    - [ ] Level creation / storage
    - [ ] Test cases

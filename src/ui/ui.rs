@@ -4,7 +4,7 @@ use crate::{
     *,
     modules::{ ModuleType, ModuleEventSender, ModuleComponent },
     engine::module_state::ModuleState,
-    game::save_load::SaveWorld,
+    game::save_load::{SaveWorld, LoadWorld},
 };
 use bevy_egui::*;
 use egui::*;
@@ -76,7 +76,8 @@ pub fn debug_ui(
     mut prev_pancam: Local<Option<PanCam>>,
     windows: Res<bevy::prelude::Windows>,
     mut text: Local<String>,
-    mut save_events: EventWriter<SaveWorld>
+    mut save_events: EventWriter<SaveWorld>,
+    mut load_events: EventWriter<LoadWorld>,
 ) {
     let active = &mut rapier_config.physics_pipeline_active;
     if *step {
@@ -114,16 +115,17 @@ pub fn debug_ui(
 
             ui.horizontal(|ui| {
                 ui.add(egui::TextEdit::singleline(&mut *text));
-                if ui.button("Save").clicked() {
-                    let trim = text
+                let text = text
                         .clone()
                         .trim_matches(
                             |c: char| !(c.is_ascii_alphanumeric() || " ()_-.,".contains(c))
                         )
                         .to_string();
-                    save_events.send(SaveWorld(trim));
+                if ui.button("Save").clicked() {
+                    save_events.send(SaveWorld(text.clone()));
                 }
                 if ui.button("Load").clicked() {
+                    load_events.send(LoadWorld(text.clone()));
                 }
             });
         });

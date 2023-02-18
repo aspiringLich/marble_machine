@@ -35,7 +35,7 @@ pub struct ModuleInfo {
 }
 
 #[typetag::serde(tag = "type")]
-pub trait Module : Component<Storage = TableStorage> + std::fmt::Debug {
+pub trait Module : Component<Storage = TableStorage> + std::fmt::Debug + dyn_clone::DynClone {
     fn info(&self) -> ModuleInfo;
     /// function that runs to update this module
     fn update(&mut self, events: &mut ModuleEventSender, state: &mut ModuleState);
@@ -46,6 +46,12 @@ pub trait Module : Component<Storage = TableStorage> + std::fmt::Debug {
         if ui.button("Fire Marble!").clicked() {
             events.send(event::ModuleUpdate::FireMarble(Marble::Bit { value: true }));
         }
+    }
+}
+
+impl Clone for Box<dyn Module> {
+    fn clone(&self) -> Self {
+        dyn_clone::clone_box(&**self)
     }
 }
 

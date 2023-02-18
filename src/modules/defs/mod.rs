@@ -26,7 +26,7 @@ impl ModuleComponent {
     }
 }
 
-#[derive(EnumIter, Clone, Copy, Debug)]
+#[derive(EnumIter, Clone, Copy, Debug, Serialize, Deserialize)]
 pub enum ModuleType {
     Basic,
 }

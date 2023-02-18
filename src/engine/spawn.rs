@@ -1,7 +1,8 @@
 use crate::{
-    modules::{SpawnInstructions, ModuleComponent},
+    modules::{ SpawnInstructions, ModuleComponent, Module },
     *,
     engine::module_state::ModuleState,
+    game::save_load::ModuleInfo,
 };
 use atlas::AtlasDictionary;
 use bevy::ecs::system::EntityCommands;
@@ -67,17 +68,23 @@ impl<'a, 'b> CommandsSpawn<'a, 'b> for Commands<'a, 'b> {
     }
 }
 
-#[derive(Clone)]
 pub struct SpawnModule {
-    module: ModuleType,
+    info: ModuleInfo,
     // whether this module is going to be dragged around
     place: bool,
 }
 
 impl SpawnModule {
-    pub fn new(module: ModuleType) -> Self {
+    pub fn from_type(module: ModuleType) -> Self {
         SpawnModule {
-            module,
+            info: ModuleInfo::new(module),
+            place: false,
+        }
+    }
+
+    pub fn new(info: ModuleInfo) -> Self {
+        SpawnModule {
+            info,
             place: false,
         }
     }
@@ -96,9 +103,10 @@ pub fn spawn_modules(
     mut selected: ResMut<SelectedModules>
 ) {
     for event in spawn_events.iter() {
-        let SpawnModule { module, place } = event;
+        let SpawnModule { info: ModuleInfo { module, instructions, module_type, offset }, place } =
+            event;
 
-        let sprite = if *place {
+        let mut sprite = if *place {
             SpriteBundle {
                 visibility: Visibility::INVISIBLE,
                 ..default()
@@ -106,10 +114,11 @@ pub fn spawn_modules(
         } else {
             SpriteBundle::default()
         };
+        sprite.transform.translation = *offset;
         let parent = commands
             .spawn(sprite)
-            .name(module.get_identifier())
-            .insert((ModuleComponent::new(*module), marker::Module))
+            .name(module_type.get_identifier())
+            .insert((ModuleComponent { ty: *module_type, module: module.clone() }, marker::Module))
             .id();
         let mut children: Vec<Entity> = vec![];
 
@@ -137,8 +146,11 @@ pub fn spawn_modules(
         }
 
         // run through all the instructions laid out in the module
-        let SpawnInstructions { body, inputs: input_transforms, outputs: output_transforms } =
-            module.spawn_instructions();
+        let SpawnInstructions {
+            body,
+            inputs: input_transforms,
+            outputs: output_transforms,
+        } = instructions;
 
         // spawn the body
         match body {

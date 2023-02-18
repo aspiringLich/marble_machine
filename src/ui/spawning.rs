@@ -146,7 +146,7 @@ pub fn ui(
                                 set = Some(module);
                             }
                             if button.clicked() {
-                                spawn_modules.send(spawn::SpawnModule::new(*module).place());
+                                spawn_modules.send(spawn::SpawnModule::from_type(*module).place());
                             }
 
                             // allocate the area to draw the module and throw stuff there
