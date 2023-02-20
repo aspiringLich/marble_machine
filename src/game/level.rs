@@ -106,6 +106,14 @@ impl FromWorld for Lua {
     }
 }
 
+#[cfg(debug_assertions)]
+impl Drop for Lua {
+    fn drop(&mut self) {
+        info!("Exiting...");
+        std::process::exit(0)
+    }
+}
+
 #[derive(Default, Resource)]
 pub struct Levels<'lua> {
     levels: Vec<Level<'lua>>,
