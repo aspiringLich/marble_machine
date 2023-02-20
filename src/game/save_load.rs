@@ -5,10 +5,9 @@ use serde::{ Serialize, Deserialize };
 
 use crate::{
     *,
-    modules::{ ModuleType, SpawnInstructions, BodyType, ModuleComponent, Module },
+    modules::{ ModuleType, SpawnInstructions, ModuleComponent, Module },
     engine::{module_state::ModuleState, spawn::SpawnModule},
 };
-use ron::ser::PrettyConfig;
 
 pub struct SaveWorld(pub String);
 
@@ -69,12 +68,12 @@ pub fn save_world(
     #[cfg(not(target_arch = "wasm32"))]
     IoTaskPool::get()
         .spawn(async move {
-            #[allow(unused_assignments)]
-            let mut serialized = ron::ser::to_string(&instructions).unwrap();
-            #[cfg(debug_assertions)]
-            serialized = ron::ser
-                ::to_string_pretty(&instructions, PrettyConfig::default())
-                .unwrap();
+            // #[allow(unused_assignments)]
+            let serialized = ron::ser::to_string(&instructions).unwrap();
+            // #[cfg(debug_assertions)]
+            // serialized = ron::ser
+            //     ::to_string_pretty(&instructions, PrettyConfig::default())
+            //     .unwrap();
 
             // Write the scene RON data to file
             let ret = File::create(format!("data/saves/{path}.ron")).and_then(|mut file|
@@ -85,7 +84,7 @@ pub fn save_world(
             }
         })
         .detach();
-}
+} 
 
 pub struct LoadWorld(pub String);
 
