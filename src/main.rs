@@ -12,6 +12,7 @@
 #![feature(core_intrinsics)]
 #![feature(iter_array_chunks)]
 #![feature(drain_filter)]
+#![feature(try_trait_v2)]
 
 extern crate derive_more;
 extern crate rand;
@@ -77,7 +78,7 @@ use ui::ui::SelectedModules;
 
 fn main() {
     modules::init_modules();
-    
+
     let mut app = App::new();
 
     // bevy plugins
@@ -117,10 +118,7 @@ fn main() {
         .add_event::<UpdateModule>()
         .add_event::<spawn::SpawnModule>()
         // startup stages
-        .add_startup_system_to_stage(
-            StartupStage::Startup,
-            setup
-        );
+        .add_startup_system_to_stage(StartupStage::Startup, setup);
 
     interactive::app(&mut app);
     graphics::app(&mut app);
@@ -130,9 +128,45 @@ fn main() {
     game::app(&mut app);
 
     // bevy_mod_debugdump::print_schedule(&mut app);
-
+    
     app.run();
 }
+
+mod err {
+    use std::error::Error;
+    use std::panic::Location;
+
+    use bevy::prelude::{ In, error };
+
+    #[derive(Debug)]
+    pub struct LocatedError {
+        inner: anyhow::Error,
+        location: &'static Location<'static>,
+    }
+
+    impl std::fmt::Display for LocatedError {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{}: {}", self.inner, self.location)
+        }
+    }
+
+    impl<T: Error + std::marker::Sync + std::marker::Send + 'static> From<T> for LocatedError {
+        #[track_caller]
+        fn from(err: T) -> Self {
+            LocatedError {
+                inner: anyhow::Error::new(err),
+                location: std::panic::Location::caller(),
+            }
+        }
+    }
+
+    pub fn log_errors(error: In<Result<(), LocatedError>>) {
+        if let Some(err) = error.0.err() {
+            error!("{:#?}", err);
+        }
+    }
+}
+use err::{ log_errors, LocatedError };
 
 fn setup(mut commands: Commands, grid_info: Res<grid::GridInfo>, window: Res<Windows>) {
     let window = window.get_primary().unwrap();

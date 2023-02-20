@@ -16,7 +16,6 @@ bevy_rapier2d = { version = "0.20.0", features = [ ] }
 bevy_mod_debugdump = "0.6.0"
 iyes_loopless = "0.9.1"
 bevy_prototype_debug_lines = "0.9"
-
 anyhow = "1.0.66"
 # auto_unwrap = "1.1.0"
 ctor = "0.1.26"

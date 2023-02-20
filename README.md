@@ -22,6 +22,7 @@ Currently I don't have a game, but I can almost start on that!
    - [x] Can't move / place stuff into other stuff
    - [x] Hover effect
  - [ ] Ui
+   - [ ] Redo with Bevy UI
    - [x] Spawning UI
    - [x] Description / Information screen (right)
    - [ ] Proper module config screen
@@ -34,5 +35,6 @@ Currently I don't have a game, but I can almost start on that!
    - [ ] Good Backgrounds
    - [x] Finalize module implementation
    - [x] Saving / Loading
-   - [ ] Level creation / storage
+   - [x] Level creation / storage
    - [ ] Test cases
+   - [ ] Particle effects :)

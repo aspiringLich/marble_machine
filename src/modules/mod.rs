@@ -44,7 +44,7 @@ pub trait Module : Component<Storage = TableStorage> + std::fmt::Debug + dyn_clo
     #[allow(unused_variables)]
     fn debug_ui(&mut self, ui: &mut Ui, events: &mut ModuleEventSender, state: &ModuleState) {
         if ui.button("Fire Marble!").clicked() {
-            events.send(event::ModuleUpdate::FireMarble(Marble::Bit { value: true }));
+            events.send(event::ModuleUpdate::FireMarble(Marble::bit(true)));
         }
     }
 }

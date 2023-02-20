@@ -1,10 +1,15 @@
-
-
-local function fn (inputs)
+local function test (inputs)
     return inputs
 end
 
-level.test = fn
+local table = {true, false, nil}
+
+local function generate(i)
+    return table[i]
+end
+
+level.test = test
+level.generate = generate
 level.inputs = { "bit" }
 level.outputs = { "bit" }
 

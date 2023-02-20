@@ -10,5 +10,7 @@ pub fn app(app: &mut App) {
         .add_system_to_stage(
             CoreStage::PreUpdate,
             save_load::load_world.before("spawn::spawn_modules")
-        );
+        )
+        .init_non_send_resource::<level::Lua>()
+        .add_startup_system(level::load_levels);
 }
